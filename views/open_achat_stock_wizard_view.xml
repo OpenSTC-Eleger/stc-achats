@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record model="ir.ui.view" id="view_po_ask_verif_budget_wizard_form">
+			<field name="name">purchase.order.ask.verif.budget.wizard</field>
+			<field name="model">purchase.order.ask.verif.budget.wizard</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<field name="analytic_account_id" on_change="onchange_analytic_account_id(analytic_account_id)"/>
+				<!-- domain="[('service_account','=',service_user)]" -->
+				<newline/>
+				<field name="po_ammount"/>
+				<field name="budget_dispo"/>
+				<field name="tx_erosion"/>
+				<button name="to_draft_engage" type="object" string="Générer Engagement" />
+			</field>
+		</record>
+        
+        <record id="action_openstc_pret_view_checkout" model="ir.actions.act_window">
+			<field name="name">Voir Etats des Lieux</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">openstc.pret.checkout</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		
+    </data>
+</openerp>

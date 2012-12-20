@@ -81,7 +81,7 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
         if 'po_id' in context:
             po_values = {}
             engage_state = "done"
-            if restant > 300.0:
+            if wizard.po_ammount >= 300.0:
                 po_values.update({'validation':'engagement_to_check'})
                 engage_state = "to_validate"
             else:

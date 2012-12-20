@@ -60,10 +60,11 @@
 					</field>
 					<newline/>
 					<field name="state"/>
+					<field name="purchase_order_id" attrs="{'invisible':[('state','&lt;&gt;', 'done')]}"/>
+					<button name="cancel" string="Revenir au début" type="object" states="waiting_supplier"/>
 					<button name="validate_supplier" string="Valider Fourniseur" type="object" states="waiting_supplier" />
 					<button name="send_ask" string="Envoyer demande (mails)" type="object" states="draft"/>
-					<button name="to_draft_po" string="Convertir en bon de commande" type="object" states="done"/>
-					<button name="cancel" string="Revenir au début" type="object" states="waiting_supplier"/>
+					<button name="to_draft_po" string="Convertir en bon de commande" type="object" states="waiting_purchase_order"/>
             	</form>
             </field>
         </record>

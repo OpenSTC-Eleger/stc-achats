@@ -28,7 +28,8 @@ import re
 import unicodedata
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
-    AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),('done','Bon pour envoi en Validation')]
+    AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
+                             ('waiting_purchase_order','Bon pour création de Commande'),('done','Bon de Commande Généré')]
     _name = "purchase.order.ask"
     
     _columns = {
@@ -36,7 +37,7 @@ class purchase_order_ask(osv.osv):
         'name':fields.char('Nom',size=64, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
-        
+        'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
     }
     _defaults={
             'state':'draft'
@@ -75,11 +76,10 @@ class purchase_order_ask(osv.osv):
     def validate_supplier(self, cr, uid, ids, context=None):
         if not self._check_supplier_selection(cr, uid, ids, context):
             raise osv.except_osv('Erreur','Vous devez choisir un Fournisseur pour la suite et un seul.')
-        self.write(cr, uid, ids, {'state':'done'})
+        self.write(cr, uid, ids, {'state':'waiting_purchase_order'})
         return
     
     def to_draft_po(self, cr, uid, ids, context=None):
-        ret_id = 0
         supplier_id = 0
         list_prod = []
         if isinstance(ids,list):
@@ -91,6 +91,8 @@ class purchase_order_ask(osv.osv):
                 supplier_id = line.partner_id.id
         #On récupère les produits demandés avec leur qté et PU
         for line in ask.order_lines:
+            if line.price_unit <= 0.0:
+                raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
             list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte})    
         return {
             'view_mode':'form',
@@ -99,7 +101,8 @@ class purchase_order_ask(osv.osv):
             'res_model':'purchase.order',
             'context':{'ask_supplier_id':supplier_id,
                        'ask_prod_ids':list_prod,
-                       'ask_today':fields.date.context_today(self,cr,uid,context)}
+                       'ask_today':fields.date.context_today(self,cr,uid,context),
+                       'po_ask_id':ids}
             }
     
     def cancel(self, cr, uid, ids, context=None):
@@ -170,10 +173,17 @@ class purchase_order(osv.osv):
                 prod_values = pol_obj.onchange_product_id(cr, uid, [], pricelist_id, prod_ctx['prod_id'], prod_ctx['qte'],
                                                            False, context['ask_supplier_id'], price_unit=prod_ctx['price_unit'],
                                                            date_order=context['ask_today'], context=context)['value']
-                prod_values.update({'price_unit':prod_ctx['price_unit']})
+                prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id']})
                 prod_actions.append((0,0,prod_values))
             ret.update({'partner_id':context['ask_supplier_id'], 'order_line':prod_actions})
         return ret
+    
+    def create(self, cr, uid, ids, context=None):
+        po_id = super(purchase_order, self).create(cr, uid, ids, context)
+        if 'po_ask_id' in context:
+            self.pool.get("purchase.order.ask").write(cr ,uid, context['po_ask_id'], {'state':'done',
+                                                                                      'purchase_order_id':po_id},context) 
+        return po_id
     
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         ok = True
@@ -263,7 +273,7 @@ class open_engagement(osv.osv):
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
         }
     _defaults = {
-            'name':lambda elf,cr,uid,context:self._custom_sequence(cr, uid, context),
+            'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
             'state':'draft',
             }
     

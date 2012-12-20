@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	    
+	<record id="sequence_engage_number_type" model="ir.sequence.type">
+            <field name="name">Numéro d'engagement</field>
+            <field name="code">engage.number</field>
+        </record>
+        <record id="sequence_asset_number" model="ir.sequence">
+            <field name="name">Numéro d'engagement</field>
+            <field name="code">engage.number</field>
+            <field name="prefix">%(year)s-xxx-</field>
+            <field name="padding" eval="4"/>
+        </record>
+    </data>
+</openerp>

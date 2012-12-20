@@ -21,7 +21,6 @@
 #
 ##############################################################################
 
-import open_achat_stock
-import wizard
-import account
+import open_achat_stock_wizard
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -14,21 +14,22 @@
            	</field>
         </record>
         
-	    <record id="purchase_order_ask_tree" model="ir.ui.view">
+	    <record id="purchase_order_inherit_form" model="ir.ui.view">
             <field name="name">purchase.order.open.form</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
-				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']/field[@name='state']" position="after">
-				    <field name="validation"/>
-				    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
-				    
+				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']" position="after">
+				    <group col="6" colspan="4">
+					    <field name="validation"/>
+					    <field name="engage_id"/>
+					    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
+				    	<button name="open_engage" string="Gérer Engagement" type="object" attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')]}"/>
+				    </group>
 				</xpath>	
             </field>
         </record>
-	    
-	    purchase_order_form
         
 	    <record id="purchase_order_ask_form" model="ir.ui.view">
             <field name="name">purchase.order.ask.form</field>
@@ -67,6 +68,17 @@
             </field>
         </record>
         
+	    <record id="open_achat_account_analytic_account_inherit_form" model="ir.ui.view">
+            <field name="name">account.analytic.account.open.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_form" />
+            <field name="arch" type="xml">
+				<page string="Account Data" position="inside">
+					<field name="service_id"/>
+				</page>	
+            </field>
+        </record>
 	    
 	</data>
 </openerp>

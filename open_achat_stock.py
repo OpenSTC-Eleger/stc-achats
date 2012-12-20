@@ -23,6 +23,9 @@
 #############################################################################
 
 from osv import osv, fields
+from datetime import datetime
+import re
+import unicodedata
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),('done','Bon pour envoi en Validation')]
@@ -77,9 +80,27 @@ class purchase_order_ask(osv.osv):
     
     def to_draft_po(self, cr, uid, ids, context=None):
         ret_id = 0
-        for ask in self.browse(cr, uid, ids):
-            self.pool.get("purchase.order").create()
-        return
+        supplier_id = 0
+        list_prod = []
+        if isinstance(ids,list):
+            ids = ids[0]
+        ask = self.browse(cr, uid, ids)
+        #On récupère le fournisseur sélectionné
+        for line in ask.suppliers_id:
+            if line.selected:
+                supplier_id = line.partner_id.id
+        #On récupère les produits demandés avec leur qté et PU
+        for line in ask.order_lines:
+            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte})    
+        return {
+            'view_mode':'form',
+            'target':'current',
+            'type':'ir.actions.act_window',
+            'res_model':'purchase.order',
+            'context':{'ask_supplier_id':supplier_id,
+                       'ask_prod_ids':list_prod,
+                       'ask_today':fields.date.context_today(self,cr,uid,context)}
+            }
     
     def cancel(self, cr, uid, ids, context=None):
         for ask in self.browse(cr, uid, ids):
@@ -133,10 +154,26 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
+            'engage_id':fields.many2one('open.engagement','Engagement associé',readonly=True),
             }
     _defaults = {
         'validation':'budget_to_check'
         }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        ret = super(purchase_order,self).default_get(cr, uid, fields, context=context)
+        if ('ask_supplier_id' and 'ask_prod_ids' and 'ask_today') in context:
+            pricelist_id = self.onchange_partner_id(cr, uid, [], context['ask_supplier_id'])['value']['pricelist_id']
+            prod_actions = []
+            pol_obj = self.pool.get("purchase.order.line")
+            for prod_ctx in context['ask_prod_ids']:
+                prod_values = pol_obj.onchange_product_id(cr, uid, [], pricelist_id, prod_ctx['prod_id'], prod_ctx['qte'],
+                                                           False, context['ask_supplier_id'], price_unit=prod_ctx['price_unit'],
+                                                           date_order=context['ask_today'], context=context)['value']
+                prod_values.update({'price_unit':prod_ctx['price_unit']})
+                prod_actions.append((0,0,prod_values))
+            ret.update({'partner_id':context['ask_supplier_id'], 'order_line':prod_actions})
+        return ret
     
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         ok = True
@@ -151,16 +188,92 @@ class purchase_order(osv.osv):
             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
     
     def verif_budget(self, cr, uid, ids, context=None):
-        """if isinstance(ids, list):
+        if isinstance(ids, list):
             ids = ids[0]
         po = self.browse(cr, uid, ids)
-        #for line in po.order_line:"""
             
         return{
+               'type':'ir.actions.act_window',
                'res_model': 'purchase.order.ask.verif.budget',
                'view_mode': 'form',
                'target':'new',
                'context': {'po_id': po.id, 'ammount_total':po.amount_total}
                }
+    
+    def open_engage(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        engage_id = self.pool.get("open.engagement").search(cr ,uid, [('purchase_order_id','=',ids)])
+        #Si on a plus d'un id renvoyé, on affiche une liste plutot qu'un formulaire
+        if isinstance(engage_id,list):
+            #Il y a plusieurs ids
+            if len(engage_id) > 1:
+                return {
+                'type':'ir.actions.act_window',
+                'target':'new',
+                'res_model':'open.engagement',
+                'view_mode':'tree,form',
+                'domain':[('id','in',engage_id)]
+                }
+            #Il n'y a qu'un seul id mais contenu dans une liste
+            else:
+                engage_id = engage_id[0]
+        #Il n'y a bien qu'un seul id
+        return {
+            'type':'ir.actions.act_window',
+            'target':'new',
+            'res_model':'open.engagement',
+            'res_id':engage_id,
+            'view_mode':'form',
+            }
 purchase_order()
+
+#Modèle d'un num d'engagement : YYYY-SER-xxx (YYYY: année, SER: service sur 3 lettres majuscules, xxx num incremental (=> id ?))
+class open_engagement(osv.osv):
+    
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+        for group in user.groups_id:
+            if prog.search(group.name):
+                if isinstance(user.service_ids, list) and not service:
+                    service = user.service_ids[0]
+                else:
+                    service = self.pool.get("openstc.service").browse(cr, uid, service)
+                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+                
+        return seq
+    
+    _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('done','Validé')]
+    _name="open.engagement"
+    #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
+    _columns = {
+        'name':fields.char('Numéro Engagement', size=16, required=True),
+        'description':fields.char('Objet de l\'achat', size=128),
+        'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
+        'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
+        'purchase_order_id':fields.many2one('purchase.order','Commandes associées'),
+        'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
+        }
+    _defaults = {
+            'name':lambda elf,cr,uid,context:self._custom_sequence(cr, uid, context),
+            'state':'draft',
+            }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        #Si on supprimer un engagement, on doit forcer les documents associés à en générer un autre
+        #En principe, aucun engagement ne doit etre supprimé
+        engages = self.browse(cr, uid, ids)
+        for engage in engages:
+            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check'}, context)
+        return super(open_engagement, self).unlink(cr, uid, ids, context)
+    
+open_engagement()
     

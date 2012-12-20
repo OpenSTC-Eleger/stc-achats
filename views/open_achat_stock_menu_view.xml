@@ -40,6 +40,14 @@
             <field name="view_mode">tree,form</field>
             <field name="domain">[('state','&lt;&gt;','draft')]</field>
         </record>
+        
+	    <record id="action_view_engagements" model="ir.actions.act_window">
+            <field name="name">Voir Engagements</field>
+            <field name="res_model">open.engagement</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
 	    
 	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10"/>
 	    
@@ -63,6 +71,8 @@
 		
 	    <menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
 	        sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view"/>
+	    <menuitem id="menu_open_achat_stock_view_engagements" name="Engagements"
+	        sequence="1" parent="menu_open_achat_stock_budgets" action="action_view_engagements"/>
 	    
 	</data>
 </openerp>

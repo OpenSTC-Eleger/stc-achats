@@ -22,8 +22,11 @@
     Ce module nécessite l'installation de openstc.
     """,
     "data": [
+        "views/sequence.xml",
+        
+        "views/open_achat_stock_wizard_view.xml",
+        "views/open_achat_stock_view.xml",
         "views/open_achat_stock_menu_view.xml",
-        "views/open_achat_stock_view.xml"
              ],
     "demo": [],
     "test": [],

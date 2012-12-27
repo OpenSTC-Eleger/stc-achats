@@ -1,0 +1,8 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"acess_open_engage_dst","open_engagement dst","model_open_engagement","openstc.openstc_dst","1","1","1","1"
+"acess_open_engage_elu","open_engagement elu","model_open_engagement","openstc_elu","1","1","1","1"
+"acess_open_engage_compta","open_engagement compta","model_open_engagement","account.group_account_user","1","1","1","1"
+"acess_open_engage_qualifier","open_engagement qualifier","model_open_engagement","openstc.openstc_qualifier","1","1","1","1"
+"acess_open_engage_employee","open_engagement employee","model_open_engagement","openstc.openstc_employee","1","1","1","0"
+"acess_open_engage_agent","open_engagement agent","model_open_engagement","openstc.openstc_agent","1","0","0","0"
+"acess_open_engage_manager","open_engagement manager","model_open_engagement","openstc.openstc_manager","1","1","1","1"

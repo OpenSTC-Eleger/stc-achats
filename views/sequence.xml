@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-	<data>
+	<data noupdate="1">
 	    
 	<record id="sequence_engage_number_type" model="ir.sequence.type">
             <field name="name">Numéro d'engagement</field>

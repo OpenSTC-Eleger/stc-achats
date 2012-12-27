@@ -25,7 +25,7 @@
 					    <field name="validation"/>
 					    <field name="engage_id"/>
 					    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
-				    	<button name="open_engage" string="Gérer Engagement" type="object" attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')]}"/>
+				    	<button name="open_engage" string="Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>	
             </field>
@@ -41,7 +41,7 @@
 					<newline/>
 					<field name="suppliers_id" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Fournisseurs potentiels" editable="top">
-						    <field name="partner_id" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
+						    <field name="partner_id" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" domain="[('supplier','=',True)]"/>
 						    <field name="partner_address_id" domain="[('partner_id','=',partner_id)]" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="selected" attrs="{'readonly':[('state','&lt;&gt;', 'waiting_selection')]}"/>
 						    <field name="state"/>
@@ -78,6 +78,61 @@
 				<page string="Account Data" position="inside">
 					<field name="service_id"/>
 				</page>	
+            </field>
+        </record>
+	    
+	     <record id="open_engage_tree_view" model="ir.ui.view">
+            <field name="name">open.engagement.tree</field>
+            <field name="model">open.engagement</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+				<tree string="Engagement">
+                	<field name="name"/>
+					<field name="description"/>
+					<field name="state"/>
+					<field name="date_invoice_received"/>
+            	</tree>
+            </field>
+        </record>
+	    
+	    <record id="open_engage_form_view" model="ir.ui.view">
+            <field name="name">open.engagement.form</field>
+            <field name="model">open.engagement</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+			   	<field name="name"/>
+				<field name="description"/>
+				<field name="user_id"/>
+            	<field name="service_id"/>
+            	<field name="purchase_order_id"/>
+        		<field name="account_invoice_id"/>
+				<field name="date_invoice_received"/>
+				<field name="state"/>
+				<group col="2" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
+            	    <separator string="Signatures du DST et d'un Elu" colspan="2"/>
+            	    <group col="4" colspan="2">
+	            		<field name="check_dst"/>
+	            		<button name="check_elu" string="Signature Elu" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+					</group>
+            	</group>
+            	<group col="6" colspan="1">
+					<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
+					<button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/>
+					<button name="terminate_engage" type="object" string="Clore Engagement" states = "engage_to_terminate"/>
+				</group>
+            </field>
+        </record>
+	    
+	    <record id="open_achat_stock_budget_tree_view" model="ir.ui.view">
+            <field name="name">open.achat.stock.crossovered.budget.tree</field>
+            <field name="model">crossovered.budget</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account_budget.crossovered_budget_view_tree"/>
+            <field name="arch" type="xml">
+				<field name="date_to" position="after">
+				    <field name="planned_amount" sum="Montant Plannifié"/>
+				    <field name="pract_amount" sum="Montant Pratique"/>
+				</field>
             </field>
         </record>
 	    

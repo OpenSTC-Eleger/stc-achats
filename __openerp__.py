@@ -22,11 +22,15 @@
     Ce module nécessite l'installation de openstc.
     """,
     "data": [
+        "views/open_achat_stock_data.xml",
         "views/sequence.xml",
         
         "views/open_achat_stock_wizard_view.xml",
         "views/open_achat_stock_view.xml",
         "views/open_achat_stock_menu_view.xml",
+        
+        "security/openstc_achat_stock_security.xml",
+        "security/ir.model.access.csv",
              ],
     "demo": [],
     "test": [],

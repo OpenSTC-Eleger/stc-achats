@@ -26,6 +26,7 @@ from osv import osv, fields
 from datetime import datetime
 import re
 import unicodedata
+import netsvc
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
@@ -147,6 +148,106 @@ class purchase_order_ask_partners(osv.osv):
     }
     
 purchase_order_ask_partners()
+
+#Modèle d'un num d'engagement : YYYY-SER-xxx (YYYY: année, SER: service sur 3 lettres majuscules, xxx num incremental (=> id ?))
+class open_engagement(osv.osv):
+    
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+        for group in user.groups_id:
+            if prog.search(group.name):
+                if isinstance(user.service_ids, list) and not service:
+                    service = user.service_ids[0]
+                else:
+                    service = self.pool.get("openstc.service").browse(cr, uid, service)
+                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+                
+        return seq
+    
+    _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
+                               ,('waiting_reception','Attente Réception Produits'),('engage_to_terminate','Engagement a Cloturer'),
+                               ('done','Clos')]
+    _name="open.engagement"
+    #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
+    _columns = {
+        'name':fields.char('Numéro Engagement', size=16, required=True),
+        'description':fields.char('Objet de l\'achat', size=128),
+        'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
+        'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
+        'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
+        'account_invoice_id':fields.many2one('account.invoice','Facture (OpenERP) associée'),
+        'check_dst':fields.boolean('Signature DST'),
+        'date_invoice_received':fields.date('Date Réception Facture'),
+        'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
+        }
+    _defaults = {
+            'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
+            'state':'draft',
+            }
+    
+    def check_elu(self, cr, uid, ids, context=None):
+        po_ids = []
+        for engage in self.browse(cr, uid, ids):
+            if not engage.check_dst:
+                raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
+            self.write(cr, uid, ids, {'state':'waiting_invoice'})
+            po_ids.append(engage.purchase_order_id.id)
+        self.pool.get("purchase.order").write(cr, uid, po_ids, {'validation':'done'})
+        return
+    
+    def real_invoice_attached(self, cr, uid, ids,context=None):
+        #Si il y a au moins une pièce jointe, on considère que la facture en fait partie (en principe, seule la facture doit y être ajoutée
+        if isinstance(ids, list):
+            ids = ids[0]
+        count = 0
+        count_attachments = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',ids),('res_model','=',self._name)], count=True)
+        if not count_attachments:
+            raise osv.except_osv('Erreur','Vous n\'avez pas joint la facture reçue par votre founisseur.')
+        self.write(cr, uid, ids, {'state':'waiting_reception','date_invoice_received':fields.date.context_today(self, cr, uid, context)})
+        wf_service = netsvc.LocalService('workflow')
+        if not isinstance(ids, list):
+            ids = [ids]
+        for engage in self.browse(cr, uid, ids, context):
+            if not engage.account_invoice_id.id:
+                raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')
+            wf_service.trg_validate(uid, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
+        return
+    
+    def open_stock_moves(self, cr, uid, ids, context=None):
+        stock_ids = []
+        for engage in self.browse(cr, uid, ids):
+            lines = [x.id for x in engage.purchase_order_id.order_line]
+            stock_ids.extend(self.pool.get("stock.move").search(cr, uid, [('purchase_line_id','in',lines)]))
+        res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','action_open_achat_stock_reception_picking_move', context)
+        res_action.update({'domain':[('id','in',stock_ids)]})
+        return res_action
+            
+    
+    def terminate_engage(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state':'done'},context)
+        return
+    
+    def unlink(self, cr, uid, ids, context=None):
+        #Si on supprimer un engagement, on doit forcer les documents associés à en générer un autre
+        #En principe, aucun engagement ne doit etre supprimé
+        engages = self.browse(cr, uid, ids)
+        for engage in engages:
+            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check'}, context)
+        return super(open_engagement, self).unlink(cr, uid, ids, context)
+    
+open_engagement()
+    
+
+
+
 #Surcharge de purchase.order pour ajouter les étapes de validation pour collectivités : 
 #Vérif dispo budget, sinon blocage
 #Vérif validation achat par DST + Elu si > 300 euros
@@ -236,54 +337,58 @@ class purchase_order(osv.osv):
             'res_id':engage_id,
             'view_mode':'form',
             }
+        
+    def action_invoice_create(self, cr, uid, ids, context=None):
+        inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)
+        for purchase in self.browse(cr, uid, ids, context):
+            self.pool.get("open.engagement").write(cr, uid, purchase.engage_id.id, {'account_invoice_id':inv_id})
+        return inv_id
+        
 purchase_order()
 
-#Modèle d'un num d'engagement : YYYY-SER-xxx (YYYY: année, SER: service sur 3 lettres majuscules, xxx num incremental (=> id ?))
-class open_engagement(osv.osv):
+class stock_picking(osv.osv):
+    _inherit = "stock.picking"
+    _name = "stock.picking"
     
-    def remove_accents(self, str):
-        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
-    
-    def _custom_sequence(self, cr, uid, context):
-        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
-        user = self.pool.get("res.users").browse(cr, uid, uid)
-        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
-        service = None
-        if 'service_id' in context:
-            service = context['service_id']
-        for group in user.groups_id:
-            if prog.search(group.name):
-                if isinstance(user.service_ids, list) and not service:
-                    service = user.service_ids[0]
-                else:
-                    service = self.pool.get("openstc.service").browse(cr, uid, service)
-                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
-                
-        return seq
-    
-    _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('done','Validé')]
-    _name="open.engagement"
-    #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
-        'name':fields.char('Numéro Engagement', size=16, required=True),
-        'description':fields.char('Objet de l\'achat', size=128),
-        'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
-        'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
-        'purchase_order_id':fields.many2one('purchase.order','Commandes associées'),
-        'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
         }
-    _defaults = {
-            'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
-            'state':'draft',
-            }
     
-    def unlink(self, cr, uid, ids, context=None):
-        #Si on supprimer un engagement, on doit forcer les documents associés à en générer un autre
-        #En principe, aucun engagement ne doit etre supprimé
-        engages = self.browse(cr, uid, ids)
-        for engage in engages:
-            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check'}, context)
-        return super(open_engagement, self).unlink(cr, uid, ids, context)
+    def action_done(self, cr, uid, ids, context=None):
+        engage_ids = []
+        if not isinstance(ids, list):
+            ids = [ids]
+        for picking in self.browse(cr ,uid, ids, context):
+            for move_id in picking.move_lines:
+                engage_id = move_id.purchase_line_id.order_id.engage_id and move_id.purchase_line_id.order_id.engage_id.id or False
+                if engage_id and not (engage_id in engage_ids):
+                    engage_ids.append(engage_id)
+        self.pool.get("open.engagement").write(cr, uid, engage_ids, {'state':'engage_to_terminate'})
+        return super(stock_picking, self).action_done(cr, uid, ids, context)
     
-open_engagement()
+stock_picking()
     
+class crossovered_budget(osv.osv):
+    _inherit = "crossovered.budget"
+    _name = "crossovered.budget"
+    
+    def _calc_amounts(self, cr, uid, ids,  field_name, args, context=None):
+        res = {}
+        for budget in self.browse(cr, uid, ids, context):
+            pract = 0.0
+            theo = 0.0
+            planned = 0.0
+            #Pour chaque budget, on ajoute les montants de toutes leurs lignes budgétaires
+            for line in budget.crossovered_budget_line:
+                pract += line.practical_amount
+                theo += line.theoritical_amount
+                planned += line.planned_amount
+            res.update({budget.id:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned}})
+        return res
+    
+    _columns = {
+        'planned_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Plannifié", type='float'),
+        'pract_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Pratique", type='float'),
+        'theo_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Théorique", type='float'),
+        }
+    
+crossovered_budget()

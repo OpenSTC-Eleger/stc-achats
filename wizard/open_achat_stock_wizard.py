@@ -66,8 +66,8 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
                 line_id = line_id[0]
                 #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
             line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
-            res = line.planned_amount - abs(line.practical_amount)
-            #Cela est seulement a titre d'infos pour le user
+            res = abs(line.planned_amount) - abs(line.practical_amount)
+            #TODO: Intégrer le taux d'érosion d'un service
             return {'value':{'budget_dispo_info':res,'budget_dispo':res,'service_id':line.analytic_account_id.service_id.id}}
         return {'value':{}}
     
@@ -80,13 +80,17 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
             raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat')
         if 'po_id' in context:
             po_values = {}
-            engage_state = "done"
+            engage_state = "waiting_invoice"
+            #Vérif montant, si > 300€, nécessite validation DST et élu
             if wizard.po_ammount >= 300.0:
                 po_values.update({'validation':'engagement_to_check'})
                 engage_state = "to_validate"
             else:
                 po_values.update({'validation':'done'})
             context.update({'user_id':uid,'service_id':wizard.service_id.id})
+            #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
+            po_line_ids = self.pool.get("purchase.order.line").search(cr, uid, [('order_id','=',context['po_id']),('account_analytic_id','=',False)])
+            self.pool.get("purchase.order.line").write(cr, uid, po_line_ids, {'account_analytic_id':wizard.analytic_account_id})
             res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
                                                                        'service_id':wizard.service_id.id,
                                                                        'purchase_order_id':context['po_id'],

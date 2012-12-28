@@ -179,7 +179,7 @@ class open_engagement(osv.osv):
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
         'name':fields.char('Numéro Engagement', size=16, required=True),
-        'description':fields.char('Objet de l\'achat', size=128),
+        'description':fields.related('purchase_order_id', 'description', string='Objet de l\'achat', type="char"),
         'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
         'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
@@ -303,9 +303,14 @@ class purchase_order(osv.osv):
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
             'engage_id':fields.many2one('open.engagement','Engagement associé',readonly=True),
+            'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
+            'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
+            'description':fields.char('Description',size=128),
             }
     _defaults = {
         'validation':'budget_to_check',
+        'user_id': lambda self, cr, uid, context: uid,
+        'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
         }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -396,7 +401,7 @@ class purchase_order(osv.osv):
                     if po.amount_total >= 300.0:
                         po_values.update({'validation':'engagement_to_check'})
                         engage_state = "to_validate"
-                    service_id = self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0]
+                    service_id = po.service_id.id
                     context.update({'user_id':uid,'service_id':service_id.id})
                     #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
                     res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,

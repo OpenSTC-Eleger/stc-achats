@@ -28,6 +28,10 @@
 				    	<button name="open_engage" string="Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>
+				<field name="invoiced" position="after">
+					<field name="user_id" readonly="1"/>
+					<field name="service_id"/>
+				</field>
 				<tree string="Purchase Order Lines" position="replace">
 	                <tree string="Purchase Order Lines">
 		                <field name="product_id"/>
@@ -39,6 +43,11 @@
 		                <field name="dispo"/>
 		            </tree>
                 </tree>
+                <field name="name" position="after">
+                    <newline/>
+                	<field name="description"/>
+                </field>
+                
             </field>
         </record>
         
@@ -49,7 +58,7 @@
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
 				<xpath expr="//notebook/page[@string='Order Line']/field[@name='account_analytic_id']" position="replace">
-				    <field name="account_analytic_id" colspan="4" groups="analytic.group_analytic_accounting" domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('parent_id', '!=', False)]" on_change="onchange_account_analytic_id(account_analytic_id)"/>
+				    <field name="account_analytic_id" required="1" colspan="4" groups="analytic.group_analytic_accounting" domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('parent_id', '!=', False),('service_id','!=',False)]" on_change="onchange_account_analytic_id(account_analytic_id)"/>
 				    <field name="budget_dispo_info"/>
 				    <field name="budget_dispo" invisible="1"/>
 				    <field name="tx_erosion_info"/>

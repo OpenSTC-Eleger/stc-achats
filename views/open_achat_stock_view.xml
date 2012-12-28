@@ -27,10 +27,38 @@
 					    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
 				    	<button name="open_engage" string="Gérer Engagement" type="object"/>
 				    </group>
-				</xpath>	
+				</xpath>
+				<tree string="Purchase Order Lines" position="replace">
+	                <tree string="Purchase Order Lines">
+		                <field name="product_id"/>
+		                <field name="product_qty"/>
+		                <field name="price_unit"/>
+		                <field name="price_subtotal"/>
+		                <field name="account_analytic_id"/>
+		                <field name="budget_dispo_info"/>
+		                <field name="dispo"/>
+		            </tree>
+                </tree>
             </field>
         </record>
         
+	    <record id="purchase_order_line_inherit_form" model="ir.ui.view">
+            <field name="name">purchase.order.line.open.form</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
+            <field name="arch" type="xml">
+				<xpath expr="//notebook/page[@string='Order Line']/field[@name='account_analytic_id']" position="replace">
+				    <field name="account_analytic_id" colspan="4" groups="analytic.group_analytic_accounting" domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('parent_id', '!=', False)]" on_change="onchange_account_analytic_id(account_analytic_id)"/>
+				    <field name="budget_dispo_info"/>
+				    <field name="budget_dispo" invisible="1"/>
+				    <field name="tx_erosion_info"/>
+				    <field name="tx_erosion" invisible="1"/>
+				</xpath>
+            </field>
+        </record>
+        
+	    
 	    <record id="purchase_order_ask_form" model="ir.ui.view">
             <field name="name">purchase.order.ask.form</field>
             <field name="model">purchase.order.ask</field>

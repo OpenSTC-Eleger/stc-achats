@@ -246,7 +246,51 @@ class open_engagement(osv.osv):
 open_engagement()
     
 
-
+class purchase_order_line(osv.osv):
+    _inherit = "purchase.order.line"
+    _name = "purchase.order.line"
+    
+    def _sel_account_user(self, cr, uid, context=None):
+        #Récup des services du user
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        service_ids = [x.id for x in user.service_ids]
+        if not service_ids:
+            raise osv.except_osv('Erreur','Vous n\'etes associés a aucun service')
+        #Recherche des comptes analytiques en rapport avec les services du user
+        account_analytic_ids = self.pool.get("account.analytic.account").search(cr, uid, [('service_id','in',service_ids)])
+        #Récup du nom complet (avec hiérarchie) des comptes, name_get renvoi une liste de tuple de la meme forme que le retour attendu de notre fonction
+        account_analytic = self.pool.get("account.analytic.account").name_get(cr, uid,account_analytic_ids, context)
+        return account_analytic
+    
+    _columns = {
+        #'analytic_account_id':fields.selection(_sel_account_user,'Compte associé à l\'achat'),
+        'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
+        'tx_erosion': fields.float('Taux Erosion de votre Service', digits=(2,2)),
+        'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible', digits=(6,2), readonly=True),
+        'tx_erosion_info': fields.float('Taux Erosion de votre Service', digits=(2,2), readonly=True),
+        'dispo':fields.boolean('Budget OK',readonly=True),
+        }
+    
+    _defaults = {
+        'dispo': False,
+        }
+    
+    def onchange_account_analytic_id(self, cr, uid, ids, account_analytic_id=False):
+        #On récupère la ligne budgétaire en rapport a ce compte analytique 
+        if account_analytic_id:
+            line_id = self.pool.get("crossovered.budget.lines").search(cr, uid, [('analytic_account_id','=',account_analytic_id)])
+            if not line_id:
+                return {'warning':{'title':'Erreur','message':'Ce compte Analytique n appartient a aucune ligne budgetaire'}}
+            if isinstance(line_id, list):
+                line_id = line_id[0]
+                #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
+            line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
+            res = abs(line.planned_amount) - abs(line.practical_amount)
+            #TODO: Intégrer le taux d'érosion d'un service
+            return {'value':{'budget_dispo_info':res,'budget_dispo':res}}
+        return {'value':{}}
+    
+purchase_order_line()
 
 #Surcharge de purchase.order pour ajouter les étapes de validation pour collectivités : 
 #Vérif dispo budget, sinon blocage
@@ -261,7 +305,7 @@ class purchase_order(osv.osv):
             'engage_id':fields.many2one('open.engagement','Engagement associé',readonly=True),
             }
     _defaults = {
-        'validation':'budget_to_check'
+        'validation':'budget_to_check',
         }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -298,20 +342,82 @@ class purchase_order(osv.osv):
         if ok:
             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
     
+    def check_all_dispo(self, cr, uid, ids, context):
+        if not isinstance(ids, list):
+            ids = [ids]
+        #Si toutes les lignes sont ok et qu'on a au moins une ligne de commande: renvoie True, sinon False
+        ok = True
+        one_line = False
+        for po in self.browse(cr, uid, ids, context):
+            for line in po.order_line:
+                one_line = True
+                ok = ok and line.dispo or False
+                    
+        return ok and one_line
+    
     def verif_budget(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        po = self.browse(cr, uid, ids)
-            
-        return{
-               'type':'ir.actions.act_window',
-               'res_model': 'purchase.order.ask.verif.budget',
-               'view_mode': 'form',
-               'target':'new',
-               'context': {'po_id': po.id, 'ammount_total':po.amount_total}
-               }
+        line_ok = []
+        line_not_ok = []
+        
+        dict_line_account = {}
+        #On vérifie si on a un budget suffisant pour chaque ligne d'achat
+        #On gère aussi le cas de plusieurs lignes référants au même compte analytique
+        for po in self.browse(cr, uid, ids):
+            for line in po.order_line:
+                restant = -1
+                if not line.account_analytic_id.id in dict_line_account:
+                    restant = line.budget_dispo - line.price_subtotal
+                else:
+                    restant = dict_line_account[line.account_analytic_id.id] - line.price_subtotal
+                dict_line_account.update({line.account_analytic_id.id:restant})
+                if restant >= 0:
+                    line_ok.append(line.id)
+                else:
+                    line_not_ok.append(line.id)
+                    #raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat:' + line.name + ' x ' + str(line.product_qty) + '(' + str(line.price_subtotal) + ' euros)')
+        self.pool.get("purchase.order.line").write(cr, uid, line_ok, {'dispo':True})
+        self.pool.get("purchase.order.line").write(cr, uid, line_not_ok, {'dispo':False})
+        if not line_not_ok:
+            self.write(cr, uid, ids, {'validation':'engagement_to_check'})
+        return
     
     def open_engage(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+            po = self.browse(cr, uid, ids, context)
+            if self.check_all_dispo(cr, uid, ids, context):
+                #On vérifie si on a un budget suffisant pour chaque ligne d'achat
+                #On gère aussi le cas de plusieurs lignes référants au même compte analytique
+                if not po.engage_id:
+                    po_values = {}
+                    engage_state = "waiting_invoice"
+                    po_values.update({'validation':'done'})
+                    #Vérif montant, si > 300€, nécessite validation DST et élu
+                    if po.amount_total >= 300.0:
+                        po_values.update({'validation':'engagement_to_check'})
+                        engage_state = "to_validate"
+                    service_id = self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0]
+                    context.update({'user_id':uid,'service_id':service_id.id})
+                    #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
+                    res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
+                                                                               'service_id':service_id.id,
+                                                                               'purchase_order_id':ids,
+                                                                               'state':engage_state}, context)
+                    po_values.update({'engage_id':res_id})
+                    self.write(cr, uid, ids, po_values, context=context)
+                else:
+                    res_id = po.engage_id.id
+                return {
+                    'type':'ir.actions.act_window',
+                    'target':'new',
+                    'res_model':'open.engagement',
+                    'view_mode':'form',
+                    'res_id':res_id
+                    }
+            else:
+                self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)  
+            return
+    """def open_engage(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
         engage_id = self.pool.get("open.engagement").search(cr ,uid, [('purchase_order_id','=',ids)])
@@ -336,7 +442,7 @@ class purchase_order(osv.osv):
             'res_model':'open.engagement',
             'res_id':engage_id,
             'view_mode':'form',
-            }
+            }"""
         
     def action_invoice_create(self, cr, uid, ids, context=None):
         inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)

@@ -30,18 +30,22 @@ import netsvc
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
-                             ('waiting_purchase_order','Bon pour création de Commande'),('done','Bon de Commande Généré')]
+                             ('waiting_purchase_order','Bon pour création de Commandes'),('done','Marché Clos')]
     _name = "purchase.order.ask"
     
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
         'name':fields.char('Nom',size=64, required=True),
+        'sequence':fields.char('Numéro Marché',size=4, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
+        'date_order':fields.date('Date d\'Obtention du Marché', required=True),
     }
     _defaults={
-            'state':'draft'
+            'state':'draft',
+            'sequence': lambda self, cr, uid, context: self.pool.get("ir.sequence").next_by_code(cr, uid, 'marche.po.number',context),
+            'date_order':lambda self, cr, uid, context: fields.date.context_today(self ,cr ,uid ,context)
     }
     def _check_supplier_selection(self, cr, uid, ids, context=None):
         one_selection = True
@@ -55,6 +59,12 @@ class purchase_order_ask(osv.osv):
                         else:
                             return False
         return one_selection
+    
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for ask in self.read(cr, uid, ids,['id', 'name','sequence']):
+            res.append((ask['id'], '%s : %s' % (ask['sequence'], ask['name'])))
+        return res
     
     def send_ask(self, cr, uid, ids, context=None):
         #Envoi d'un mail aux 3 fournisseurs
@@ -95,7 +105,27 @@ class purchase_order_ask(osv.osv):
             if line.price_unit <= 0.0:
                 raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
             list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte})    
-        return {
+        partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
+        prod_actions = []
+        pol_obj = self.pool.get("purchase.order.line")
+        for prod_ctx in list_prod:
+            prod_values = pol_obj.onchange_product_id(cr, uid, [], partner_infos['pricelist_id'], prod_ctx['prod_id'], prod_ctx['qte'],
+                                                       False, supplier_id, price_unit=prod_ctx['price_unit'],
+                                                       date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
+            prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id']})
+            prod_actions.append((0,0,prod_values))
+        entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
+        if not entrepot_id:
+            raise osv.except_osv('Erreur','Vous devez définir un entrepot dans la configuration OpenERP avant de continuer.')
+        if isinstance(entrepot_id, list):
+            entrepot_id = entrepot_id[0]
+        entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
+        ret = {'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions}
+        ret.update(partner_infos)
+        ret.update(entrepot_infos)
+        context.update({'from_ask':'1'})
+        po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
+        """return {
             'view_mode':'form',
             'target':'current',
             'type':'ir.actions.act_window',
@@ -104,7 +134,18 @@ class purchase_order_ask(osv.osv):
                        'ask_prod_ids':list_prod,
                        'ask_today':fields.date.context_today(self,cr,uid,context),
                        'po_ask_id':ids}
+            }"""
+        return {
+            'view_mode':'form',
+            'target':'current',
+            'type':'ir.actions.act_window',
+            'res_model':'purchase.order',
+            'res_id':po_id
             }
+    
+    def do_terminate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state':'done'})
+        return
     
     def cancel(self, cr, uid, ids, context=None):
         for ask in self.browse(cr, uid, ids):
@@ -151,7 +192,6 @@ purchase_order_ask_partners()
 
 #Modèle d'un num d'engagement : YYYY-SER-xxx (YYYY: année, SER: service sur 3 lettres majuscules, xxx num incremental (=> id ?))
 class open_engagement(osv.osv):
-    
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
     
@@ -173,7 +213,7 @@ class open_engagement(osv.osv):
         return seq
     
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
-                               ,('waiting_reception','Attente Réception Produits'),('engage_to_terminate','Engagement a Cloturer'),
+                               ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement a Cloturer'),
                                ('done','Clos')]
     _name="open.engagement"
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
@@ -187,39 +227,66 @@ class open_engagement(osv.osv):
         'check_dst':fields.boolean('Signature DST'),
         'date_invoice_received':fields.date('Date Réception Facture'),
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
+        'reception_ok':fields.boolean('Produits Réceptionnés', readonly=True),
+        'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
             'state':'draft',
             }
     
+    def check_achat(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        po_id = self.read(cr, uid, ids, ['purchase_order_id'])
+        return self.pool.get("purchase.order").check_achat(cr, uid, po_id['purchase_order_id'][0], context)
+    
     def check_elu(self, cr, uid, ids, context=None):
         po_ids = []
         for engage in self.browse(cr, uid, ids):
             if not engage.check_dst:
                 raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
-            self.write(cr, uid, ids, {'state':'waiting_invoice'})
             po_ids.append(engage.purchase_order_id.id)
-        self.pool.get("purchase.order").write(cr, uid, po_ids, {'validation':'done'})
+            self.pool.get("purchase.order").write(cr, uid, po_ids, {'validation':'done'})
+            wf_service = netsvc.LocalService('workflow')
+            wf_service.trg_validate(uid, 'open.engagement', engage.id, 'signal_validated', cr)
         return
     
-    def real_invoice_attached(self, cr, uid, ids,context=None):
+    def link_engage_po(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state':'to_validate'}, context)
+        for engage in self.browse(cr, uid, ids, context):
+            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'engage_id':engage.id}, context)
+        return True
+    
+    def validated_engage(self, cr, uid, ids, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
+        po_ids = [x.purchase_order_id.id for x in self.browse(cr, uid, ids, context)]
+        self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context)
+        return True
+    
+    def validate_po_invoice(self, cr, uid, ids,context=None):
         #Si il y a au moins une pièce jointe, on considère que la facture en fait partie (en principe, seule la facture doit y être ajoutée
-        if isinstance(ids, list):
+        """if isinstance(ids, list):
             ids = ids[0]
         count = 0
         count_attachments = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',ids),('res_model','=',self._name)], count=True)
         if not count_attachments:
-            raise osv.except_osv('Erreur','Vous n\'avez pas joint la facture reçue par votre founisseur.')
-        self.write(cr, uid, ids, {'state':'waiting_reception','date_invoice_received':fields.date.context_today(self, cr, uid, context)})
+            raise osv.except_osv('Erreur','Vous n\'avez pas joint la facture reçue par votre founisseur.')"""
         wf_service = netsvc.LocalService('workflow')
         if not isinstance(ids, list):
             ids = [ids]
         for engage in self.browse(cr, uid, ids, context):
-            if not engage.account_invoice_id.id:
-                raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')
+            wf_service.trg_validate(uid, 'purchase.order', engage.purchase_order_id.id, 'purchase_confirm', cr)
+            wf_service.trg_write(uid, 'purchase.order', engage.purchase_order_id.id, cr)
+        #Il faut relire l'objet car une nouvelle donnée est apparue entre temps dans l'engagement, account_invoice_id
+        for engage in self.browse(cr, uid, ids, context):    
+            wf_service.trg_write(uid, 'account.invoice', engage.account_invoice_id.id, cr)
             wf_service.trg_validate(uid, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
-        return
+        if not engage.account_invoice_id.id:
+                raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')
+            
+        return True
     
     def open_stock_moves(self, cr, uid, ids, context=None):
         stock_ids = []
@@ -229,8 +296,28 @@ class open_engagement(osv.osv):
         res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','action_open_achat_stock_reception_picking_move', context)
         res_action.update({'domain':[('id','in',stock_ids)]})
         return res_action
-            
     
+    def real_invoice_attached(self, cr, uid, ids):
+        #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
+        """
+        if isinstance(ids, list):
+            ids = ids[0]
+        po_id = self.read(cr, uid, ids, ['purchase_order_id'], context)
+        attachment_ids = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',po_id),('res_model','=','purchase.order')])
+        attachments = self.pool.get("ir.attachment").read(cr, uid, attachment_ids, ['id','datas_fname'])
+        prog = re.compile("pattern")
+        for attachment in attachments:
+            if prog.search(attachment['datas_fname']):
+                self.write(cr, uid, ids, {'invoice_ok':True})
+                return True
+        return False"""
+        #Pour éviter boucle infinie
+        if not isinstance(ids, list):
+            ids = [ids]
+        for engage in self.browse(cr, uid, ids):
+            if not engage.invoice_ok:
+                self.write(cr, uid, ids, {'invoice_ok':True, 'date_invoice_received':fields.context.today(self, cr, uid, context)})
+        return True
     def terminate_engage(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state':'done'},context)
         return
@@ -294,7 +381,7 @@ purchase_order_line()
 
 #Surcharge de purchase.order pour ajouter les étapes de validation pour collectivités : 
 #Vérif dispo budget, sinon blocage
-#Vérif validation achat par DST + Elu si > 300 euros
+#Vérif validation achat par DST + Elu si > 300 euros (EDIT: voir modifs ALAMICHEL dans son mail)
 class purchase_order(osv.osv):
     AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Engagement A Vérifier'),
                                   ('done','Bon de Commande Validable')]
@@ -306,6 +393,8 @@ class purchase_order(osv.osv):
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Description',size=128),
+            'po_ask_id':fields.many2one('purchase.order.ask', 'Marché'),
+            'po_ask_date':fields.related('po_ask_id','date_order', string='Date Marché', type='date'),
             }
     _defaults = {
         'validation':'budget_to_check',
@@ -313,7 +402,20 @@ class purchase_order(osv.osv):
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
         }
     
-    def default_get(self, cr, uid, fields, context=None):
+    """def onchange_po_ask_id(self, cr, uid, ids, po_ask_id,order_line):
+        ret = {}
+        ask = self.browse(cr, uid, po_ask_id)
+        list_suppliers = []
+        #On récupère si possible le fournisseur associé aux marchands (ne fait rien si plusieurs fournisseurs sont retenus dans le marché)
+        for partner in ask.suppliers_id:
+            if partner.selected:
+                list_suppliers.append(partner.partner_id.id)
+        if len(list_suppliers) == 1:
+            ret.update({'partner_id':list_suppliers[0]})
+        line_ids = [x[1] for x in order_line]
+        return"""
+    
+    """def default_get(self, cr, uid, fields, context=None):
         ret = super(purchase_order,self).default_get(cr, uid, fields, context=context)
         if ('ask_supplier_id' and 'ask_prod_ids' and 'ask_today') in context:
             pricelist_id = self.onchange_partner_id(cr, uid, [], context['ask_supplier_id'])['value']['pricelist_id']
@@ -327,13 +429,57 @@ class purchase_order(osv.osv):
                 prod_actions.append((0,0,prod_values))
             ret.update({'partner_id':context['ask_supplier_id'], 'order_line':prod_actions})
         return ret
-    
-    def create(self, cr, uid, ids, context=None):
-        po_id = super(purchase_order, self).create(cr, uid, ids, context)
-        if 'po_ask_id' in context:
-            self.pool.get("purchase.order.ask").write(cr ,uid, context['po_ask_id'], {'state':'done',
-                                                                                      'purchase_order_id':po_id},context) 
+    """
+    def create(self, cr, uid, vals, context=None):
+        #Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
+        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            
+        po_id = super(purchase_order, self).create(cr, uid, vals, context)
+        po = self.browse(cr, uid, po_id)
+        ask_prods = {}
+        values = []
+        #Si un marché est renseigné
+        if po.po_ask_id and not 'from_ask' in context:
+            #Si True, on envoie un msg au user pour lui indiquer qu'on a forcé le price_unit de certaines lignes de commandes
+            warning = False
+            #récup des produits et de leur prix unitaire convenu avec le fournisseur
+            for line in po.po_ask_id.order_lines:
+                ask_prods.update({line.product_id.id:line.price_unit})
+            #Récup des lines de commandes dont on doit forcer le price_unit
+            for line in po.order_line:
+                if line.product_id.id in ask_prods and line.price_unit <> ask_prods[line.product_id.id]:
+                    warning = True
+                    values.append((1,line.id,{'price_unit':ask_prods[line.product_id.id]}))
+            super(purchase_order, self).write(cr, uid, [po_id], {'order_line':values})
+            if warning:
+                self.log(cr, uid, po_id, 'Les prix unitaires de certaines lignes de la commande %s ont été modifiés' (po.name))
         return po_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        #Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
+        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            
+        if not isinstance(ids, list):
+            ids = [ids]
+        super(purchase_order, self).write(cr, uid, ids, vals, context)
+        for po in self.browse(cr, uid, ids):
+            ask_prods = {}
+            values = []
+            #Si un marché est renseigné
+            if po.po_ask_id:
+                #Si True, on envoie un msg au user pour lui indiquer qu'on a forcé le price_unit de certaines lignes de commandes
+                warning = False
+                #récup des produits et de leur prix unitaire convenu avec le fournisseur
+                for line in po.po_ask_id.order_lines:
+                    ask_prods.update({line.product_id.id:line.price_unit})
+                #Récup des lines de commandes dont on doit forcer le price_unit
+                for line in po.order_line:
+                    if line.product_id.id in ask_prods and line.price_unit <> ask_prods[line.product_id.id]:
+                        warning = True
+                        values.append((1,line.id,{'price_unit':ask_prods[line.product_id.id]}))
+                super(purchase_order, self).write(cr, uid, [po.id], {'order_line':values})
+                if warning:
+                    self.log(cr, uid, po.id, 'Les prix unitaires de certaines lignes de la commande %s ont été modifiés' % (po.name))
+        return True
+    
     
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         ok = True
@@ -346,6 +492,17 @@ class purchase_order(osv.osv):
                     raise osv.except_osv('Engagement A Vérifier','L\'engagement doit être vérifié et compet pour valider un Bon de Commande')
         if ok:
             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
+    
+    def check_achat(self, cr, uid, ids, context):
+        if not isinstance(ids, list):
+            ids = [ids]
+        for po in self.browse(cr, uid, ids, context):
+            if not po.po_ask_id:
+                return po.amount_total < 300
+            else:
+                #TODO: Intégrer modifs du client, seuil max pour le marché et montant max par acheteur par BC
+                return False
+        return False
     
     def check_all_dispo(self, cr, uid, ids, context):
         if not isinstance(ids, list):
@@ -394,22 +551,19 @@ class purchase_order(osv.osv):
                 #On vérifie si on a un budget suffisant pour chaque ligne d'achat
                 #On gère aussi le cas de plusieurs lignes référants au même compte analytique
                 if not po.engage_id:
-                    po_values = {}
-                    engage_state = "waiting_invoice"
-                    po_values.update({'validation':'done'})
-                    #Vérif montant, si > 300€, nécessite validation DST et élu
-                    if po.amount_total >= 300.0:
-                        po_values.update({'validation':'engagement_to_check'})
-                        engage_state = "to_validate"
-                    service_id = po.service_id.id
+                    """po_values = {}
+                    po_values.update({'validation':'done'})"""
+                    """#Vérif montant, si > 300€, nécessite validation DST et élu
+                    if not self.check_achat(cr, uid, ids, context):
+                        po_values.update({'validation':'engagement_to_check'})"""
+                    service_id = po.service_id
                     context.update({'user_id':uid,'service_id':service_id.id})
                     #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
                     res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
                                                                                'service_id':service_id.id,
-                                                                               'purchase_order_id':ids,
-                                                                               'state':engage_state}, context)
-                    po_values.update({'engage_id':res_id})
-                    self.write(cr, uid, ids, po_values, context=context)
+                                                                               'purchase_order_id':ids}, context)
+                    """po_values.update({'engage_id':res_id})
+                    self.write(cr, uid, ids, po_values, context=context)"""
                 else:
                     res_id = po.engage_id.id
                 return {
@@ -420,34 +574,9 @@ class purchase_order(osv.osv):
                     'res_id':res_id
                     }
             else:
-                self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)  
+                self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
+                self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
             return
-    """def open_engage(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        engage_id = self.pool.get("open.engagement").search(cr ,uid, [('purchase_order_id','=',ids)])
-        #Si on a plus d'un id renvoyé, on affiche une liste plutot qu'un formulaire
-        if isinstance(engage_id,list):
-            #Il y a plusieurs ids
-            if len(engage_id) > 1:
-                return {
-                'type':'ir.actions.act_window',
-                'target':'new',
-                'res_model':'open.engagement',
-                'view_mode':'tree,form',
-                'domain':[('id','in',engage_id)]
-                }
-            #Il n'y a qu'un seul id mais contenu dans une liste
-            else:
-                engage_id = engage_id[0]
-        #Il n'y a bien qu'un seul id
-        return {
-            'type':'ir.actions.act_window',
-            'target':'new',
-            'res_model':'open.engagement',
-            'res_id':engage_id,
-            'view_mode':'form',
-            }"""
         
     def action_invoice_create(self, cr, uid, ids, context=None):
         inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)
@@ -473,7 +602,10 @@ class stock_picking(osv.osv):
                 engage_id = move_id.purchase_line_id.order_id.engage_id and move_id.purchase_line_id.order_id.engage_id.id or False
                 if engage_id and not (engage_id in engage_ids):
                     engage_ids.append(engage_id)
-        self.pool.get("open.engagement").write(cr, uid, engage_ids, {'state':'engage_to_terminate'})
+        wf_service = netsvc.LocalService('workflow')
+        for engage_id in engage_ids:
+            wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_to_terminate', cr)
+        self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True})
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()

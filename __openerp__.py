@@ -29,6 +29,8 @@
         "views/open_achat_stock_view.xml",
         "views/open_achat_stock_menu_view.xml",
         
+        "workflow/openstc_achat_stock_workflow.xml",
+        
         "security/openstc_achat_stock_security.xml",
         "security/ir.model.access.csv",
              ],

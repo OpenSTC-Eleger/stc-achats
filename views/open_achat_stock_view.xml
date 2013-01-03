@@ -7,8 +7,10 @@
             <field name="model">purchase.order.ask</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-				<tree string="Demandes de Prix">
+				<tree string="Marchés de Bons de Commandes en cours">
+				    <field name="sequence"/>
 					<field name="name"/>
+					<field name="date_order"/>
 					<field name="state"/>
            		</tree>
            	</field>
@@ -28,12 +30,17 @@
 				    	<button name="open_engage" string="Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>
+				<xpath expr="//notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="before">
+					<field name="po_ask_id"/>
+					<field name="po_ask_date"/>
+				</xpath>
 				<field name="invoiced" position="after">
 					<field name="user_id" readonly="1"/>
 					<field name="service_id"/>
 				</field>
 				<tree string="Purchase Order Lines" position="replace">
 	                <tree string="Purchase Order Lines">
+		                <field name="date_planned"/>
 		                <field name="product_id"/>
 		                <field name="product_qty"/>
 		                <field name="price_unit"/>
@@ -44,8 +51,8 @@
 		            </tree>
                 </tree>
                 <field name="name" position="after">
-                    <newline/>
                 	<field name="description"/>
+                    <newline/>
                 </field>
                 
             </field>
@@ -73,8 +80,12 @@
             <field name="model">purchase.order.ask</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-				<form string="Demandes de Prix">
-                	<field name="name"/>
+				<form string="Marché de Bons de Commandes">
+                	<group col="6" colspan="4">
+	                	<field name="sequence"/>
+	                	<field name="name"/>
+	                	<field name="date_order"/>
+                	</group>
 					<newline/>
 					<field name="suppliers_id" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Fournisseurs potentiels" editable="top">
@@ -101,7 +112,8 @@
 					<button name="cancel" string="Revenir au début" type="object" states="waiting_supplier"/>
 					<button name="validate_supplier" string="Valider Fourniseur" type="object" states="waiting_supplier" />
 					<button name="send_ask" string="Envoyer demande (mails)" type="object" states="draft"/>
-					<button name="to_draft_po" string="Convertir en bon de commande" type="object" states="waiting_purchase_order"/>
+					<button name="to_draft_po" string="Créer un Bon de Commande" type="object" states="waiting_purchase_order"/>
+            		<button name="do_terminate" string="Clore marché" type="object" states="waiting_purchase_order"/>
             	</form>
             </field>
         </record>
@@ -151,6 +163,10 @@
 	            		<field name="check_dst"/>
 	            		<button name="check_elu" string="Signature Elu" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
 					</group>
+            	</group>
+            	<group col="2" colspan="2">
+            	    <field name="reception_ok"/>
+            	    <field name="invoice_ok"/>
             	</group>
             	<group col="6" colspan="1">
 					<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>

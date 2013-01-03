@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="wkf_openstc_achat_stock_open_engage" model="workflow">
+            <field name="name">Marché Bons Commandes</field>
+            <field name="osv">open.engagement</field>
+            <field name="on_create" eval="True"/>
+        </record>
+
+         <!-- 
+                            Activités Engagement
+        -->
+        
+        <record id="wkf_open_engage_draft" model="workflow.activity">
+            <field name="name">Brouillon</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'draft'})</field>
+            <field name="flow_start" eval="True"/>
+        </record>
+
+        <record id="wkf_open_engage_to_validate" model="workflow.activity">
+            <field name="name">A Valider</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">link_engage_po()</field>
+            <field name="split_mode">OR</field>
+        </record>
+        
+        <record id="wkf_open_engage_validate_po_and_invoice" model="workflow.activity">
+            <field name="name">Validation Bon Commande et Facture</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="split_mode">AND</field>
+            <field name="action">validated_engage(),validate_po_invoice()</field>
+        </record>
+        
+        <record id="wkf_open_engage_waiting_reception" model="workflow.activity">
+            <field name="name">Attente Réception Produits</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'waiting_reception'})</field>
+        </record>
+        
+        <record id="wkf_open_engage_waiting_invoice" model="workflow.activity">
+            <field name="name">Attente Facture Fournisseur</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+        </record>
+        
+        <record id="wkf_open_engage_engage_to_terminate" model="workflow.activity">
+            <field name="name">Engagement A Terminer</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="join_mode">AND</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'engage_to_terminate'})</field>
+        </record>
+        
+        <record id="wkf_open_engage_done" model="workflow.activity">
+            <field name="name">Clos</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'done'})</field>
+            <field name="flow_end" eval="True"/>
+        </record>
+        
+       <!-- 
+                               Transitions Engagement
+        -->
+        
+        <record id="wkf_ask_trans_draft_to_validate" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_draft"/>
+            <field name="act_to" ref="wkf_open_engage_to_validate"/>
+        </record>
+		
+        <record id="wkf_ask_trans_to_validate_validate_po_invoice" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_to_validate"/>
+            <field name="act_to" ref="wkf_open_engage_validate_po_and_invoice"/>
+        	<field name="condition">not check_achat()</field>
+        	<field name="signal">signal_validated</field>
+        </record>
+		
+        <record id="wkf_ask_trans_to_validate_validate_po_invoice_auto" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_to_validate"/>
+            <field name="act_to" ref="wkf_open_engage_validate_po_and_invoice"/>
+        	<field name="condition">check_achat()</field>
+        </record>
+		
+        <record id="wkf_ask_trans_validate_po_invoice_waiting_reception" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_validate_po_and_invoice"/>
+            <field name="act_to" ref="wkf_open_engage_waiting_reception"/>
+        </record>
+        
+        <record id="wkf_ask_trans_validate_po_invoice_waiting_invoice" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_validate_po_and_invoice"/>
+            <field name="act_to" ref="wkf_open_engage_waiting_invoice"/>
+        </record>
+        
+        <record id="wkf_ask_trans_waiting_invoice_to_terminate" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_waiting_invoice"/>
+            <field name="act_to" ref="wkf_open_engage_engage_to_terminate"/>
+            <field name="condition">real_invoice_attached()</field>
+        </record>
+        
+        <record id="wkf_ask_trans_waiting_reception_to_terminate" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_waiting_reception"/>
+            <field name="act_to" ref="wkf_open_engage_engage_to_terminate"/>
+            <field name="signal">signal_to_terminate</field>
+        </record>
+        
+        <record id="wkf_ask_trans_to_terminate_done" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_engage_to_terminate"/>
+            <field name="act_to" ref="wkf_open_engage_done"/>
+            <field name="signal">terminate_engage</field>
+        </record>
+		
+        
+    </data>
+</openerp>

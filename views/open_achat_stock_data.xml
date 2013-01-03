@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data noupdate="1">
+
+	<record id="openstc_elu" model="res.groups">
+        <field name="name">openstc/Elu</field>
+        <field name="category_id" ref="base.module_category_project_management"/>
+    </record>
+    
+	<record id="openstc_elu_1" model="res.users">
+        <field name="name">Elu 1</field>
+        <field name="login">elu1</field>
+    	<field name="password">elu1</field>
+    	<field name="groups_id" eval="[(4, ref('openstc_elu'))]"/>
+    </record>
+    </data>
+</openerp>

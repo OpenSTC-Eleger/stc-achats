@@ -12,5 +12,17 @@
             <field name="prefix">%(year)s-xxx-</field>
             <field name="padding" eval="4"/>
         </record>
+    <record id="sequence_marche_purchase_order" model="ir.sequence.type">
+            <field name="name">Numéro Marché aux Bons de Commandes</field>
+            <field name="code">marche.po.number</field>
+        </record>
+        <record id="sequence_marche_purchase_order_number" model="ir.sequence">
+            <field name="name">Numéro Marché aux Bons de Commandes</field>
+            <field name="code">marche.po.number</field>
+            <field name="prefix"></field>
+            <field name="padding" eval="3"/>
+        </record>
+        
+        
     </data>
 </openerp>

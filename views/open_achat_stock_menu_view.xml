@@ -16,7 +16,7 @@
         </record>
 	    
 	    <record id="action_view_po_ask" model="ir.actions.act_window">
-            <field name="name">Demandes de Prix</field>
+            <field name="name">Marchés Bons de Commandes</field>
             <field name="res_model">purchase.order.ask</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>

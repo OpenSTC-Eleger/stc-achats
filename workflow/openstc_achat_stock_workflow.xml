@@ -47,10 +47,25 @@
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
         </record>
         
+        <record id="wkf_open_engage_waiting_invoice_validated" model="workflow.activity">
+            <field name="name">Attente Facture Fournisseur Validée</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'waiting_invoice_validated'})</field>
+            <field name="join_mode">AND</field>
+        </record>
+        
+        <record id="wkf_open_engage_except_invoice" model="workflow.activity">
+            <field name="name">Exception sur Validation Facture</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'except_invoice'})</field>
+        </record>
+        
         <record id="wkf_open_engage_engage_to_terminate" model="workflow.activity">
             <field name="name">Engagement A Terminer</field>
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
-            <field name="join_mode">AND</field>
+            <field name="join_mode">XOR</field>
             <field name="kind">function</field>
             <field name="action">write({'state':'engage_to_terminate'})</field>
         </record>
@@ -60,7 +75,7 @@
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
             <field name="kind">function</field>
             <field name="action">write({'state':'done'})</field>
-            <field name="flow_end" eval="True"/>
+            <field name="flow_stop" eval="True"/>
         </record>
         
        <!-- 
@@ -95,16 +110,29 @@
             <field name="act_to" ref="wkf_open_engage_waiting_invoice"/>
         </record>
         
-        <record id="wkf_ask_trans_waiting_invoice_to_terminate" model="workflow.transition">
+        <record id="wkf_ask_trans_waiting_invoice_waiting_invoice_validated" model="workflow.transition">
             <field name="act_from" ref="wkf_open_engage_waiting_invoice"/>
-            <field name="act_to" ref="wkf_open_engage_engage_to_terminate"/>
+            <field name="act_to" ref="wkf_open_engage_waiting_invoice_validated"/>
             <field name="condition">real_invoice_attached()</field>
         </record>
         
-        <record id="wkf_ask_trans_waiting_reception_to_terminate" model="workflow.transition">
+        <record id="wkf_ask_trans_waiting_reception_waiting_invoice_validated" model="workflow.transition">
             <field name="act_from" ref="wkf_open_engage_waiting_reception"/>
+            <field name="act_to" ref="wkf_open_engage_waiting_invoice_validated"/>
+            <field name="signal">signal_received</field>
+            <field name="condition">real_reception_attached()</field>
+        </record>
+        
+        <record id="wkf_ask_trans_waiting_invoice_validated_engage_to_terminate" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_waiting_invoice_validated"/>
             <field name="act_to" ref="wkf_open_engage_engage_to_terminate"/>
             <field name="signal">signal_to_terminate</field>
+        </record>
+        
+        <record id="wkf_ask_trans_waiting_invoice_validated_except_invoice" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_waiting_invoice_validated"/>
+            <field name="act_to" ref="wkf_open_engage_except_invoice"/>
+            <field name="signal">signal_to_except_invoice</field>
         </record>
         
         <record id="wkf_ask_trans_to_terminate_done" model="workflow.transition">

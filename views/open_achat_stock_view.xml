@@ -168,10 +168,13 @@
             	    <field name="reception_ok"/>
             	    <field name="invoice_ok"/>
             	</group>
+            	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
             	<group col="6" colspan="1">
 					<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
 					<button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/>
-					<button name="terminate_engage" type="object" string="Clore Engagement" states = "engage_to_terminate"/>
+					<button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/>
+					<button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/>	
+					<button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/>
 				</group>
             </field>
         </record>

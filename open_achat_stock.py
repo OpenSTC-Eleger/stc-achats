@@ -213,7 +213,8 @@ class open_engagement(osv.osv):
         return seq
     
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
-                               ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement a Cloturer'),
+                               ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement Bon Pour Paiement'),
+                               ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
                                ('done','Clos')]
     _name="open.engagement"
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
@@ -229,10 +230,12 @@ class open_engagement(osv.osv):
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
         'reception_ok':fields.boolean('Produits Réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
+        'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
             'state':'draft',
+            'user_id':lambda self,cr,uid,context:uid,
             }
     
     def check_achat(self, cr, uid, ids, context=None):
@@ -305,7 +308,7 @@ class open_engagement(osv.osv):
         po_id = self.read(cr, uid, ids, ['purchase_order_id'], context)
         attachment_ids = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',po_id),('res_model','=','purchase.order')])
         attachments = self.pool.get("ir.attachment").read(cr, uid, attachment_ids, ['id','datas_fname'])
-        prog = re.compile("pattern")
+        prog = re.compile("pattern_invoice")
         for attachment in attachments:
             if prog.search(attachment['datas_fname']):
                 self.write(cr, uid, ids, {'invoice_ok':True})
@@ -316,8 +319,31 @@ class open_engagement(osv.osv):
             ids = [ids]
         for engage in self.browse(cr, uid, ids):
             if not engage.invoice_ok:
-                self.write(cr, uid, ids, {'invoice_ok':True, 'date_invoice_received':fields.context.today(self, cr, uid, context)})
+                self.write(cr, uid, ids, {'invoice_ok':True, 'date_invoice_received':fields.date.context_today(self, cr, uid, None)})
         return True
+    
+    def real_reception_attached(self, cr, uid, ids):
+        #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
+        """
+        if isinstance(ids, list):
+            ids = ids[0]
+        po_id = self.read(cr, uid, ids, ['purchase_order_id'], context)
+        attachment_ids = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',po_id),('res_model','=','purchase.order')])
+        attachments = self.pool.get("ir.attachment").read(cr, uid, attachment_ids, ['id','datas_fname'])
+        prog = re.compile("pattern_reception")
+        for attachment in attachments:
+            if prog.search(attachment['datas_fname']):
+                self.write(cr, uid, ids, {'invoice_ok':True})
+                return True
+        return False"""
+        #Pour éviter boucle infinie
+        if not isinstance(ids, list):
+            ids = [ids]
+        for engage in self.browse(cr, uid, ids):
+            if not engage.reception_ok:
+                self.write(cr, uid, ids, {'reception_ok':True})
+        return True
+    
     def terminate_engage(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state':'done'},context)
         return
@@ -493,15 +519,45 @@ class purchase_order(osv.osv):
         if ok:
             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
     
-    def check_achat(self, cr, uid, ids, context):
+    """
+    indique si engagement validable sans signature Elu + DST ou non
+    Si commande hors marché : True si < 300€ Sinon False
+    Sinon : True si montant commande <= seuil max par commande de l'acheteur
+                ET si montant commandes de l'années en cours <= seuil max annuel de l'acheteur
+            Sinon False
+    @return bool: True si validable directement, False sinon
+    """
+    def check_achat(self, cr, uid, ids, context=None):
         if not isinstance(ids, list):
             ids = [ids]
+        #   Initialisation des seuils du user
+        seuils = self.pool.get("res.users").read(cr, uid, uid, ['max_po_amount','max_total_amount'], context)
+        #seuil par bon de commande
+        max_po_autorise = seuils['max_po_amount']
+        #seuil sur l'année
+        max_total_autorise = seuils['max_total_amount']
+        #Quota atteint sur l'année pour l'instant par l'utilisateur
+        user_po_ids = self.search(cr, uid, [('user_id','=',uid)], context)
+        total_po_amount = 0
+        for user_po in self.read(cr, uid, user_po_ids, ['amount_total']):
+            total_po_amount += user_po['amount_total']
+        #On vérifie pour la commande en cours à la fois le seuil par commande et le seuil annuel
         for po in self.browse(cr, uid, ids, context):
+            #Commande "hors_marché"
             if not po.po_ask_id:
                 return po.amount_total < 300
+            #Commande dans le cadre d'un marché
             else:
-                #TODO: Intégrer modifs du client, seuil max pour le marché et montant max par acheteur par BC
-                return False
+                #Test seuil par bon de commande
+                if po.amount_total > max_po_autorise :
+                    return False
+                #Test seuil annuel
+                elif po.amount_total + total_po_amount > max_total_autorise:
+                    return False
+                #Dans ce cas tout est ok, on peut valider automatiquement l'engagement
+                return True
+        #Si on arrive ici, c'est qu'il y a un pb (la commande n'est plus associée à l'engagement)
+        #TODO: mettre un message d'erreur, voir si on ne perds pas les instances de wkf
         return False
     
     def check_all_dispo(self, cr, uid, ids, context):
@@ -604,7 +660,7 @@ class stock_picking(osv.osv):
                     engage_ids.append(engage_id)
         wf_service = netsvc.LocalService('workflow')
         for engage_id in engage_ids:
-            wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_to_terminate', cr)
+            wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
         self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True})
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
@@ -635,3 +691,16 @@ class crossovered_budget(osv.osv):
         }
     
 crossovered_budget()
+
+class res_users(osv.osv):
+    _inherit = "res.users"
+    _name = "res.users"
+    
+    _columns = {
+        'max_po_amount':fields.float('Montant max autorisé par Bon de Commande', digit=(4,2)),
+        'max_total_amount':fields.float('Montant Annuel max', digit=(5,2)),
+        }
+    
+res_users()
+
+

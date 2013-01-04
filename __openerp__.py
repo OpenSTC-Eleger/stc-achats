@@ -33,6 +33,8 @@
         
         "security/openstc_achat_stock_security.xml",
         "security/ir.model.access.csv",
+        
+        "unit_tests/unit_tests.xml",
              ],
     "demo": [],
     "test": [],

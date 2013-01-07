@@ -217,6 +217,33 @@ class open_engagement(osv.osv):
                 
         return seq
     
+    def _get_engage_attaches(self, cr, uid, ids, field_name, arg=None, context=None):
+        #Récup des pièces jointes de po
+        engage_to_po = {}
+        for engage in self.browse(cr, uid, ids, context):
+            engage_to_po.update({engage.purchase_order_id.id:engage.id})
+        po_ids = engage_to_po.keys()
+        cr.execute('''select a.id, a.res_id 
+                    from ir_attachment as a 
+                    where a.res_id in %s and a.res_model = %s
+                    or res_id in %s and a.res_model = %s 
+                    group by a.res_id, a.id
+                    order by a.res_id''',(tuple(ids), self._name, tuple(po_ids),'purchase.order'))
+        ret = {}
+        search_ids = []
+        search_ids.extend(ids)
+        search_ids.extend(po_ids)
+        for id in ids:
+            ret.setdefault(id, [])
+        for r in cr.fetchall():
+            if r[1] in ids:
+                #Soit il s'agit d'une piece jointe associée a l'engagement
+                ret[r[1]].append(r[0])
+            else:
+                #Soit il s'agit d'une piece jointe associée au bon de commande associé a l'engagement
+                ret[engage_to_po[r[1]]].append(r[0])
+        return ret
+    
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
                                ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement Bon Pour Paiement'),
                                ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
@@ -236,6 +263,7 @@ class open_engagement(osv.osv):
         'reception_ok':fields.boolean('Produits Réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
         'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
+        'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints')
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),

@@ -175,6 +175,13 @@
             	    <field name="reception_ok"/>
             	    <field name="invoice_ok"/>
             	</group>
+            	<field name="attach_ids" nolabel="1">
+            		<tree string="Documents joints">
+            		    <field name="datas_fname"/>
+            		    <field name="create_uid"/>
+            		    <field name="create_date"/>
+            		</tree>
+            	</field>
             	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
             	<group col="6" colspan="1">
 					<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>

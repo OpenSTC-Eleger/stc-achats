@@ -78,12 +78,14 @@ class account_invoice(osv.osv):
                 #On lie chaque produit au move_line auquel il est associé
                 for move_line in inv.move_id.line_id:
                     #TOCHECK: ne prendre que les move_line de débits ? (Correspondant à l'achat?)
-                    if move_line.debit >0.0:
+                    if move_line.debit > 0.0:
                         analytic_lines_by_prod.update({move_line.product_id.id:move_line.id})
                 #Puis pour chaque ligne de facture de l'objet en cours, on lie le move_id aux merge_lines associés
                 for line in inv.invoice_line:
                     if line.product_id.id in analytic_lines_by_prod:
-                        move_line_obj.write(cr, uid, analytic_lines_by_prod[line.product_id.id], {'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]}, context)
+                        #Si un besoin est recensé par la facture, on le lie avec le move_line, sinon c'est une écriture classique de move_line
+                        if line.merge_line_ids:
+                            move_line_obj.write(cr, uid, analytic_lines_by_prod[line.product_id.id], {'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]}, context)
             return True
         return False
 

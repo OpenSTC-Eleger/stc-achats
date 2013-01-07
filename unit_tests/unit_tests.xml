@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data noupdate="1">  
+		<function model="account.invoice" name="action_number">
+		    <value eval="[46]"/>
+		</function>
+	</data>
+</openerp>

@@ -70,6 +70,13 @@
 				    <field name="budget_dispo" invisible="1"/>
 				    <field name="tx_erosion_info"/>
 				    <field name="tx_erosion" invisible="1"/>
+				    <field name="merge_line_ids">
+				    	<tree editable="top">
+				    	    <field name="product_qty"/>
+				    	    <field name="service_id"/>
+				    	    <field name="site_id"/>
+				    	</tree> 
+				    </field>
 				</xpath>
             </field>
         </record>
@@ -191,6 +198,6 @@
 				</field>
             </field>
         </record>
-	    
+	
 	</data>
 </openerp>

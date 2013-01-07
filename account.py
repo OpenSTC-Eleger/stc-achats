@@ -30,3 +30,85 @@ class account_analytic_account(osv.osv):
         }
     
 account_analytic_account()
+
+class account_invoice_line(osv.osv):
+    _inherit = "account.invoice.line"
+    _name = "account.invoice.line"
+    
+    _columns = {
+        'merge_line_ids':fields.one2many('openstc.merge.line.ask', 'invoice_line_id','Regroupement des Besoins')
+        }
+    
+    def _check_qte_merge_qte_invoice(self, cr, uid, ids, context=None):
+        for line in self.browse(cr, uid, ids, context):
+            qte_ref = line.quantity
+            qte = 0
+            for merge_line in line.merge_line_ids:
+                if not merge_line.product_id or merge_line.product_id.id == line.product_id.id:
+                    qte += merge_line.product_qty
+                else:
+                    raise osv.except_osv('Erreur','Vous avez associé des lignes de regroupement ne faisait pas référence au produit de la ligne de commande en cours')
+            if qte_ref < qte:
+                return False
+            else:
+                return True
+        return False
+    
+    _constraints = [(_check_qte_merge_qte_invoice,'Erreur, la quantité du produit acheté est inférieure a la quantité obtenu par regroupement de la demande de différents services et sites',['product_id','merge_line_ids'])]
+    
+    """def move_line_get_item(self, cr, uid, line, context=None):
+        ret = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context)
+        ret.update({'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})
+        return ret"""
+    
+account_invoice_line()
+ 
+
+class account_invoice(osv.osv):
+    _inherit = "account.invoice"
+    _name = "account.invoice"
+    _columns = {
+        }
+    #Ecrit pour les merge_lines le move_line associé à la ligne de facture
+    def action_number(self, cr, uid, ids, context=None):
+        if super(account_invoice, self).action_number(cr, uid, ids, context):
+            move_line_obj = self.pool.get("account.move.line")
+            for inv in self.browse(cr, uid, ids, context):
+                analytic_lines_by_prod = {}
+                #On lie chaque produit au move_line auquel il est associé
+                for move_line in inv.move_id.line_id:
+                    #TOCHECK: ne prendre que les move_line de débits ? (Correspondant à l'achat?)
+                    if move_line.debit >0.0:
+                        analytic_lines_by_prod.update({move_line.product_id.id:move_line.id})
+                #Puis pour chaque ligne de facture de l'objet en cours, on lie le move_id aux merge_lines associés
+                for line in inv.invoice_line:
+                    if line.product_id.id in analytic_lines_by_prod:
+                        move_line_obj.write(cr, uid, analytic_lines_by_prod[line.product_id.id], {'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]}, context)
+            return True
+        return False
+
+account_invoice()
+
+class account_move_line(osv.osv):
+    _inherit = "account.move.line"
+    _name = "account.move.line"
+    _columns = {
+        'merge_line_ids':fields.one2many('openstc.merge.line.ask','move_line_id','Besoins en Fournitures associés'),
+        }
+    
+    def _check_prod(self, cr, uid, ids, context=None):
+        for move_line in self.browse(cr, uid, ids, context):
+            for merge_line in move_line.merge_line_ids:
+                if not merge_line.product_id or merge_line.product_id.id <> move_line.product_id.id:
+                    return False
+            return True
+        return True
+    
+    _constraints = [(_check_prod,'Erreur, Vous avez regroupé un besoin comportant au moins un produit différent par rapport auqel cette écriture analytique fait référence',['product_id','merge_line_ids'])]
+
+    
+account_move_line()
+    
+    
+    
+

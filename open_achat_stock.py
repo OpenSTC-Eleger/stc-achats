@@ -391,6 +391,88 @@ class open_engagement(osv.osv):
     
 open_engagement()
     
+class openstc_ask_prod(osv.osv):
+    _name = "openstc.ask.prod"
+    
+    _AVAILABLE_STATE_ASK = [('draft','Brouillon'),('confirmed','Confirmé par le Demandeur'),('waiting_validation','En Attente de Validation par les service concernés'),
+                            ('waiting_stock','Attente Réappro Stock'),('waiting_stock_validation','Attente Traitement de la Demande'),('to_receive','Produits A Réceptionner'),
+                            ('done','Terminée'),('in_except','Commande Interrompue')]
+    
+    _columns = {
+        'sequence':fields.char('Numéro de la Demande', size=16, required=True),
+        'name':fields.char('Description de la Demande',size=128),
+        'user_id':fields.many2one('res.users','Demandeur',required=True),
+        'service_id':fields.many2one('openstc.service','Service Demandeur'),
+        'site_id':fields.many2one('openstc.site','Site Demandeur'),
+        'date_order':fields.date('Date de la Demande', required=True),
+        'merge_line_ask_id':fields.one2many('openstc.merge.line.ask','ask_prod_id','Besoins'),
+        'state':fields.selection(_AVAILABLE_STATE_ASK, 'Etat',readonly=True),
+        }
+    
+    _defaults = {
+        'user_id':lambda self, cr, uid, context:uid,
+        'date_order':lambda self, cr, uid, context: fields.date.context_today(self, cr, uid, context),
+        'sequence': lambda self, cr, uid, context: self.pool.get("ir.sequence").next_by_code(cr, uid, 'openstc.ask.prod.number',context),
+        'state':'draft',
+        }
+    
+    def have_stock_manager(self, cr, uid, ids, context=None):
+        #TODO:
+        return False
+    
+    #TOCHECK: Si une partie de la demande peut etre satisafaite, faisons-nous une livraison partielle ?
+    def all_in_stock(self, cr, uid, ids, context=None):
+        prod_qty = {}
+        for ask in self.browse(cr, uid, ids, context):
+            already_asked_prods = {}
+            #On récupère les produits ainsi que leurs quantités demandées
+            for merge in ask.merge_line_ask_id:
+                prod_qty.update({merge.product_id.id:merge.product_qty})
+                already_asked_prods.setdefault({merge.product_id.id:0})
+            stock_prod = self.pool.get("product.product")._product_available(cr, uid, prod_qty.keys(), ['qty_available'])
+            #On récupère toutes les demandes référant aux produits de la demande actuel
+            cr.execute('''select line.product_id, sum(line.product_qty) as qty from openstc_ask_prod as ask, merge_line_ask_prod as line
+                        where  ask.id = line.ask_prod_id and ask.id not in %s and ask.state not in %s 
+                        group by line.product_id''', (tuple(ids), ('draft','done','in_except')))
+            
+            for value in cr.fetchall():
+                already_asked_prods.update({value['product_id']:value['qty']})
+            prod_not_dispo = []
+            #Puis on vérifie la dispo de chaque produit en fct du stock et des autres demandes
+            for prod_id, qty in prod_qty.iteritems():
+                if stock_prod[prod_id]['qty_available'] < already_asked_prods[prod_id] + qty:
+                    prod_not_dispo.append(prod_id)
+            #On coche les lignes de la demande dont le produit est dispo de suite
+            self.write(cr, uid, ids, {'merge_line_ask_id':[(1,x.id,{'dispo':True}) for x in ask.merge_line_ask_id if x.product_id.id not in prod_not_dispo]})
+        return prod_qty and not prod_not_dispo or False
+    
+    def create(self, cr, uid, vals, context=None):
+        context.update({'service_id':vals['service_id'],'site_id':vals['site_id']})
+        ask_id = super(openstc_ask_prod, self).create(cr, uid, vals, context)
+        ask = self.browse(cr, uid, ask_id, context)
+        self.pool.get("openstc.merge.line.ask").write(cr, uid, [x.id for x in ask.merge_line_ask_id], 
+                                                      {'service_id':ask.service_id and ask.service_id.id or False,
+                                                       'site_id':ask.site_id and ask.site_id.id or False})
+        return ask_id
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        super(openstc_ask_prod, self).write(cr, uid, ids, vals, context)
+        for ask in self.browse(cr, uid, ids, context):
+            self.pool.get("openstc.merge.line.ask").write(cr, uid, [x.id for x in ask.merge_line_ask_id], {'service_id':ask.service_id.id,'site_id':ask.site_id.id})
+        return True
+    
+    
+    def _check_service_site(self, cr, uid, ids, context=None):
+        for ask in self.browse(cr, uid, ids, context):
+            if ask.service_id and ask.site_id \
+             or not ask.service_id and not ask.site_id:
+                return False
+        return True
+
+    _constraints = [(_check_service_site,'Erreur, Vous devez obligatoirement saisir soit un service soit un site et non les deux pour votre Demande.',['service_id','site_id'])]
+    
+openstc_ask_prod()
+    
 class openstc_merge_line_ask(osv.osv):
     _name = "openstc.merge.line.ask"
     _columns = {
@@ -402,16 +484,21 @@ class openstc_merge_line_ask(osv.osv):
         'po_line_id':fields.many2one('purchase.order.line','Ligne Commande associée'),
         'move_line_id':fields.many2one('account.move.line','Move Line Associated'),
         'invoice_line_id':fields.many2one('account.invoice.line','Ligne Achat associée'),
-        #'ask_prod_id':fields.many2one('openstc.ask.prod','Demande de Fourniture Associée'),        
+        'ask_prod_id':fields.many2one('openstc.ask.prod','Demande de Fourniture Associée'),
+        'dispo':fields.boolean('Qté en stock', readonly=True),
         }
     #Renvoie True si service_id XOR site_id
     def _check_service_site(self, cr, uid, ids, context=None):
-        for merge in self.browse(cr, uid, ids ,context):    
+        for merge in self.browse(cr, uid, ids, context):
             return (merge.service_id and not merge.site_id) or (not merge.service_id and merge.site_id)
         return True
     
-    _constraints=[(_check_service_site,'une demande de produit doit etre associée a un service ou un site, mais pas les deux en memes temps.',['service_id','product_id','site_id'])]
+    _constraints=[(_check_service_site,'une ligne de demande de produit doit etre associée a un service ou un site, mais pas les deux en memes temps.',['service_id','site_id'])]
 
+    def create(self, cr, uid, vals, context=None):
+        vals.update({'service_id':context.get('service_id',False),'site_id':context.get('site_id',False)})
+        return super(openstc_merge_line_ask, self).create(cr, uid, vals, context)
+    
 openstc_merge_line_ask()
 
 
@@ -438,8 +525,6 @@ class stock_picking(osv.osv):
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()
-    
-
 
 class res_users(osv.osv):
     _inherit = "res.users"
@@ -452,4 +537,15 @@ class res_users(osv.osv):
     
 res_users()
 
+class product_product(osv.osv):
+    _inherit = "product.product"
+    _name = "product.product"
+    _columns = {
+        }
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if 'force_product_uom' in context:
+            args.extend([('isroom','=',False),('active','=',True)])
+        return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
+
+product_product()

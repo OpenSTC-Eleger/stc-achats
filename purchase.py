@@ -344,19 +344,15 @@ class purchase_order(osv.osv):
                 #On vérifie si on a un budget suffisant pour chaque ligne d'achat
                 #On gère aussi le cas de plusieurs lignes référants au même compte analytique
                 if not po.engage_id:
-                    """po_values = {}
-                    po_values.update({'validation':'done'})"""
-                    """#Vérif montant, si > 300€, nécessite validation DST et élu
-                    if not self.check_achat(cr, uid, ids, context):
-                        po_values.update({'validation':'engagement_to_check'})"""
                     service_id = po.service_id
                     context.update({'user_id':uid,'service_id':service_id.id})
                     #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
                     res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
                                                                                'service_id':service_id.id,
                                                                                'purchase_order_id':ids}, context)
-                    """po_values.update({'engage_id':res_id})
-                    self.write(cr, uid, ids, po_values, context=context)"""
+                    if res_id:
+                        engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
+                        self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé' % (engage['name']))
                 else:
                     res_id = po.engage_id.id
                 return {

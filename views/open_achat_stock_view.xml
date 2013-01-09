@@ -142,7 +142,7 @@
             <field name="model">open.engagement</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-				<tree string="Engagement">
+				<tree string="Bon d'Engagements">
                 	<field name="name"/>
 					<field name="description"/>
 					<field name="state"/>
@@ -156,42 +156,61 @@
             <field name="model">open.engagement</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-			   	<field name="name"/>
-				<field name="description"/>
-				<field name="user_id"/>
-            	<field name="service_id"/>
-            	<field name="purchase_order_id"/>
-        		<field name="account_invoice_id"/>
-				<field name="date_invoice_received"/>
-				<field name="state"/>
-				<group col="2" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
-            	    <separator string="Signatures du DST et d'un Elu" colspan="2"/>
-            	    <group col="4" colspan="2">
-	            		<field name="check_dst"/>
-	            		<button name="check_elu" string="Signature Elu" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+				<form string="Bon d'Engagement">
+					<group col="4" colspan="4">
+				    	<field name="name"/>
+						<field name="description"/>
+						<field name="user_id"/>
+		            	<field name="service_id"/>
+		            	<field name="purchase_order_id"/>
+		        		<field name="account_invoice_id"/>
+						<field name="date_invoice_received"/>
+						<field name="state"/>
 					</group>
-            	</group>
-            	<group col="2" colspan="2">
-            	    <field name="reception_ok"/>
-            	    <field name="invoice_ok"/>
-            	</group>
-            	<field name="attach_ids" nolabel="1">
-            		<tree string="Documents joints">
-            		    <field name="datas_fname"/>
-            		    <field name="create_uid"/>
-            		    <field name="create_date"/>
-            		</tree>
-            	</field>
-            	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
-            	<group col="6" colspan="1">
-					<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
-					<button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/>
-					<button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/>
-					<button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/>	
-					<button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/>
-				</group>
+					<group col="2" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
+	            	    <separator string="Signatures du DST et d'un Elu" colspan="2"/>
+	            	    <group col="4" colspan="2">
+		            		<field name="check_dst"/>
+		            		<button name="check_elu" string="Signature Elu" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+						</group>
+	            	</group>
+	            	<group col="2" colspan="2">
+	            	    <field name="reception_ok"/>
+	            	    <field name="invoice_ok"/>
+	            	</group>
+	            	<field name="attach_ids" nolabel="1" colspan="4">
+	            		<tree string="Documents joints">
+	            		    <field name="datas_fname"/>
+	            		    <field name="create_uid"/>
+	            		    <field name="create_date"/>
+	            		</tree>
+	            	</field>
+	            	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
+	            	<group col="6" colspan="1">
+						<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
+						<button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/>
+						<button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/>
+						<button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/>	
+						<button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/>
+					</group>
+				</form>
             </field>
         </record>
+	    
+	    <record model="ir.ui.view" id="view_openstc_open_engage_search_view">
+			<field name="name">openstc.engagement.search</field>
+			<field name="model">open.engagement</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Engagements">
+					<filter name="to_validate" string="A Valider" domain="[('state','in',('draft','to_validate'))]" help="Engagements Brouillons ou en attente signature DST + Elu"/>
+					<filter name="in_progress" string="En Cours" domain="[('state','in',('waiting_reception','waiting_invoice','waiting_invoice_validated'))]" help="Engagements en attente de couments Comptables"/>
+					<filter name="to_pay" string="Attente Paiement" domain="[('state','=','engage_to_terminate')]" help="Engagements dont la facture est a payer"/>
+					<filter name="done" string="Terminés" domain="[('state','=','done')]" help="Engagement Clos (facture payée et et réception produits / prestation complet et validé)"/>
+					<filter name="except" string="Litigieux" domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement"/>
+				</search>
+			</field>
+		</record>
 	    
 	    <record id="open_achat_stock_budget_tree_view" model="ir.ui.view">
             <field name="name">open.achat.stock.crossovered.budget.tree</field>
@@ -206,5 +225,42 @@
             </field>
         </record>
 	
+	    
+	    <record id="openstc_ask_prod_form" model="ir.ui.view">
+            <field name="name">openstc.ask.prod.form</field>
+            <field name="model">openstc.ask.prod</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<form string="Demande de Fournitures">
+				    <group col="4" colspan="4" string="Informations Générales">
+					    <field name="sequence"/>
+					    <field name="name"/>
+					    <field name="user_id"/>
+						<field name="date_order"/>
+					</group>
+				    <group col="4" colspan="4" string="Choisissez le site OU le service demandeur">
+				    	<field name="service_id"/>
+					    <field name="site_id"/>
+				   	</group>
+				   	<field name="merge_line_ask_id" nolabel="1" colspan="4">
+				   	    <tree string="Votre Besoin" editable="top">
+				   	        <field name="product_id" required="1" domain="[('purchase_ok','=',True)]" context="{'force_product_uom':True}"/>
+				   	        <field name="product_qty"/>
+				   	        <field name="dispo"/>
+				   	        <field name="service_id"/>
+				   	        <field name="site_id"/>
+				   	    </tree>
+				   	</field>
+				   	<field name="state"/>
+           			<group col="2" colspan="1">
+	           		    <button name="confirm" string="Confirmer Votre Demande" states="draft"/>
+	           		    <button name="validate" string="Valider Pour Demande en Stock" states="waiting_validation"/>
+	      		    	<button name="in_except" string="Annuler Demande" groups="openstc.openstc_manager,openstc.openstc_dst,openstc.openstc_elu"/>
+	           			<button name="done" string="Fournitures Obtenues (Termine la Demande)" states="to_receive"/>
+	           		</group>
+           		</form>
+           	</field>
+        </record>
+	    
 	</data>
 </openerp>

@@ -26,8 +26,7 @@
 				    <group col="6" colspan="4">
 					    <field name="validation"/>
 					    <field name="engage_id"/>
-					    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
-				    	<button name="open_engage" string="Créer/Gérer Engagement" type="object"/>
+					    <button name="open_engage" string="Créer/Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>
 				<xpath expr="//notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="before">
@@ -39,7 +38,7 @@
 					<field name="service_id"/>
 				</field>
 				<tree string="Purchase Order Lines" position="replace">
-	                <tree string="Purchase Order Lines">
+	                <tree string="Purchase Order Lines" colors="red:dispo==False">
 		                <field name="date_planned"/>
 		                <field name="product_id"/>
 		                <field name="product_qty"/>
@@ -179,10 +178,14 @@
 	            	    <field name="invoice_ok"/>
 	            	</group>
 	            	<field name="attach_ids" nolabel="1" colspan="4">
-	            		<tree string="Documents joints">
+	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail'">
 	            		    <field name="datas_fname"/>
 	            		    <field name="create_uid"/>
 	            		    <field name="create_date"/>
+	            		    <field name="state"/>
+	            		    <button name="send_invoice_to_pay" type="object" icon="gtk-go-forward" help="Valide et Envoie la Facture au service compta pour paiement" states="to_check,except_send_mail"/>
+	            			<button name="refuse_invoice_to_pay" type="object" icon="gtk-cancel" help="Refuser la facture pour paiement, vous allez saisir un bref justificatif" states="to_check,except_send_mail"/>
+	            			<button name="engage_complete" type="object" icon="gtk-ok" help="Indiquer que la commande est entiérement soldée, cela clos l'engagement" states="to_check,validated,refused,except_send_mail" />
 	            		</tree>
 	            	</field>
 	            	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
@@ -192,6 +195,7 @@
 						<button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/>
 						<button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/>	
 						<button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/>
+						<button name="test" type="object" string="test"/>
 					</group>
 				</form>
             </field>

@@ -48,7 +48,7 @@ class purchase_order_line(osv.osv):
         'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
         'tx_erosion': fields.float('Taux Erosion de votre Service', digits=(2,2)),
         'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible', digits=(6,2), readonly=True),
-        'tx_erosion_info': fields.float('Taux Erosion de votre Service', digits=(2,2), readonly=True),
+        'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service', type="float", digits=(2,2), readonly=True),
         'dispo':fields.boolean('Budget OK',readonly=True),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Regroupement des Besoins'),
         }
@@ -83,8 +83,9 @@ class purchase_order_line(osv.osv):
                 #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
             line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
             res = abs(line.planned_amount) - abs(line.practical_amount)
+            res_erosion = abs(line.practical_amount) / abs(line.planned_amount) * 100
             #TODO: Intégrer le taux d'érosion d'un service
-            return {'value':{'budget_dispo_info':res,'budget_dispo':res}}
+            return {'value':{'budget_dispo_info':res,'budget_dispo':res,'tx_erosion':res_erosion,'tx_erosion_info':res_erosion}}
         return {'value':{}}
     
     def onchange_product_id(self, cr, uid, ids, pricelist_id, product_id, qty, uom_id,
@@ -185,10 +186,10 @@ class purchase_order(osv.osv):
         return ret
     """
     def create(self, cr, uid, vals, context=None):
-        #Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
-        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            
+        """#Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
+        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            """
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
-        po = self.browse(cr, uid, po_id)
+        """po = self.browse(cr, uid, po_id)
         ask_prods = {}
         values = []
         #Si un marché est renseigné
@@ -207,16 +208,16 @@ class purchase_order(osv.osv):
             super(purchase_order, self).write(cr, uid, [po_id], {'order_line':values, 'validation':'budget_to_check'})
             if warning:
                 self.log(cr, uid, po_id, 'Les prix unitaires de certaines lignes de la commande %s ont été modifiés' (po.name))
-        
+        """
         return po_id
 
     def write(self, cr, uid, ids, vals, context=None):
-        #Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
-        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            
+        """#Si un marché est renseigné, il faut forcer les prix unitaires aux valeurs négociées avec le fournisseur pour chaque produit
+        #TOCHECK: Si un produit n'est pas dans le marché, permettre tout de même la commande ? Pour l'instant on considère que oui            """
         if not isinstance(ids, list):
             ids = [ids]
         super(purchase_order, self).write(cr, uid, ids, vals, context)
-        #On ne mets à jour les lignes de commandes seulement si le user veut sauvegarder le le formulaire, sinon
+        """#On ne mets à jour les lignes de commandes seulement si le user veut sauvegarder le le formulaire, sinon
         #On doit passer no_ask_validation dans le context pour schunter cette étape
         if context and  not 'no_ask_validation' in context or not context:
             for po in self.browse(cr, uid, ids):
@@ -240,7 +241,7 @@ class purchase_order(osv.osv):
                         self.log(cr, uid, po.id, 'Les prix unitaires de certaines lignes de la commande %s ont été modifiés' % (po.name))
                 #super(purchase_order, self).write(cr, uid, po.id, {'order_line':[(1,x.id,{'dispo':False}) for x in po.order_line]})
         else:
-            del(context['no_ask_validation'])
+            del(context['no_ask_validation'])"""
         return True
     
     
@@ -280,8 +281,9 @@ class purchase_order(osv.osv):
             total_po_amount += user_po['amount_total']
         #On vérifie pour la commande en cours à la fois le seuil par commande et le seuil annuel
         for po in self.browse(cr, uid, ids, context):
-            #Commande "hors_marché"
-            if not po.po_ask_id:
+            #Commande "hors_marché", soit lorsqu'une commande est crée avec une demande de devis
+            #if not po.po_ask_id:
+            if po.po_ask_id:
                 return po.amount_total < 300
             #Commande dans le cadre d'un marché
             else:
@@ -317,55 +319,56 @@ class purchase_order(osv.osv):
         dict_line_account = {}
         #On vérifie si on a un budget suffisant pour chaque ligne d'achat
         #On gère aussi le cas de plusieurs lignes référants au même compte analytique
-        for po in self.browse(cr, uid, ids):
-            for line in po.order_line:
-                restant = -1
-                if not line.account_analytic_id.id in dict_line_account:
-                    restant = line.budget_dispo - line.price_subtotal
-                else:
-                    restant = dict_line_account[line.account_analytic_id.id] - line.price_subtotal
-                dict_line_account.update({line.account_analytic_id.id:restant})
-                if restant >= 0:
-                    line_ok.append(line.id)
-                else:
-                    line_not_ok.append(line.id)
-                    #raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat:' + line.name + ' x ' + str(line.product_qty) + '(' + str(line.price_subtotal) + ' euros)')
+        po = self.browse(cr, uid, ids)
+        for line in po.order_line:
+            restant = -1
+            if not line.account_analytic_id.id in dict_line_account:
+                restant = line.budget_dispo - line.price_subtotal
+            else:
+                restant = dict_line_account[line.account_analytic_id.id] - line.price_subtotal
+            dict_line_account.update({line.account_analytic_id.id:restant})
+            if restant >= 0:
+                line_ok.append(line.id)
+            else:
+                line_not_ok.append(line.id)
+                #raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat:' + line.name + ' x ' + str(line.product_qty) + '(' + str(line.price_subtotal) + ' euros)')
         self.pool.get("purchase.order.line").write(cr, uid, line_ok, {'dispo':True})
         self.pool.get("purchase.order.line").write(cr, uid, line_not_ok, {'dispo':False})
-        if not line_not_ok:
-            self.write(cr, uid, ids, {'validation':'engagement_to_check'})
-        return
+        """if not line_not_ok:
+            self.write(cr, uid, ids, {'validation':'engagement_to_check'})"""
+        return not line_not_ok
     
     def open_engage(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
-            po = self.browse(cr, uid, ids, context)
-            if self.check_all_dispo(cr, uid, ids, context):
-                #On vérifie si on a un budget suffisant pour chaque ligne d'achat
-                #On gère aussi le cas de plusieurs lignes référants au même compte analytique
-                if not po.engage_id:
-                    service_id = po.service_id
-                    context.update({'user_id':uid,'service_id':service_id.id})
-                    #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
-                    res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
-                                                                               'service_id':service_id.id,
-                                                                               'purchase_order_id':ids}, context)
-                    if res_id:
-                        engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-                        self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé' % (engage['name']))
-                else:
-                    res_id = po.engage_id.id
-                return {
-                    'type':'ir.actions.act_window',
-                    'target':'new',
-                    'res_model':'open.engagement',
-                    'view_mode':'form',
-                    'res_id':res_id
-                    }
+        po = self.browse(cr, uid, ids, context)
+        if self.verif_budget(cr, uid, ids, context):
+            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
+            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
+            if not po.engage_id:
+                service_id = po.service_id
+                context.update({'user_id':uid,'service_id':service_id.id})
+                #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
+                res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
+                                                                           'service_id':service_id.id,
+                                                                           'purchase_order_id':ids}, context)
+                if res_id:
+                    engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
+                    self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé' % (engage['name']))
             else:
-                self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
-                self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
-            return
+                res_id = po.engage_id.id
+            return {
+                'type':'ir.actions.act_window',
+                'target':'new',
+                'res_model':'open.engagement',
+                'view_mode':'form',
+                'res_id':res_id
+                }
+        #else:
+            #raise osv.except_osv('Erreur','Une partie de votre commande ne rentre pas dans votre budget.')
+            #self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
+            #self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
+        return
         
     def action_invoice_create(self, cr, uid, ids, context=None):
         inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)

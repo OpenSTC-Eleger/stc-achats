@@ -381,6 +381,25 @@ class open_engagement(osv.osv):
         self.write(cr, uid, ids, {'state':'done'},context)
         return
     
+    def test(self, cr, uid, ids, context=None):
+        return    
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'check_dst' in vals and vals['check_dst']:
+            #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
+            #TODO: Comment connaitre l'élu auquel envoyer la demande ?
+            template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Elu%')], context=context)
+            if isinstance(template_id, list):
+                template_id = template_id[0]
+            if isinstance(ids, list):
+                ids = ids[0]
+            msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
+            if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+                del vals['check_dst']
+                self.log(cr, uid, ids, 'Erreur, Echec d\'envoi du mail A l\'élu, votre signature n\'est pas prise en compte pour cette fois.')
+        super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
+        return True
+    
     def unlink(self, cr, uid, ids, context=None):
         #Si on supprimer un engagement, on doit forcer les documents associés à en générer un autre
         #En principe, aucun engagement ne doit etre supprimé
@@ -470,7 +489,7 @@ class openstc_ask_prod(osv.osv):
         return True
     
     
-    def _check_service_site(self, cr, uid, ids, context=None):
+"""    def _check_service_site(self, cr, uid, ids, context=None):
         for ask in self.browse(cr, uid, ids, context):
             if ask.service_id and ask.site_id \
              or not ask.service_id and not ask.site_id:
@@ -478,7 +497,7 @@ class openstc_ask_prod(osv.osv):
         return True
 
     _constraints = [(_check_service_site,'Erreur, Vous devez obligatoirement saisir soit un service soit un site et non les deux pour votre Demande.',['service_id','site_id'])]
-    
+    """
 openstc_ask_prod()
     
 class openstc_merge_line_ask(osv.osv):
@@ -486,7 +505,7 @@ class openstc_merge_line_ask(osv.osv):
     _columns = {
         'product_id':fields.many2one('product.product','Produit'),
         'product_qty':fields.integer('Qté Désirée',required=True),
-        'service_id':fields.many2one('openstc.service','Service Bénéficiaire'),
+        'service_id':fields.many2one('openstc.service','Service Bénéficiaire',required=True),
         'site_id':fields.many2one('openstc.site','Site Bénéficiaire'),
         'price_unit':fields.float('Prix Unitaire (remplie après facturation)',digit=(4,2)),
         'po_line_id':fields.many2one('purchase.order.line','Ligne Commande associée'),
@@ -499,14 +518,15 @@ class openstc_merge_line_ask(osv.osv):
         }
     
     _order = "product_id"
-    #Renvoie True si service_id XOR site_id
+    
+    """    #Renvoie True si service_id XOR site_id
     def _check_service_site(self, cr, uid, ids, context=None):
         for merge in self.browse(cr, uid, ids, context):
             return (merge.service_id and not merge.site_id) or (not merge.service_id and merge.site_id)
         return True
     
     _constraints=[(_check_service_site,'une ligne de demande de produit doit etre associée a un service ou un site, mais pas les deux en memes temps.',['service_id','site_id'])]
-
+    """
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in context or 'site_id' in context:    
             vals.update({'service_id':context.get('service_id',False),'site_id':context.get('site_id',False)})
@@ -562,3 +582,92 @@ class product_product(osv.osv):
         return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
 
 product_product()
+
+
+class ir_attachment(osv.osv):
+    _inherit = "ir.attachment"
+    _name = "ir.attachment"
+    _columns = {
+        'state':fields.selection([('to_check','A Traiter'),('validated','Facture Validée'),
+                                  ('refused','Facture Refusée'),('not_invoice','RAS'),('except_send_mail','Echec envoi du mail')], 'Etat', readonly=True)
+        }
+    
+    _defaults = {
+        'state':'to_check',
+        }
+    #Override of create method to force state attach at 'RAS' if not linked with an engage (restrict access to button action)
+    def create(self, cr, uid, vals, context=None):
+        attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
+        attach = self.browse(cr, uid, attach_id, context)
+        if attach.res_model <> 'open.engagement':
+            self.write(cr, uid, [attach_id], {'state':'RAS'}, context=context)
+        else:
+            #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
+            engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)
+            self.log(cr, engage.user_id.id, attach_id,'Vous devez vérifier la facture %s ajoutée le %s sur votre engagement %s' %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
+        return attach_id
+    
+    def send_invoice_to_pay(self, cr, uid, ids, context=None):
+        #ids refer to attachment that need to be sent with mail
+        #Envoie de la piece jointe en mail au service compta
+        if isinstance(ids, list):
+            ids = ids[0]
+        attach = self.browse(cr, uid, ids, context)
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Valid%')], context=context)
+        if isinstance(template_id, list):
+            template_id = template_id[0]
+        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
+        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
+        self.pool.get("mail.message").send(cr, uid, [msg_id], context)
+        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+            self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail au service compta pour paiement de la facture %s'%(attach.datas_fname))
+            self.write(cr, uid, [ids], {'state':'except_send_mail'}, context)
+        else:
+            self.write(cr, uid, [ids], {'state':'validated'}, context)
+        
+        return {'res_model':'open.engagement',
+                'view_mode':'form,tree',
+                'target':'current',
+                'res_id':attach.res_id,
+                'type':'ir.actions.act_window'
+                }
+    
+    def refuse_invoice_to_pay(self, cr, uid, ids, context=None):
+        #ids refer to attachment that need to be sent with mail
+        #Envoie de la piece jointe en mail au service compta
+        if isinstance(ids, list):
+            ids = ids[0]
+        attach = self.browse(cr, uid, ids, context)
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Refus%')], context=context)
+        if isinstance(template_id, list):
+            template_id = template_id[0]
+        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
+        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':(4, ids)}, context=context)
+        self.pool.get("mail.message").send(cr, uid, [msg_id], context)
+        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+            self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail', context=context)
+            return
+        self.write(cr, uid, ids, {'state':'refused'}, context)
+        return
+    
+    #_order=""
+    
+ir_attachment()    
+
+
+"""class res_log(osv.osv):
+    _inherit = "res.log"
+    _name = "res.log"
+    _columns = {
+        }
+    #Override
+    #permets de forcer l'affichage des logs indiquant aux achateurs les factures qu'ils nont pas encore vérfiées
+    def get(self, cr, uid, context=None):
+        res = super(res_log, self).get(cr, uid, context)
+        to_check_attaches = self.pool.get("ir.attachment").search(cr, uid, [('state','=','to_check'),('res_model','=','open.engagement')])
+        log_ids = self.search(cr, uid, [('user_id', '=',uid),('res_model','=','open.engagement'),('id','in',to_check_attaches)])
+        for log in self.browse(cr, uid, log_ids, context):
+            res.append(0,log)
+        return res
+res_log()"""
+    

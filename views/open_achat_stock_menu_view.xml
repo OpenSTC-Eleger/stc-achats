@@ -16,7 +16,7 @@
         </record>
 	    
 	    <record id="action_view_po_ask" model="ir.actions.act_window">
-            <field name="name">Marchés A Bons de Commandes</field>
+            <field name="name">Demandes de Devis</field>
             <field name="res_model">purchase.order.ask</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -67,6 +67,14 @@
             <field name="view_mode">tree,form</field>
         </record>
 	    
+	    <record id="openstc_merge_line_ask_view" model="ir.actions.act_window">
+            <field name="name">Besoins en Fournitures Exprimés</field>
+            <field name="res_model">openstc.merge.line.ask</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain"> [('ask_prod_id','!=',False),('state','in',('waiting_stock_validation','waiting_validation','waiting_stock'))]</field>
+        </record>
 	    
 	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10"/>
 	    
@@ -81,7 +89,9 @@
 	    <menuitem id="menu_open_achat_stock_stock_view_product" name="Fournitures"
 	        sequence="3" parent="menu_open_achat_stock_stocks" action="openstc_achat_stock_action_view_products"/>
 	    <menuitem id="menu_open_achat_stock_stock_view_ask_prod"
-	        sequence="" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view"/>
+	        sequence="4" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view"/>
+		<menuitem id="menu_open_achat_stock_stock_view_merge_line_ask"
+	        sequence="5" parent="menu_open_achat_stock_stocks" action="openstc_merge_line_ask_view"/>
 		
 		<menuitem id="menu_open_achat_stock_stock_view_supplier" name="Fournisseurs"
 	        sequence="3" parent="menu_open_achat_stock_stocks" action="base.action_partner_supplier_form"/>

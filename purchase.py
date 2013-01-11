@@ -147,8 +147,8 @@ class purchase_order(osv.osv):
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Description',size=128),
-            'po_ask_id':fields.many2one('purchase.order.ask', 'Marché'),
-            'po_ask_date':fields.related('po_ask_id','date_order', string='Date Marché', type='date'),
+            'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
+            'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
             }
     _defaults = {
         'validation':'budget_to_check',

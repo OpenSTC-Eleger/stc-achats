@@ -421,22 +421,22 @@ class openstc_ask_prod(osv.osv):
         return False
     
     #TOCHECK: Si une partie de la demande peut etre satisafaite, faisons-nous une livraison partielle ?
-    def all_in_stock(self, cr, uid, ids, context=None):
+    def check_stock(self, cr, uid, ids, context=None):
         prod_qty = {}
         for ask in self.browse(cr, uid, ids, context):
             already_asked_prods = {}
             #On récupère les produits ainsi que leurs quantités demandées
             for merge in ask.merge_line_ask_id:
                 prod_qty.update({merge.product_id.id:merge.product_qty})
-                already_asked_prods.setdefault({merge.product_id.id:0})
+                already_asked_prods.setdefault(merge.product_id.id,0)
+            #On récupère le stock réel de chaque produit
             stock_prod = self.pool.get("product.product")._product_available(cr, uid, prod_qty.keys(), ['qty_available'])
             #On récupère toutes les demandes référant aux produits de la demande actuel
-            cr.execute('''select line.product_id, sum(line.product_qty) as qty from openstc_ask_prod as ask, merge_line_ask_prod as line
+            cr.execute('''select line.product_id, sum(line.product_qty) as qty from openstc_ask_prod as ask, openstc_merge_line_ask as line
                         where  ask.id = line.ask_prod_id and ask.id not in %s and ask.state not in %s 
                         group by line.product_id''', (tuple(ids), ('draft','done','in_except')))
-            
             for value in cr.fetchall():
-                already_asked_prods.update({value['product_id']:value['qty']})
+                already_asked_prods.update({value[0]:value[1]})
             prod_not_dispo = []
             #Puis on vérifie la dispo de chaque produit en fct du stock et des autres demandes
             for prod_id, qty in prod_qty.iteritems():
@@ -445,6 +445,13 @@ class openstc_ask_prod(osv.osv):
             #On coche les lignes de la demande dont le produit est dispo de suite
             self.write(cr, uid, ids, {'merge_line_ask_id':[(1,x.id,{'dispo':True}) for x in ask.merge_line_ask_id if x.product_id.id not in prod_not_dispo]})
         return prod_qty and not prod_not_dispo or False
+    
+    def all_in_stock(self, cr, uid, ids, context=None):
+        for ask in self.browse(cr, uid, ids, context):
+            for merge in ask.merge_line_ask_id:
+                if not merge.dispo:
+                    return False
+        return True
     
     def create(self, cr, uid, vals, context=None):
         context.update({'service_id':vals['service_id'],'site_id':vals['site_id']})
@@ -457,8 +464,9 @@ class openstc_ask_prod(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         super(openstc_ask_prod, self).write(cr, uid, ids, vals, context)
-        for ask in self.browse(cr, uid, ids, context):
-            self.pool.get("openstc.merge.line.ask").write(cr, uid, [x.id for x in ask.merge_line_ask_id], {'service_id':ask.service_id.id,'site_id':ask.site_id.id})
+        if 'service_id' in vals or 'site_id' in vals:
+            for ask in self.browse(cr, uid, ids, context):
+                self.pool.get("openstc.merge.line.ask").write(cr, uid, [x.id for x in ask.merge_line_ask_id], {'service_id':ask.service_id.id,'site_id':ask.site_id.id})
         return True
     
     
@@ -485,8 +493,12 @@ class openstc_merge_line_ask(osv.osv):
         'move_line_id':fields.many2one('account.move.line','Move Line Associated'),
         'invoice_line_id':fields.many2one('account.invoice.line','Ligne Achat associée'),
         'ask_prod_id':fields.many2one('openstc.ask.prod','Demande de Fourniture Associée'),
-        'dispo':fields.boolean('Qté en stock', readonly=True),
+        'dispo':fields.boolean('Disponible en Stock (Calculé A la saisie de la Demande)', readonly=True),
+        'state':fields.related('ask_prod_id','state',type='char', string="Etat Demande Associée"),
+        'qty_available':fields.related('product_id','qty_available',type='float',string="Qté Dispo En Stock"),
         }
+    
+    _order = "product_id"
     #Renvoie True si service_id XOR site_id
     def _check_service_site(self, cr, uid, ids, context=None):
         for merge in self.browse(cr, uid, ids, context):
@@ -496,7 +508,8 @@ class openstc_merge_line_ask(osv.osv):
     _constraints=[(_check_service_site,'une ligne de demande de produit doit etre associée a un service ou un site, mais pas les deux en memes temps.',['service_id','site_id'])]
 
     def create(self, cr, uid, vals, context=None):
-        vals.update({'service_id':context.get('service_id',False),'site_id':context.get('site_id',False)})
+        if 'service_id' in context or 'site_id' in context:    
+            vals.update({'service_id':context.get('service_id',False),'site_id':context.get('site_id',False)})
         return super(openstc_merge_line_ask, self).create(cr, uid, vals, context)
     
 openstc_merge_line_ask()
@@ -531,7 +544,7 @@ class res_users(osv.osv):
     _name = "res.users"
     
     _columns = {
-        'max_po_amount':fields.float('Montant max autorisé par Bon de Commande', digit=(4,2)),
+        'max_po_amount':fields.float('Montant par Bon de Commande', digit=(4,2), help="Montant Max autorisé par Bon de Commande"),
         'max_total_amount':fields.float('Montant Annuel max', digit=(5,2)),
         }
     

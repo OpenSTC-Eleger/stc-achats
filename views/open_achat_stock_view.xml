@@ -7,7 +7,7 @@
             <field name="model">purchase.order.ask</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-				<tree string="Marchés de Bons de Commandes en cours">
+				<tree string="Demandes de Devis">
 				    <field name="sequence"/>
 					<field name="name"/>
 					<field name="date_order"/>
@@ -27,7 +27,7 @@
 					    <field name="validation"/>
 					    <field name="engage_id"/>
 					    <button name="verif_budget" string="Vérifier Budget" type="object" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
-				    	<button name="open_engage" string="Gérer Engagement" type="object"/>
+				    	<button name="open_engage" string="Créer/Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>
 				<xpath expr="//notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="before">
@@ -87,7 +87,7 @@
             <field name="model">purchase.order.ask</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-				<form string="Marché de Bons de Commandes">
+				<form string="Demandes de Devis">
                 	<group col="6" colspan="4">
 	                	<field name="sequence"/>
 	                	<field name="name"/>
@@ -260,6 +260,49 @@
 	           		</group>
            		</form>
            	</field>
+        </record>
+        
+	    <record id="openstc_merge_line_ask_tree_view" model="ir.ui.view">
+            <field name="name">openstc.merge.line.ask.tree</field>
+            <field name="model">openstc.merge.line.ask</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+				<tree string="Besoins en Fournitures Exprimés">
+				    <field name="product_id"/>
+				    <field name="product_qty"/>
+				    <field name="dispo"/>
+				    <field name="qty_available"/>
+				    <field name="service_id"/>
+				    <field name="site_id"/>
+				</tree>
+            </field>
+        </record>
+	    
+	    <record model="ir.ui.view" id="view_openstc_merge_line_ask_search_view">
+			<field name="name">openstc.merge.line.ask.search</field>
+			<field name="model">openstc.merge.line.ask</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Besoins">
+					<filter name="ask_ok" string="Besoins Satisfaisables" domain="[('dispo','=',True)]" help="Besoins où le stock est dispo"/>
+					<filter name="to_purchase" string="Besoins nécessitant une Réappro" domain="[('dispo','=',False)]" help="Besoins nécessitant de réapprovisionner le stock"/>
+				</search>
+			</field>
+		</record>
+	    
+	    <record id="openstc_achat_stock_res_users_form" model="ir.ui.view">
+            <field name="name">openstc.achat.stockres.users.inherit</field>
+            <field name="model">res.users</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_users_form" />
+            <field name="arch" type="xml">
+				<xpath expr="//form/group[@col='6']/field[@name='active']" position="before">
+				    <group col="4" colspan="4">
+				        <field name="max_po_amount"/>
+				        <field name="max_total_amount"/>
+				    </group>
+				</xpath>
+			</field>
         </record>
 	    
 	</data>

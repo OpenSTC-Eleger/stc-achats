@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
 	<data noupdate="1">  
-		<function model="account.invoice" name="action_number">
-		    <value eval="[46]"/>
+		<function model="openstc.ask.prod" name="all_in_stock">
+		    <value eval="[26]"/>
 		</function>
 	</data>
 </openerp>

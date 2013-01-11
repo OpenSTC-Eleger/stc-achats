@@ -179,6 +179,13 @@
             <field name="action">write({'state':'waiting_validation'})</field>
         </record>
         
+        <record id="wkf_openstc_ask_prod_check_stock" model="workflow.activity">
+            <field name="name">Vérif Stock</field>
+            <field name="wkf_id" ref="wkf_openstc_ask_prod"/>
+            <field name="kind">function</field>
+            <field name="action">check_stock()</field>
+        </record>
+        
         <record id="wkf_openstc_ask_prod_waiting_stock_validation" model="workflow.activity">
             <field name="name">Attente Traitement de la Demande</field>
             <field name="wkf_id" ref="wkf_openstc_ask_prod"/>
@@ -231,31 +238,31 @@
             <field name="condition">have_stock_manager()</field>
         </record>
         
-		<record id="wkf_openstc_ask_prod_trans_waiting_validation_waiting_stock_validation" model="workflow.transition">
+		<record id="wkf_openstc_ask_prod_trans_waiting_validation_check_stock" model="workflow.transition">
             <field name="act_from" ref="wkf_openstc_ask_prod_waiting_validation"/>
-            <field name="act_to" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>
+            <field name="act_to" ref="wkf_openstc_ask_prod_check_stock"/>
             <field name="signal">validate</field>
         </record>
 		
 		<!-- Si pas de magazinier (cas de PontLabbé par exemple) c'est le service associé qui traite les demandes-->
-        <record id="wkf_openstc_ask_prod_trans_confirmed_waiting_stock_validation" model="workflow.transition">
+        <record id="wkf_openstc_ask_prod_trans_confirmed_check_stock" model="workflow.transition">
             <field name="act_from" ref="wkf_openstc_ask_prod_confirmed"/>
-            <field name="act_to" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>
+            <field name="act_to" ref="wkf_openstc_ask_prod_check_stock"/>
             <field name="condition">not have_stock_manager()</field>
         </record>
         
-        <record id="wkf_openstc_ask_prod_trans_waiting_stock_validation_to_receive" model="workflow.transition">
-            <field name="act_from" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>
-            <field name="act_to" ref="wkf_openstc_ask_prod_to_receive"/>
-            <field name="signal">to_receive</field>
-        	<field name="condition">not all_in_stock()</field>
-        </record>
-        
-        <record id="wkf_openstc_ask_prod_trans_waiting_stock_validation_to_receive_auto" model="workflow.transition">
-            <field name="act_from" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>
+        <record id="wkf_openstc_ask_prod_trans_check_stock_to_receive_auto" model="workflow.transition">
+            <field name="act_from" ref="wkf_openstc_ask_prod_check_stock"/>
             <field name="act_to" ref="wkf_openstc_ask_prod_to_receive"/>
             <field name="condition">all_in_stock()</field>
         </record>
+        
+        <record id="wkf_openstc_ask_prod_trans_check_dispo_waiting_stock_validation" model="workflow.transition">
+            <field name="act_from" ref="wkf_openstc_ask_prod_check_stock"/>
+            <field name="act_to" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>
+            <field name="condition">not all_in_stock()</field>
+        </record>
+        
         
         <record id="wkf_openstc_ask_prod_trans_waiting_stock_validation_waiting_stock" model="workflow.transition">
             <field name="act_from" ref="wkf_openstc_ask_prod_waiting_stock_validation"/>

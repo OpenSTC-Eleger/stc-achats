@@ -212,10 +212,10 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Engagements">
-					<filter name="to_validate" string="A Valider" domain="[('state','in',('draft','to_validate'))]" help="Engagements Brouillons ou en attente signature DST + Elu"/>
+					<filter name="to_validate" string="A Signer" domain="[('state','in',('draft','to_validate'))]" help="Engagements Brouillons ou en attente signature DST + Elu"/>
 					<filter name="in_progress" string="En Cours" domain="[('state','in',('waiting_reception','waiting_invoice','waiting_invoice_validated'))]" help="Engagements en attente de couments Comptables"/>
-					<filter name="to_pay" string="Attente Paiement" domain="[('state','=','engage_to_terminate')]" help="Engagements dont la facture est a payer"/>
-					<filter name="done" string="Terminés" domain="[('state','=','done')]" help="Engagement Clos (facture payée et et réception produits / prestation complet et validé)"/>
+					<filter name="to_pay" string="Reste A Payer" domain="[('state','=','engage_to_terminate')]" help="Engagements dont la facture est a payer"/>
+					<filter name="done" string="Clos" domain="[('state','=','done')]" help="Engagement Clos (facture payée et et réception produits / prestation complet et validé)"/>
 					<filter name="except" string="Litigieux" domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement"/>
 				</search>
 			</field>

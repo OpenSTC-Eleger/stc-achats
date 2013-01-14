@@ -314,15 +314,14 @@ class open_engagement(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         for engage in self.browse(cr, uid, ids, context):
-            wf_service.trg_validate(uid, 'purchase.order', engage.purchase_order_id.id, 'purchase_confirm', cr)
-            wf_service.trg_write(uid, 'purchase.order', engage.purchase_order_id.id, cr)
+            wf_service.trg_validate(engage.user_id.id, 'purchase.order', engage.purchase_order_id.id, 'purchase_confirm', cr)
+            wf_service.trg_write(engage.user_id.id, 'purchase.order', engage.purchase_order_id.id, cr)
         #Il faut relire l'objet car une nouvelle donnée est apparue entre temps dans l'engagement, account_invoice_id
         for engage in self.browse(cr, uid, ids, context):    
-            wf_service.trg_write(uid, 'account.invoice', engage.account_invoice_id.id, cr)
-            wf_service.trg_validate(uid, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
+            wf_service.trg_write(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, cr)
+            wf_service.trg_validate(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
         if not engage.account_invoice_id.id:
-                raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')
-            
+            raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')    
         return True
     
     def open_stock_moves(self, cr, uid, ids, context=None):

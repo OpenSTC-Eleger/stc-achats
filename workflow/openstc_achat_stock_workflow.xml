@@ -67,14 +67,14 @@
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
             <field name="join_mode">XOR</field>
             <field name="kind">function</field>
-            <field name="action">write({'state':'engage_to_terminate'})</field>
+            <field name="action">write({'state':'engage_to_terminate','reception_ok':True})</field>
         </record>
         
         <record id="wkf_open_engage_done" model="workflow.activity">
             <field name="name">Clos</field>
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
             <field name="kind">function</field>
-            <field name="action">write({'state':'done'})</field>
+            <field name="action">engage_done()</field>
             <field name="flow_stop" eval="True"/>
         </record>
         
@@ -120,13 +120,13 @@
             <field name="act_from" ref="wkf_open_engage_waiting_reception"/>
             <field name="act_to" ref="wkf_open_engage_waiting_invoice_validated"/>
             <field name="signal">signal_received</field>
-            <field name="condition">real_reception_attached()</field>
+            <field name="condition">all_reception_done()</field>
         </record>
         
         <record id="wkf_ask_trans_waiting_invoice_validated_engage_to_terminate" model="workflow.transition">
             <field name="act_from" ref="wkf_open_engage_waiting_invoice_validated"/>
             <field name="act_to" ref="wkf_open_engage_engage_to_terminate"/>
-            <field name="signal">signal_to_terminate</field>
+            <!--  <field name="signal">signal_to_terminate</field> Pour Simplifier le process -->
         </record>
         
         <record id="wkf_ask_trans_waiting_invoice_validated_except_invoice" model="workflow.transition">

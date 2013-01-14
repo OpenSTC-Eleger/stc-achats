@@ -51,6 +51,8 @@ class purchase_order_line(osv.osv):
         'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service', type="float", digits=(2,2), readonly=True),
         'dispo':fields.boolean('Budget OK',readonly=True),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Regroupement des Besoins'),
+        'in_stock':fields.float('Qté qui sera Stockée', digits=(3,2)),
+        'in_stock_info':fields.related('in_stock',type='float', digits=(3,2), string='Qté qui sera Stockée', readonly=True),
         }
     
     _defaults = {
@@ -87,7 +89,6 @@ class purchase_order_line(osv.osv):
             #TODO: Intégrer le taux d'érosion d'un service
             return {'value':{'budget_dispo_info':res,'budget_dispo':res,'tx_erosion':res_erosion,'tx_erosion_info':res_erosion}}
         return {'value':{}}
-    
     def onchange_product_id(self, cr, uid, ids, pricelist_id, product_id, qty, uom_id,
             partner_id, date_order=False, fiscal_position_id=False, date_planned=False,
             name=False, price_unit=False, notes=False, context=None):
@@ -101,6 +102,19 @@ class purchase_order_line(osv.osv):
             name, price_unit, notes, context)
     
         ret['value'].update({'merge_line_ids':merge_action})
+        return ret
+    
+    def onchange_merge_line_ids(self, cr, uid, ids, merge_line_ids=False, product_qty=False, context=None):
+        if product_qty:
+            qte_restante = product_qty
+            for action in merge_line_ids:
+                if action[0] == 1 or action[0] == 0:
+                    qte_restante -= action[2]['product_qty']
+                elif action[0] == 4:
+                    qte_restante -= self.pool.get("openstc.merge.line.ask").read(cr, uid, action[1], ['product_qty'],context=context)['product_qty']
+        ret = {'value':{'in_stock':qte_restante,'in_stock_info':qte_restante}}
+        if qte_restante < 0:
+            ret.update({'warning':{'title':'Attention','message':'Le Besoin que vous avez recensé est supérieur A ce que vous voulez acheter.'}})
         return ret
     
     def create(self, cr, uid, vals, context=None):
@@ -354,7 +368,7 @@ class purchase_order(osv.osv):
                                                                            'purchase_order_id':ids}, context)
                 if res_id:
                     engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-                    self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé' % (engage['name']))
+                    self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé le %s' % (engage['name'], datetime.now()))
             else:
                 res_id = po.engage_id.id
             return {

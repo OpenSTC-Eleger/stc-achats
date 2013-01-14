@@ -258,9 +258,10 @@ class open_engagement(osv.osv):
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
         'account_invoice_id':fields.many2one('account.invoice','Facture (OpenERP) associée'),
         'check_dst':fields.boolean('Signature DST'),
-        'date_invoice_received':fields.date('Date Réception Facture'),
+        #'date_invoice_received':fields.date('Date Réception Facture'),
+        'date_engage_done':fields.datetime('Date de Cloture de l\'engagement',readonly=True),
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
-        'reception_ok':fields.boolean('Produits Réceptionnés', readonly=True),
+        'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
         'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
         'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints')
@@ -355,34 +356,32 @@ class open_engagement(osv.osv):
                 self.write(cr, uid, ids, {'invoice_ok':True, 'date_invoice_received':fields.date.context_today(self, cr, uid, None)})
         return True
     
-    def real_reception_attached(self, cr, uid, ids):
-        #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
-        """
+    def all_reception_done(self, cr, uid, ids):
         if isinstance(ids, list):
             ids = ids[0]
-        po_id = self.read(cr, uid, ids, ['purchase_order_id'], context)
-        attachment_ids = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',po_id),('res_model','=','purchase.order')])
-        attachments = self.pool.get("ir.attachment").read(cr, uid, attachment_ids, ['id','datas_fname'])
-        prog = re.compile("pattern_reception")
-        for attachment in attachments:
-            if prog.search(attachment['datas_fname']):
-                self.write(cr, uid, ids, {'invoice_ok':True})
-                return True
-        return False"""
-        #Pour éviter boucle infinie
-        if not isinstance(ids, list):
-            ids = [ids]
-        for engage in self.browse(cr, uid, ids):
-            if not engage.reception_ok:
-                self.write(cr, uid, ids, {'reception_ok':True})
+        #On vérifie que toutes le réceptions de produits sont faites
+        engage_id = self.browse(cr, uid, ids)
+        for line in engage_id.purchase_order_id.order_line:
+            for move in line.move_ids:
+                if move.state <> 'done':
+                    return False
+            #if not engage.reception_ok:
+            #    self.write(cr, uid, ids, {'reception_ok':True})
         return True
     
-    def terminate_engage(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state':'done'},context)
-        return
+    def engage_done(self, cr, uid, ids, context=None):
+        engage = self.browse(cr, uid, ids[0], context)
+        self.write(cr, uid, ids, {'state':'done','date_engage_done':datetime.now()})
+        self.pool.get('ir.attachment').write(cr, uid, [x.id for x in engage.attach_ids], {'engage_done':True}, context=context)
+        return True
     
-    def test(self, cr, uid, ids, context=None):
-        return    
+    """def terminate_engage(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        attach = self.browse(cr, uid, ids, context)
+        wf_service = netsvc.LocalService('workflow')
+        wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
+        return True"""
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'check_dst' in vals and vals['check_dst']:
@@ -518,15 +517,7 @@ class openstc_merge_line_ask(osv.osv):
         }
     
     _order = "product_id"
-    
-    """    #Renvoie True si service_id XOR site_id
-    def _check_service_site(self, cr, uid, ids, context=None):
-        for merge in self.browse(cr, uid, ids, context):
-            return (merge.service_id and not merge.site_id) or (not merge.service_id and merge.site_id)
-        return True
-    
-    _constraints=[(_check_service_site,'une ligne de demande de produit doit etre associée a un service ou un site, mais pas les deux en memes temps.',['service_id','site_id'])]
-    """
+
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in context or 'site_id' in context:    
             vals.update({'service_id':context.get('service_id',False),'site_id':context.get('site_id',False)})
@@ -542,6 +533,8 @@ class stock_picking(osv.osv):
     _columns = {
         }
     
+    #TOCHECK: Vérifier si nécessiter de vérifier les stock.move, puisqu'apparemment action_done n'est appelée uniquement
+    #lorsque tous les stock.move sont faits (Etat Done seulement, ou aussi en exception ?)
     def action_done(self, cr, uid, ids, context=None):
         engage_ids = []
         if not isinstance(ids, list):
@@ -552,9 +545,10 @@ class stock_picking(osv.osv):
                 if engage_id and not (engage_id in engage_ids):
                     engage_ids.append(engage_id)
         wf_service = netsvc.LocalService('workflow')
+        #On vérifie que toutes les réceptions de produits sont faites
         for engage_id in engage_ids:
             wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
-        self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True})
+        #self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True})
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()
@@ -589,19 +583,21 @@ class ir_attachment(osv.osv):
     _name = "ir.attachment"
     _columns = {
         'state':fields.selection([('to_check','A Traiter'),('validated','Facture Validée'),
-                                  ('refused','Facture Refusée'),('not_invoice','RAS'),('except_send_mail','Echec envoi du mail')], 'Etat', readonly=True)
+                                  ('refused','Facture Refusée'),('not_invoice','RAS'),('except_send_mail','Echec envoi du mail')], 'Etat', readonly=True),
+         'action_date':fields.datetime('Date de la derniere action', readonly=True),
+         'engage_done':fields.boolean('Engagement Clos',readonly=True),
+         'attach_made_done':fields.boolean('Cette Facture Clos l\'engagement', readonly=True),
         }
     
     _defaults = {
-        'state':'to_check',
+        'state':'not_invoice',
         }
     #Override of create method to force state attach at 'RAS' if not linked with an engage (restrict access to button action)
     def create(self, cr, uid, vals, context=None):
         attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
         attach = self.browse(cr, uid, attach_id, context)
-        if attach.res_model <> 'open.engagement':
-            self.write(cr, uid, [attach_id], {'state':'RAS'}, context=context)
-        else:
+        if attach.res_model == 'open.engagement':
+            self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
             engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)
             self.log(cr, engage.user_id.id, attach_id,'Vous devez vérifier la facture %s ajoutée le %s sur votre engagement %s' %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
@@ -621,9 +617,9 @@ class ir_attachment(osv.osv):
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
             self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail au service compta pour paiement de la facture %s'%(attach.datas_fname))
-            self.write(cr, uid, [ids], {'state':'except_send_mail'}, context)
+            self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
         else:
-            self.write(cr, uid, [ids], {'state':'validated'}, context)
+            self.write(cr, uid, [ids], {'state':'validated','action_date':datetime.now()}, context)
         
         return {'res_model':'open.engagement',
                 'view_mode':'form,tree',
@@ -642,32 +638,44 @@ class ir_attachment(osv.osv):
         if isinstance(template_id, list):
             template_id = template_id[0]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
-        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':(4, ids)}, context=context)
+        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
             self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail', context=context)
-            return
-        self.write(cr, uid, ids, {'state':'refused'}, context)
-        return
+            self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
+        else:
+            self.write(cr, uid, [ids], {'state':'refused','action_date':datetime.now()}, context)
+        return {'res_model':'open.engagement',
+                'view_mode':'form,tree',
+                'target':'current',
+                'res_id':attach.res_id,
+                'type':'ir.actions.act_window'
+                }
     
-    #_order=""
+    #Action du Boutton Permettant de Clore l'engagement
+    #Bloque s'il reste des factures à valider (état 'to_check' ou 'except_send_mail'
+    #TOCHECK: Faut-il envoyer un mail de confirmation au service compta etc... ?
+    def engage_complete(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        #TOCHECK: Vérifier s'il ne faudrait pas mettre ces tests dans une condition de wkf (A place de real_invoice_attached()) 
+        attach = self.browse(cr, uid, ids, context)
+        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','in',('to_check','except_send_mail'))], context=context)
+        if attach_ids:
+            raise osv.except_osv('Erreur','Vous ne pouvez pas clore l\'engagement car il reste des factures à traiter')
+        else:
+            if self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context).reception_ok:
+                self.write(cr, uid, [attach.id], {'attach_made_done':True},context=context)
+                wf_service = netsvc.LocalService('workflow')
+                wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
+            else:
+                raise osv.except_osv('Erreur','Vous ne pouvez pas clore l\'engagement car il reste des produits A Réceptionner (dans OpenERP)')
+        return {'res_model':'open.engagement',
+                'view_mode':'form,tree',
+                'target':'current',
+                'res_id':attach.res_id,
+                'type':'ir.actions.act_window'
+                }
     
-ir_attachment()    
-
-
-"""class res_log(osv.osv):
-    _inherit = "res.log"
-    _name = "res.log"
-    _columns = {
-        }
-    #Override
-    #permets de forcer l'affichage des logs indiquant aux achateurs les factures qu'ils nont pas encore vérfiées
-    def get(self, cr, uid, context=None):
-        res = super(res_log, self).get(cr, uid, context)
-        to_check_attaches = self.pool.get("ir.attachment").search(cr, uid, [('state','=','to_check'),('res_model','=','open.engagement')])
-        log_ids = self.search(cr, uid, [('user_id', '=',uid),('res_model','=','open.engagement'),('id','in',to_check_attaches)])
-        for log in self.browse(cr, uid, log_ids, context):
-            res.append(0,log)
-        return res
-res_log()"""
     
+ir_attachment()

@@ -94,6 +94,8 @@
 	                	<field name="name"/>
 	                	<field name="date_order"/>
                 	</group>
+                	<field name="user_id"/>
+                	<field name="service_id"/>
 					<newline/>
 					<field name="suppliers_id" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Fournisseurs potentiels" editable="top">

@@ -85,7 +85,8 @@
             <field name="context">{'search_default_my':'1'}</field>
         </record>
 	    
-	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10"/>
+	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10" 
+	        groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user"/>
 	    
 	    <menuitem id="menu_open_achat_stock_stocks" name="Stocks" sequence="1" parent="menu_open_achat_stock"/>
 	    <menuitem id="menu_open_achat_stock_achats" name="Achats" sequence="2" parent="menu_open_achat_stock"/>

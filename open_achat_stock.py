@@ -41,12 +41,17 @@ class purchase_order_ask(osv.osv):
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
         'date_order':fields.date('Date d\'Obtention du Marché', required=True),
+        'user_id':fields.many2one('res.users','Utilisateur Demandeur', readonly=True),
+        'service_id':fields.many2one('openstc.service','Service Demandeur',required=True),
     }
     _defaults={
             'state':'draft',
             'sequence': lambda self, cr, uid, context: self.pool.get("ir.sequence").next_by_code(cr, uid, 'marche.po.number',context),
-            'date_order':lambda self, cr, uid, context: fields.date.context_today(self ,cr ,uid ,context)
+            'date_order':lambda self, cr, uid, context: fields.date.context_today(self ,cr ,uid ,context),
+            'user_id':lambda self, cr, uid, context: uid,
+            'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
     }
+    
     def _check_supplier_selection(self, cr, uid, ids, context=None):
         one_selection = True
         for ask in self.browse(cr, uid, ids):

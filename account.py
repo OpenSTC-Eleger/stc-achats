@@ -45,7 +45,7 @@ class account_invoice_line(osv.osv):
             qte = 0
             for merge_line in line.merge_line_ids:
                 if not merge_line.product_id or merge_line.product_id.id == line.product_id.id:
-                    qte += merge_line.product_qty
+                    qte += merge_line.qty_remaining
                 else:
                     raise osv.except_osv('Erreur','Vous avez associé des lignes de regroupement ne faisait pas référence au produit de la ligne de commande en cours')
             if qte_ref < qte:

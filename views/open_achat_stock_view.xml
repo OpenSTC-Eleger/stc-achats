@@ -72,7 +72,7 @@
 				    <field name="merge_line_ids" on_change="onchange_merge_line_ids(merge_line_ids, product_qty)">
 				    	<tree editable="top">
 				    	    <field name="product_qty"/>
-				    	    <field name="service_id"/>
+				    	    <field name="service_id" required="1"/>
 				    	    <field name="site_id"/>
 				    	</tree> 
 				    </field>
@@ -91,7 +91,7 @@
 				<form string="Demandes de Devis">
                 	<group col="6" colspan="4">
 	                	<field name="sequence"/>
-	                	<field name="name"/>
+	                	<field name="name" required="1"/>
 	                	<field name="date_order"/>
                 	</group>
                 	<field name="user_id"/>
@@ -244,16 +244,16 @@
             <field name="arch" type="xml">
 				<form string="Demande de Fournitures">
 				    <group col="4" colspan="4" string="Informations Générales">
-					    <field name="sequence"/>
-					    <field name="name"/>
-					    <field name="user_id"/>
-						<field name="date_order"/>
+					    <field name="sequence" attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}"/>
+					    <field name="name" attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}"/>
+					    <field name="user_id" attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}"/>
+						<field name="date_order" attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}"/>
 					</group>
 				    <group col="4" colspan="4" string="Choisissez le site OU le service demandeur">
-				    	<field name="service_id"/>
-					    <field name="site_id"/>
+				    	<field name="service_id" attrs="{'readonly':[('state','!=','draft')]}"/>
+					    <field name="site_id" attrs="{'readonly':[('state','!=','draft')]}"/>
 				   	</group>
-				   	<field name="merge_line_ask_id" nolabel="1" colspan="4">
+				   	<field name="merge_line_ask_id" nolabel="1" colspan="4" attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}">
 				   	    <tree string="Votre Besoin" editable="top">
 				   	        <field name="product_id" required="1" domain="[('purchase_ok','=',True)]" context="{'force_product_uom':True}"/>
 				   	        <field name="product_qty"/>
@@ -266,8 +266,7 @@
            			<group col="2" colspan="1">
 	           		    <button name="confirm" string="Confirmer Votre Demande" states="draft"/>
 	           		    <button name="validate" string="Valider Pour Demande en Stock" states="waiting_validation"/>
-	      		    	<button name="in_except" string="Annuler Demande" groups="openstc.openstc_manager,openstc.openstc_dst,openstc.openstc_elu"/>
-	           			<button name="done" string="Fournitures Obtenues (Termine la Demande)" states="to_receive"/>
+	      		    	<button name="in_except" string="Annuler Demande" groups="openstc.openstc_manager,openstc.openstc_dst,openstc.openstc_elu" states='waiting_validation,in_progress'/>
 	           		</group>
            		</form>
            	</field>
@@ -280,11 +279,18 @@
             <field name="arch" type="xml">
 				<tree string="Besoins en Fournitures Exprimés">
 				    <field name="product_id"/>
-				    <field name="product_qty"/>
-				    <field name="dispo"/>
-				    <field name="qty_available"/>
 				    <field name="service_id"/>
 				    <field name="site_id"/>
+				    <field name="product_qty"/>
+				    <field name="qty_delivered"/>
+				    <field name="qty_remaining"/>
+				    <field name="qty_available"/>
+				    <field name="merge_ask_donable"/>
+				    <field name="merge_ask_done"/>
+				    <button name="to_respond" type="object" help="Répondre A ce Besoin Précisément (la qté fournie est limitée au stock disponible)" icon="gtk-go-forward" 
+				    	attrs="{'invisible':[('qty_available','=',0)]}"/>
+					<button name="to_do_purchase" type="object" help="Crée une commande spécifique A ce Besoin" icon="gtk-edit" 
+					    attrs="{'invisible':[('merge_ask_donable','=',True)]}"/>
 				</tree>
             </field>
         </record>
@@ -295,8 +301,8 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Besoins">
-					<filter name="ask_ok" string="Besoins Satisfaisables" domain="[('dispo','=',True)]" help="Besoins où le stock est dispo"/>
-					<filter name="to_purchase" string="Besoins nécessitant une Réappro" domain="[('dispo','=',False)]" help="Besoins nécessitant de réapprovisionner le stock"/>
+					<filter name="ask_ok" string="Besoins Satisfaisables" domain="[('merge_ask_donable','=',True)]" help="Besoins où le stock est dispo"/>
+					<filter name="to_purchase" string="Besoins nécessitant une Réappro" domain="[('merge_ask_donable','=',False)]" help="Besoins nécessitant de réapprovisionner le stock"/>
 				</search>
 			</field>
 		</record>
@@ -313,6 +319,44 @@
 				        <field name="max_total_amount"/>
 				    </group>
 				</xpath>
+			</field>
+        </record>
+        
+	    <record id="openstc_merge_ask_to_respond_form" model="ir.ui.view">
+            <field name="name">openstc.merge.line.ask.respond.wizard.form</field>
+            <field name="model">openstc.merge.line.ask.respond.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<form string="Répondre Aux Besoins">
+				    <label string="Voulez-vous vraiment répondre A ces Besoins ?" colspan="4"/>
+				    <field name="merge_ask_ids" colspan="4" nolabel="1"/>
+				    <newline/>
+				    <button special="cancel" string="Annuler" icon="gtk-cancel"/>
+				    <button name="to_respond" type="object" string="Répondre aux Besoins" icon="gtk-go-forward"/>
+				</form>
+			</field>
+        </record>
+        
+	    <record id="openstc_merge_ask_to_po_form" model="ir.ui.view">
+            <field name="name">openstc.merge.line.ask.po.wizard.form</field>
+            <field name="model">openstc.merge.line.ask.po.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<form string="Réapprovisionner pour répondre A ces Besoins">
+				    <label string="Voulez-vous vraiment lancer une Réappro pour ces Besoins ?" colspan="4"/>
+				    <field name="merge_ask_ids" colspan="4" nolabel="1"/>
+				    <newline/>
+			    	<group col="6" colspan="4">
+				    	<label string="Retour en Arriere." colspan="2"/>
+				    	<label string="Vous pouvez faire un Achat sans marché, c'est A dire que vous devrez passer par une demande de prix." colspan="2"/>
+					    <label string="Vous pouvez faire un Achat avec Marché, vous serez directement dirigé vers un Bon de Commande associé au Marché correspondant aux fournitures désignées." colspan="2"/>
+			    	</group>
+			    	<group col="6" colspan="4">
+					    <button special="cancel" string="Annuler" icon="gtk-cancel"/>
+				    	<button name="to_po_ask" type="object" string="Faire un Achat sans marché" icon="gtk-go-forward"/>
+				    	<button name="to_po" type="object" string="Faire un Achat avec marché" icon="gtk-go-forward"/>
+					</group>
+				</form>
 			</field>
         </record>
 	    

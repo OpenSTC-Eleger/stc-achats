@@ -110,3 +110,72 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
 purchase_order_ask_verif_budget()
     
 
+class openstc_merge_line_ask_respond_wizard(osv.osv_memory):
+    _name = "openstc.merge.line.ask.respond.wizard"
+    _columns = {
+        'merge_ask_ids':fields.many2many('openstc.merge.line.ask', 'merge_ask_line_response_ids','wizard_id','merge_id'),
+        }
+
+    def default_get(self, cr, uid, fields, context=None):
+        ret = {}
+        if 'merge_ask_ids' in context:
+            ret.update({'merge_ask_ids':[(6,0,context['merge_ask_ids'])]})
+        return ret
+
+    def to_respond(self, cr, uid, ids, context):
+        for wizard in self.browse(cr, uid, ids, context):
+            merge_ids = [x.id for x in wizard.merge_ask_ids]
+        return self.pool.get("openstc.merge.line.ask").to_respond(cr, uid, merge_ids, context)
+
+openstc_merge_line_ask_respond_wizard()
+
+
+#TDOO: Gérer les marchés  A Bons de Commandes
+class openstc_merge_line_ask_po_wizard(osv.osv_memory):
+    _name = "openstc.merge.line.ask.po.wizard"
+    _columns = {
+        'merge_ask_ids':fields.many2many('openstc.merge.line.ask', 'merge_ask_line_to_po_ids','wizard_id','merge_id'),
+        #'market':fields.function(_calc_market, 'Marché Dispo pour l\'ensemble de ces Besoins', type='many2one'),
+        }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        ret = {}
+        if 'merge_ask_ids' in context:
+            ret.update({'merge_ask_ids':[(6,0,context['merge_ask_ids'])]})
+        return ret
+    
+    #simply create a new po_ask with prod_lines already set
+    def to_po_ask(self, cr, uid, ids, context=None):
+        prod_merges = {}
+        for wizard in self.browse(cr, uid, ids, context):
+            #merge lines ask
+            for merge in wizard.merge_ask_ids:
+                prod_merges.setdefault(merge.product_id.id,{'merge_line_ids':[],'qte':0.0})
+                prod_merges[merge.product_id.id]['merge_line_ids'].append((4,merge.id))
+                prod_merges[merge.product_id.id]['qte'] += merge.qty_remaining
+            #create ask_lines actions
+            values = []
+            for key, value in prod_merges.items():
+                values_temp = value
+                values_temp.update({'product_id':key})
+                values.append((0,0,values_temp))
+            res_id = self.pool.get("purchase.order.ask").create(cr, uid, {'order_lines':values}, context)
+        return {
+                'type':'ir.actions.act_window',
+                'res_model':'purchase.order.ask',
+                'res_id': res_id,
+                'view_type':'form',
+                'view_mode':'form,tree',
+                'target':'current',
+            }
+    
+    def to_po(self, cr, uid, ids, context=None):
+        #merge lines ask
+        for wizard in self.browse(cr, uid, ids, context):
+            pass
+        #TODO: Check if a market already exist for ALL products of the merges    
+        #create po and po_line according to the market
+        return
+    
+openstc_merge_line_ask_po_wizard()
+

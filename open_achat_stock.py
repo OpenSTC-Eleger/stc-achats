@@ -35,7 +35,7 @@ class purchase_order_ask(osv.osv):
     
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
-        'name':fields.char('Nom',size=64, required=True),
+        'name':fields.char('Nom',size=64),
         'sequence':fields.char('Numéro Marché',size=4, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
@@ -109,7 +109,7 @@ class purchase_order_ask(osv.osv):
         for line in ask.order_lines:
             if line.price_unit <= 0.0:
                 raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
-            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte})    
+            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
         partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
         prod_actions = []
         pol_obj = self.pool.get("purchase.order.line")
@@ -117,7 +117,7 @@ class purchase_order_ask(osv.osv):
             prod_values = pol_obj.onchange_product_id(cr, uid, [], partner_infos['pricelist_id'], prod_ctx['prod_id'], prod_ctx['qte'],
                                                        False, supplier_id, price_unit=prod_ctx['price_unit'],
                                                        date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
-            prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id']})
+            prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id'], 'merge_line_ids':prod_ctx['merge_line_ids']})
             prod_actions.append((0,0,prod_values))
         entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
         if not entrepot_id:
@@ -169,6 +169,7 @@ class purchase_order_ask_line(osv.osv):
         'price_unit':fields.float('Prix Unitaire convenu',digit=(3,2)),
         'description':fields.char('Description',size=256),
         'date_order':fields.date('Date Souhaitée'),
+        'merge_line_ids':fields.one2many('openstc.merge.line.ask', 'po_ask_line_id','Besoins Associés'),
         'state':fields.selection([('draft','Brouillon'),('waiting_pu','Attente PU'),('done','Terminé')], 'Etat',invisible=True)
         }
     
@@ -417,14 +418,13 @@ class openstc_ask_prod(osv.osv):
     _name = "openstc.ask.prod"
     
     _AVAILABLE_STATE_ASK = [('draft','Brouillon'),('confirmed','Confirmé par le Demandeur'),('waiting_validation','En Attente de Validation par les service concernés'),
-                            ('waiting_stock','Attente Réappro Stock'),('waiting_stock_validation','Attente Traitement de la Demande'),('to_receive','Produits A Réceptionner'),
-                            ('done','Terminée'),('in_except','Commande Interrompue')]
+                            ('in_progress','En cours de Traitement'),('done','Terminée'),('in_except','Commande Interrompue')]
     
     _columns = {
         'sequence':fields.char('Numéro de la Demande', size=16, required=True),
         'name':fields.char('Description de la Demande',size=128),
         'user_id':fields.many2one('res.users','Demandeur',required=True),
-        'service_id':fields.many2one('openstc.service','Service Demandeur'),
+        'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
         'site_id':fields.many2one('openstc.site','Site Demandeur'),
         'date_order':fields.date('Date de la Demande', required=True),
         'merge_line_ask_id':fields.one2many('openstc.merge.line.ask','ask_prod_id','Besoins'),
@@ -442,7 +442,14 @@ class openstc_ask_prod(osv.osv):
         #TODO:
         return False
     
-    #TOCHECK: Si une partie de la demande peut etre satisafaite, faisons-nous une livraison partielle ?
+    def all_merge_done(self, cr, uid, ids, context=None):
+        for ask in self.browse(cr, uid, ids, context):
+            for merge in ask.merge_line_ask_id:
+                if not merge.merge_ask_done:
+                    return False
+        return True
+    
+    """#TOCHECK: Si une partie de la demande peut etre satisafaite, faisons-nous une livraison partielle ?
     def check_stock(self, cr, uid, ids, context=None):
         prod_qty = {}
         for ask in self.browse(cr, uid, ids, context):
@@ -466,14 +473,7 @@ class openstc_ask_prod(osv.osv):
                     prod_not_dispo.append(prod_id)
             #On coche les lignes de la demande dont le produit est dispo de suite
             self.write(cr, uid, ids, {'merge_line_ask_id':[(1,x.id,{'dispo':True}) for x in ask.merge_line_ask_id if x.product_id.id not in prod_not_dispo]})
-        return prod_qty and not prod_not_dispo or False
-    
-    def all_in_stock(self, cr, uid, ids, context=None):
-        for ask in self.browse(cr, uid, ids, context):
-            for merge in ask.merge_line_ask_id:
-                if not merge.dispo:
-                    return False
-        return True
+        return prod_qty and not prod_not_dispo or False"""
     
     def create(self, cr, uid, vals, context=None):
         context.update({'service_id':vals['service_id'],'site_id':vals['site_id']})
@@ -505,22 +505,157 @@ openstc_ask_prod()
     
 class openstc_merge_line_ask(osv.osv):
     _name = "openstc.merge.line.ask"
+    
+    def _get_merge_ids(self, cr, uid, ids, context=None):
+        return ids
+    
+    def _get_merge_by_prod_ids(self, cr, uid, ids, context=None):
+        prod_ids = []
+        #get all products concerned by a receive of another merge(s)
+        for merge in self.browse(cr, uid ,ids, context):
+            if merge.product_id and merge.product_id.id not in prod_ids:
+                prod_ids.append(merge.product_id.id) 
+        ret = self.search(cr, uid, [('product_id','in', prod_ids),('ask_prod_id','!=',False),('merge_ask_done','=',False)])
+        return ret 
+    
+    def _calc_merge_ask_donable_done(self, cr, uid, ids,field_name, arg=None, context=None):
+        ret =  {}
+        for merge in self.browse(cr, uid, ids, context):
+            qty_delivered = 0
+            qty_available = merge.product_id.qty_available or 0.0
+            for move in merge.stock_move_ids:
+                #check if move and merge belong to the same product
+                assert move.product_id.id == merge.product_id.id, 'Erreur, les mouvements de stocks associés au besoin ne correspondent pas au meme produit.'
+                if move.state == 'done':
+                    qty_delivered += move.product_qty
+            ret.update({merge.id:{'qty_delivered':qty_delivered, 
+                                  'merge_ask_donable':merge.product_qty - qty_delivered <= qty_available, 
+                                  'merge_ask_done':merge.product_qty == qty_delivered,
+                                  'qty_remaining':merge.product_qty - qty_delivered}})
+        return ret
+    
+    
+    def _get_moved_merge_ids(self, cr, uid, ids, context=None):
+        ret = []
+        for move in self.browse(cr, uid, ids, context):
+            if move.merge_ask_id and not move.merge_ask_id in ret:
+                ret.append(move.merge_ask_id.id)
+        return ret
+    
+    def _get_qty_delivered(self, cr, uid, ids, field_name, args=None, context=None):
+        ret = {}
+        for merge in self.browse(cr, uid, ids, context):
+            qty_delivered = 0
+            for move in merge.stock_move_ids:
+                #check if move and merge belong to the same product
+                assert move.product_id.id == merge.product_id.id, 'Erreur, les mouvements de stocks associés au besoin ne correspondent pas au meme produit.'
+                if move.state == 'done':
+                    qty_delivered += move.product_qty
+            ret.update({merge.id:qty_delivered})
+        return ret
+    
+    #_AVAILABLE_STATE_PO = [('ras','RAS'),('waiting_purchase','Réappro en cours'),('purchase_to_receive','Réappro vous est livrable'),('purchase_receive_done','Livraison Réappro faite')]
+    #_AVAILABLE_STATE_RECEIVE = [('ras','RAS'),('to_partial_receive','Livraison Partielle Possible'),('partial_receive_done','Livraison partielle Faite'),('to_receive','Besoin entiérement Livrable'),('receive_done','Besoin entiérement livré')]
+    
     _columns = {
         'product_id':fields.many2one('product.product','Produit'),
-        'product_qty':fields.integer('Qté Désirée',required=True),
-        'service_id':fields.many2one('openstc.service','Service Bénéficiaire',required=True),
+        'product_qty':fields.float('Qté Désirée',required=True),
+        'service_id':fields.many2one('openstc.service','Service Bénéficiaire'),
         'site_id':fields.many2one('openstc.site','Site Bénéficiaire'),
         'price_unit':fields.float('Prix Unitaire (remplie après facturation)',digit=(4,2)),
         'po_line_id':fields.many2one('purchase.order.line','Ligne Commande associée'),
         'move_line_id':fields.many2one('account.move.line','Move Line Associated'),
         'invoice_line_id':fields.many2one('account.invoice.line','Ligne Achat associée'),
         'ask_prod_id':fields.many2one('openstc.ask.prod','Demande de Fourniture Associée'),
+        'po_ask_line_id':fields.many2one('purchase.order.ask.line', 'Ligne de Devis associée'),
         'dispo':fields.boolean('Disponible en Stock (Calculé A la saisie de la Demande)', readonly=True),
-        'state':fields.related('ask_prod_id','state',type='char', string="Etat Demande Associée"),
+        'stock_move_ids':fields.one2many('stock.move','merge_ask_id','Mouvements de Stock Associés'),
+        #'state_po':fields.selection(_AVAILABLE_STATE_PO, 'Etat de l\'approvisionnement', readonly=True),
+        #'state_receive':fields.selection(_AVAILABLE_STATE_RECEIVE, 'Etat de la Livraison sur Stock', readonly=True),
         'qty_available':fields.related('product_id','qty_available',type='float',string="Qté Dispo En Stock"),
+        'qty_delivered':fields.function(_calc_merge_ask_donable_done, multi='ask_done', type='float', store={'stock.move':(_get_moved_merge_ids, ['merge_ask_id'],10),'openstc.merge.line.ask':(_get_merge_ids,['product_qty','stock_move_ids'],8)}, string='Qté Livrée'),
+        'qty_remaining':fields.function(_calc_merge_ask_donable_done, multi='ask_done', type='float', store={'stock.move':(_get_moved_merge_ids, ['merge_ask_id'],10),'openstc.merge.line.ask':(_get_merge_ids,['product_qty','stock_move_ids'],8)}, string='Qté Restante A Fournir'),
+        'merge_ask_donable':fields.function(_calc_merge_ask_donable_done, multi='ask_done', type='boolean',string='Besoin Satisfaisable', store={'openstc.merge.line.ask':(_get_merge_by_prod_ids,['product_qty','qty_available'],10)}),
+        'merge_ask_done':fields.function(_calc_merge_ask_donable_done, multi='ask_done', type='boolean',string='Besoin Satisfait', store={'stock.move':(_get_moved_merge_ids, ['merge_ask_id'],10),'openstc.merge.line.ask':(lambda self,cr,uid,ids,context={}:ids,['product_qty','stock_move_ids'],10)})
         }
     
     _order = "product_id"
+    
+    """
+    @param ids: merge_ask ids
+    @param vals : list of dicts containing prod_id, qte_to_deliver and merge_ask_id, used to create some stock.move
+    @return: True
+    """
+    #TODO:
+    def create_moves(self, cr, uid, vals, context=None):
+        #create one move per list item
+        prod_obj = self.pool.get("product.product")
+        merge_obj = self.pool.get("openstc.merge.line.ask")
+        move_obj = self.pool.get("stock.move")
+        move_ids = []
+        for item in vals:
+            if ('prod_id' and 'merge_ask_id' and 'qty') in item:
+                merge = merge_obj.browse(cr, uid, item['merge_ask_id'], context)
+                prod = merge.product_id
+                qty_available = prod.qty_available or 0.0
+                #TODO: check if qty_deliver + qty already delivered <= merge.product_qty, otherwise raise an exception 
+                assert item['qty'] <= qty_available, 'Erreur, Vous essayez de livrer une quantité de fourniture supérieure au stock disponible.'
+                #move creation
+                values = move_obj.onchange_product_id(cr, uid, [], prod_id=item['prod_id'])['value']
+                values.update({'product_id':prod.id,'product_qty':item['qty']})
+                move_id = move_obj.create(cr, uid, values, context=context)
+                #force validation of stock move
+                move_obj.action_done(cr, uid, [move_id], context)
+                wf_service = netsvc.LocalService('workflow')
+                wf_service.trg_write(uid, 'stock.move', move_id, cr)
+                move_obj.write(cr, uid, [move_id], {'merge_ask_id':merge.id}, context=context)
+        return True
+    
+    def create_po(self, cr, uid, ids, context=None):
+        return
+    
+    # if multiple ids: generates stock_move, if qty_available < qte desired moves only qty_available, qte desired otherwise 
+    def to_respond(self, cr, uid, ids, context=None): 
+        multiple_ids = len(ids) >1
+        prod_qty_deliver = {}
+        values = []
+        ask_ids = []
+        for merge in self.browse(cr, uid, ids, context):
+            qty_available = merge.product_id.qty_available or 0.0
+            #TODO: we can filter with qty_virtual_available to know if some prods are planned to be received                
+            if qty_available == 0.0: 
+                raise osv.except_osv('Erreur', 'Vous ne pouvez pas répondre A ce besoin car la quantité en stock de cette fourniture est nul, procédez A une Réappro ou attendez q\'une Réappro soit faite')
+            #qty needed to response to the ask, we could have already done a partial delivering 
+            qty_to_deliver = merge.product_qty - merge.qty_delivered
+            #if user selected more than one ask, raise an exception if qty total desired of a product < qty_available of this product
+            if multiple_ids:
+                if merge.product_id.id in prod_qty_deliver:
+                    prod_qty_deliver[merge.product_id.id] += qty_to_deliver
+                else:
+                    prod_qty_deliver.update({merge.product_id.id:qty_to_deliver})
+                if prod_qty_deliver[merge.product_id.id] > qty_available:
+                    raise osv.except_osv('Erreur','Les stocks du produit %s sont insuffisants pour répondre A une partie des besoins que vous avez sélectionnés.' %(merge.product_id.name))
+            #if user selected only one ask and qty_available < qty needed to terminate the ask, we do a partial delivering
+            else:
+                qty_to_deliver = min(qty_available, qty_to_deliver)
+            values.append({'prod_id':merge.product_id.id,'merge_ask_id':merge.id,'qty':qty_to_deliver})
+            #get ask_prod relying to those merge lines
+            if merge.ask_prod_id and merge.ask_prod_id.id not in ask_ids:
+                ask_ids.append(merge.ask_prod_id.id)
+        if values:
+            self.create_moves(cr, uid, values, context)    
+        res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','openstc_merge_line_ask_view', context)
+        wf_service = netsvc.LocalService('workflow')
+        for ask_id in ask_ids:
+            wf_service.trg_validate(uid, 'openstc.ask.prod', ask_id, 'done', cr)
+        return res_action
+
+    #Action de Lancer une Réappro selon un Besoin
+    #Note: ce sera aussi cette méthode qui sera appelée avec l'action liée A l'ir.value
+    def to_do_purchase(self, cr, uid, ids, context=None):
+        for merge in self.browse(cr, uid, ids, context):
+            pass
+        return
 
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in context or 'site_id' in context:    
@@ -556,6 +691,15 @@ class stock_picking(osv.osv):
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()
+
+class stock_move(osv.osv):
+    _inherit = "stock.move"
+    _name = "stock.move"
+    _columns = {
+            'merge_ask_id':fields.many2one('openstc.merge.line.ask','Besoin Associé'),
+        }
+    
+stock_move()
 
 class res_users(osv.osv):
     _inherit = "res.users"
@@ -681,5 +825,23 @@ class ir_attachment(osv.osv):
                 'type':'ir.actions.act_window'
                 }
     
-    
 ir_attachment()
+
+"""class email_template(osv.osv):
+    _inherit = "email.template"
+    _name = "email.template"
+    _columns = {
+        }
+    
+    def generate_email(self, cr, uid, template_id, res_id, context=None):
+        ret = super(email_template, self).generate_email(cr, uid, template_id, res_id, context)
+        if 'headers' in ret and isinstance(ret['headers'], dict):
+            ret['headers'].update({'Disposition-Notification-To':ret['email_from']})
+        else:
+            ret.update({'headers':{'Disposition-Notification-To':ret['email_from']}})
+        return ret
+        
+email_template()"""
+    
+    
+

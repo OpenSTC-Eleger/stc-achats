@@ -735,6 +735,7 @@ class ir_attachment(osv.osv):
          'action_date':fields.datetime('Date de la derniere action', readonly=True),
          'engage_done':fields.boolean('Engagement Clos',readonly=True),
          'attach_made_done':fields.boolean('Cette Facture Clos l\'engagement', readonly=True),
+         'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]})
         }
     
     _defaults = {
@@ -774,6 +775,17 @@ class ir_attachment(osv.osv):
                 'target':'current',
                 'res_id':attach.res_id,
                 'type':'ir.actions.act_window'
+                }
+    
+    def action_refuse_invoice_to_pay(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        return {'type':'ir.actions.act_window',
+                'res_model':'openstc.open.engage.refuse.inv.wizard',
+                'view_mode':'form',
+                'view_type':'form',
+                'target':'new',
+                'context':{'attach_id':ids}
                 }
     
     def refuse_invoice_to_pay(self, cr, uid, ids, context=None):

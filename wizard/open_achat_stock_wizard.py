@@ -110,6 +110,26 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
 purchase_order_ask_verif_budget()
     
 
+class openstc_open_engage_refuse_inv_wizard(osv.osv_memory):
+    _name = "openstc.open.engage.refuse.inv.wizard"
+    _columns = {
+        'justif_refuse':fields.text('Justificatif du Refus de paiement de la facture',required=True),
+        }
+
+    def to_refuse(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        wizard = self.browse(cr, uid, ids, context)
+        if 'attach_id' in context:
+            attach = self.pool.get("ir.attachment").browse(cr, uid, context['attach_id'], context)
+            #On indique le msg que devra afficher le mail
+            self.pool.get("open.engagement").write(cr, uid, attach.res_id, {'justificatif_refus':wizard.justif_refuse}, context=context)
+        self.pool.get("ir.attachment").write(cr, uid, attach.id, {'justif_refuse':wizard.justif_refuse}, context=context)
+        return self.pool.get("ir.attachment").refuse_invoice_to_pay(cr, uid, attach.id, context)
+
+openstc_open_engage_refuse_inv_wizard()
+
+
 class openstc_merge_line_ask_respond_wizard(osv.osv_memory):
     _name = "openstc.merge.line.ask.respond.wizard"
     _columns = {

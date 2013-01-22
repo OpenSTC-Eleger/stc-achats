@@ -300,7 +300,7 @@ class purchase_order(osv.osv):
                 res_id = po.engage_id.id
             return {
                 'type':'ir.actions.act_window',
-                'target':'new',
+                'target':'current',
                 'res_model':'open.engagement',
                 'view_mode':'form',
                 'res_id':res_id

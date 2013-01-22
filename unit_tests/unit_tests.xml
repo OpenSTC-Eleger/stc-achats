@@ -5,4 +5,10 @@
 		    <value eval="[26]"/>
 		</function>
 	</data>
+	
+	<data noupdate="1">
+	    <function model="product.pricelist" name="price_get">
+	        <value eval=""/>
+	    </function>
+	</data>
 </openerp>

@@ -44,15 +44,15 @@
 		<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
-		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement {object.name or 'inconnu'}.</p>
-		    
+		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement {object.name or 'inconnu'}, pour la raison suivante : </p>
+		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
 		<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
-		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}.
-		    
+		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}, pour les raisons suivantes :
+		    ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}
 		    Vous pouvez voir cette facture en piéce jointe A ce mail.
 		    ]]></field>
     </record>

@@ -190,7 +190,7 @@
 	            		    <field name="engage_done"/>
 	            		    <field name="attach_made_done"/>
 	            		    <button name="send_invoice_to_pay" type="object" icon="gtk-go-forward" help="Valide et Envoie la Facture au service compta pour paiement" states="to_check,except_send_mail"/>
-	            			<button name="refuse_invoice_to_pay" type="object" icon="gtk-cancel" help="Refuser la facture pour paiement, vous allez saisir un bref justificatif" states="to_check,except_send_mail"/>
+	            			<button name="action_refuse_invoice_to_pay" type="object" icon="gtk-cancel" help="Refuser la facture pour paiement, vous allez saisir un bref justificatif" states="to_check,except_send_mail"/>
 	            			<button name="engage_complete" type="object" icon="gtk-ok" help="Indiquer que la commande est entiérement soldée, cela clos l'engagement" attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"/>
 	            			<button name="dummy" icon="gtk-help" help="Ceci indique que c'est cette facture qui A permis de clore l'engagement" attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}"/>
 	            		</tree>
@@ -202,7 +202,7 @@
 						<!-- <button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/> -->
 						<!-- <button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/> -->	
 						<!-- <button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/> -->
-						<button name="engage_done" type="object" string="test"/>
+						<!-- <button name="engage_done" type="object" string="test"/> -->
 					</group>
 				</form>
             </field>
@@ -360,5 +360,33 @@
 			</field>
         </record>
 	    
+	     <record id="openstc_open_engage_refuse_inv_wizard" model="ir.ui.view">
+            <field name="name">openstc.open.engage.refuse.inv.wizard.form</field>
+            <field name="model">openstc.open.engage.refuse.inv.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<form string="Réapprovisionner pour répondre A ces Besoins">
+				    <label string="Veuillez Saisir la raison de votre refus pour le paiement de la facture sélectionnée" colspan="4"/>
+				    <field name="justif_refuse" colspan="4" nolabel="1"/>
+				    <button special="cancel" string="Anuler" icon="gtk-cancel"/>
+				    <button name="to_refuse" type="object" string="Valider" icon="gtk-go-forward"/>
+				</form>
+			</field>
+        </record>
+        <record id="openstc_ir_attachment_inherit_form" model="ir.ui.view">
+            <field name="name">ir.attachment.inherit.form</field>
+            <field name="model">ir.attachment</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_attachment_form"/>
+            <field name="arch" type="xml">
+			    <group col="2" groups="base.group_extended" position="after">
+	   				<group col="1" colspan="4" attrs="{'invisible':[('state','&lt;&gt;','refused')]}">
+	   				    <field name="state" invisible="1"/>
+	   				    <separator string="Justificatif de l'acheteur de son Refus pour Paiement"/>
+	   				    <field name="justif_refuse" nolabel="1"/>
+	   				</group>
+	   			</group>
+	   		</field>
+	   	</record>
 	</data>
 </openerp>

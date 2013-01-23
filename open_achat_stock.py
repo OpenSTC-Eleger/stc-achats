@@ -250,6 +250,7 @@ class open_engagement(osv.osv):
                 ret[engage_to_po[r[1]]].append(r[0])
         return ret
     
+    
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
                                ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement Bon Pour Paiement'),
                                ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
@@ -265,12 +266,15 @@ class open_engagement(osv.osv):
         'account_invoice_id':fields.many2one('account.invoice','Facture (OpenERP) associée'),
         'check_dst':fields.boolean('Signature DST'),
         #'date_invoice_received':fields.date('Date Réception Facture'),
+        'date_engage_validated':fields.date('Date de Validation du Bon d\'Engagement', readonly=True),
         'date_engage_done':fields.datetime('Date de Cloture de l\'engagement',readonly=True),
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
         'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
         'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
-        'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints')
+        'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints'),
+        'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
+        'supplier_id':fields.related('purchase_order_id','partner_id', string='Fournisseur', type='many2one', relation='res.partner'),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
@@ -305,17 +309,36 @@ class open_engagement(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         po_ids = [x.purchase_order_id.id for x in self.browse(cr, uid, ids, context)]
-        self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context)
+        #écriture des numéros d'engagement, un numéro par compte Analytique (et non par ligne d'achat)
+        if not context:
+            context = {}
+        engage_obj = self.pool.get("open.engagement")
+        #line_obj = self.pool.get("purchase.order.line")
+        engage_line_obj = self.pool.get("open.engagement.line")
+        account_amount = {}
+        for engage in self.browse(cr, uid, ids, context):
+            po = engage.purchase_order_id
+            for line in po.order_line:
+                #On vérifie si le compte Analytique est associé A un service technique
+                if not line.account_analytic_id.service_id:
+                    #On regroupe les montants par budget analytique
+                    #TODO: Utiliser name_get si name ne rencoit pas le nom complet (cad avec le nom des comptes parents)
+                    raise osv.except_osv('Erreur','Le compte Analytique %s n\'est associé A aucun service technique.' % line.account_analytic_id.name)
+                account_amount.setdefault(line.account_analytic_id.id,{'line_id':[],'service_id':0})
+                account_amount[line.account_analytic_id.id]['line_id'].append(line.id)
+                account_amount[line.account_analytic_id.id]['service_id'] = line.account_analytic_id.service_id.id
+            engage_line = []
+            #On crée les numéros d'engagements associés
+            for key, value in account_amount.items():
+                context.update({'service_id':value['service_id']})
+                #line_obj.write(cr, uid, value['line_id'], {'num_engage':engage_obj._custom_sequence(cr, uid, context)}, context=context)
+                engage_line.append(engage_line_obj.create(cr, uid, {'order_line':[(4,x) for x in value['line_id']]}, context=context))
+            #puis on associe les engage.lines crées A l'engagement en cours
+            self.write(cr, uid, [engage.id], {'engage_lines':[(4,x) for x in engage_line], 'date_engage_validated':fields.date.context_today(self, cr, uid, context)}, context=context)
+            self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context=context)
         return True
     
     def validate_po_invoice(self, cr, uid, ids,context=None):
-        #Si il y a au moins une pièce jointe, on considère que la facture en fait partie (en principe, seule la facture doit y être ajoutée
-        """if isinstance(ids, list):
-            ids = ids[0]
-        count = 0
-        count_attachments = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',ids),('res_model','=',self._name)], count=True)
-        if not count_attachments:
-            raise osv.except_osv('Erreur','Vous n\'avez pas joint la facture reçue par votre founisseur.')"""
         wf_service = netsvc.LocalService('workflow')
         if not isinstance(ids, list):
             ids = [ids]
@@ -413,6 +436,51 @@ class open_engagement(osv.osv):
         return super(open_engagement, self).unlink(cr, uid, ids, context)
     
 open_engagement()
+    
+class open_engagement_line(osv.osv):
+    
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+        for group in user.groups_id:
+            if prog.search(group.name):
+                if isinstance(user.service_ids, list) and not service:
+                    service = user.service_ids[0]
+                else:
+                    service = self.pool.get("openstc.service").browse(cr, uid, service)
+                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+                
+        return seq
+    
+    def _calc_amount(self, cr, uid, ids, field_name, arg=None, context=None):
+        ret = {}
+        for line in self.browse(cr, uid, ids, context):
+            for po_line in line.order_line:
+                ret.setdefault(line.id,0.0)
+                ret[line.id] += po_line.price_subtotal
+        return ret
+    
+    _name = "open.engagement.line"
+    _columns = {
+        'name':fields.char('Numéro d\'Engagement',size=32, required=True),
+        'order_line':fields.one2many('purchase.order.line','engage_line_id',string='Lignes d\'achats associées'),
+        'amount':fields.function(_calc_amount,type='float',string='Montant de l\'Engagement'),
+        'account_analytic_id':fields.related('order_line','account_analytic_id',string='Ligne Budgétaire Engagée', type='many2one', relation="account.analytic.account"),
+        'engage_id':fields.many2one('open.engagement','Engagement Associé'),
+        }
+    
+    _defaults = {
+        'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
+        }
+    
+open_engagement_line()
     
 class openstc_ask_prod(osv.osv):
     _name = "openstc.ask.prod"
@@ -741,11 +809,16 @@ class ir_attachment(osv.osv):
     _defaults = {
         'state':'not_invoice',
         }
-    #Override of create method to force state attach at 'RAS' if not linked with an engage (restrict access to button action)
+    #Override to put an attach as a pdf invoice if it responds to the pattern 
     def create(self, cr, uid, vals, context=None):
         attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
         attach = self.browse(cr, uid, attach_id, context)
-        if attach.res_model == 'open.engagement':
+        is_invoice = False
+        #invoice : F-yyyy-MM-dd-001
+        prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
+        #if attach.res_model == 'open.engagement':
+        is_invoice = prog.search(attach.datas_fname)
+        if is_invoice:
             self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
             engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)

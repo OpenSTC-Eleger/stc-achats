@@ -47,10 +47,11 @@
 		                <field name="account_analytic_id"/>
 		                <field name="budget_dispo_info"/>
 		                <field name="dispo"/>
+		                <field name="engage_line_id"/>
 		            </tree>
                 </tree>
                 <field name="name" position="after">
-                	<field name="description"/>
+                	<field name="description" required="1"/>
                     <newline/>
                 </field>
                 
@@ -159,16 +160,27 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
 				<form string="Bon d'Engagement">
-					<group col="4" colspan="4">
-				    	<field name="name"/>
-						<field name="description"/>
-						<field name="user_id"/>
-		            	<field name="service_id"/>
-		            	<field name="purchase_order_id"/>
-		        		<field name="account_invoice_id"/>
-						<field name="date_engage_done"/>
-						<field name="state"/>
-					</group>
+					<group col="6" colspan="4">
+						<group col="2" colspan="2" string="Infos Générales">
+					    	<field name="name"/>
+							<field name="description"/>
+							<field name="user_id"/>
+			            	<field name="service_id"/>
+			            	<field name="purchase_order_id"/>
+			        		<field name="account_invoice_id" invisible="1"/>
+							<field name="date_engage_done"/>
+							<field name="date_engage_validated"/>
+						</group>
+						<group col="2" colspan="4" string="Numéros d'Engagements">
+							<field name="engage_lines" nolabel="1" colspan="2">
+								<tree>
+								    <field name="name"/>
+								    <field name="amount"/>
+								    <field name="account_analytic_id"/>
+								</tree>
+							</field>
+					    </group>
+				    </group>
 					<group col="2" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
 	            	    <separator string="Signatures du DST et d'un Elu" colspan="2"/>
 	            	    <group col="4" colspan="2">
@@ -204,6 +216,7 @@
 						<!-- <button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/> -->
 						<!-- <button name="engage_done" type="object" string="test"/> -->
 					</group>
+					<field name="state" widget="statusbar" statusbar_visible="draft,to_validate,waiting_reception,engage_to_terminate,done"/>
 				</form>
             </field>
         </record>
@@ -219,7 +232,10 @@
 					<filter name="to_pay" string="Reste A Payer" domain="[('state','=','engage_to_terminate')]" help="Engagements dont la facture est a payer"/>
 					<filter name="done" string="Clos" domain="[('state','=','done')]" help="Engagement Clos (facture payée et et réception produits / prestation complet et validé)"/>
 					<filter name="except" string="Litigieux" domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement"/>
-				</search>
+					<field name="name" string="Bon d'Engagement" filter_domain="[('name','ilike',self)]"/>
+					<field name="service_id" string="Service concerné" filter_domain="[('service_id','=',self)]" widget="selection"/>
+					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]" filter_domain="[('supplier_id','=',self)]" widget="selection"/>
+			    </search>
 			</field>
 		</record>
 	    

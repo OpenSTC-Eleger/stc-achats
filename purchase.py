@@ -26,6 +26,7 @@ from osv import osv, fields
 from datetime import datetime
 import re
 import netsvc
+import unicodedata
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -48,12 +49,14 @@ class purchase_order_line(osv.osv):
         'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
         'tx_erosion': fields.float('Taux Erosion de votre Service', digits=(2,2)),
         'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible', digits=(6,2), readonly=True),
-        'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service', type="float", digits=(2,2), readonly=True),
+        'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service (%)', type="float", digits=(2,2), readonly=True),
         'dispo':fields.boolean('Budget OK',readonly=True),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Regroupement des Besoins'),
         'in_stock':fields.float('Qté qui sera Stockée', digits=(3,2)),
         'in_stock_info':fields.related('in_stock',type='float', digits=(3,2), string='Qté qui sera Stockée', readonly=True),
+        'engage_line_id':fields.many2one('open.engagement.line', 'Numéro d\'Engagement')
         }
+    
     
     _defaults = {
         'dispo': False,
@@ -152,6 +155,27 @@ purchase_order_line()
 #Vérif dispo budget, sinon blocage
 #Vérif validation achat par DST + Elu si > 300 euros (EDIT: voir modifs ALAMICHEL dans son mail)
 class purchase_order(osv.osv):
+    
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'openstc.purchase.order',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+        for group in user.groups_id:
+            if prog.search(group.name):
+                if isinstance(user.service_ids, list) and not service:
+                    service = user.service_ids[0]
+                else:
+                    service = self.pool.get("openstc.service").browse(cr, uid, service)
+                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+                
+        return seq
+    
     AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Engagement A Vérifier'),
                                   ('done','Bon de Commande Validable')]
     _inherit = 'purchase.order'
@@ -169,6 +193,7 @@ class purchase_order(osv.osv):
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
+        'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context)
         }
     
     """def default_get(self, cr, uid, args, context=None):

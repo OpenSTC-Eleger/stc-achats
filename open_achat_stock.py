@@ -258,7 +258,7 @@ class open_engagement(osv.osv):
     _name="open.engagement"
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
-        'name':fields.char('Numéro Engagement', size=16, required=True),
+        'name':fields.char('Numéro Bon  d\'Engagement', size=16, required=True),
         'description':fields.related('purchase_order_id', 'description', string='Objet de l\'achat', type="char"),
         'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
         'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
@@ -275,7 +275,7 @@ class open_engagement(osv.osv):
         'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints'),
         'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
         'supplier_id':fields.related('purchase_order_id','partner_id', string='Fournisseur', type='many2one', relation='res.partner'),
-        'justif_check':fields.text('Justification de la décision',state={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],
+        'justif_check':fields.text('Justification de la décision de l\'Elu',state={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],
                                                                          'readonly':[('check_dst','=',True)]}),
         'procuration_dst':fields.boolean('Procuration DST ?',readonly=True),
         }

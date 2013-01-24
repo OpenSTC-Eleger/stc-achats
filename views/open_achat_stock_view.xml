@@ -169,7 +169,6 @@
 			            	<field name="purchase_order_id"/>
 			        		<field name="account_invoice_id" invisible="1"/>
 							<field name="date_engage_done"/>
-							<field name="date_engage_validated"/>
 						</group>
 						<group col="2" colspan="4" string="Numéros d'Engagements">
 							<field name="engage_lines" nolabel="1" colspan="2">
@@ -179,19 +178,15 @@
 								    <field name="account_analytic_id"/>
 								</tree>
 							</field>
+							<field name="date_engage_validated" colspan="2"/>
 					    </group>
 				    </group>
-	            	<group col="2" colspan="2">
-	            	    <field name="reception_ok"/>
-	            	    <field name="invoice_ok" invisible="1"/>
-	            	</group>
-					<group col="4" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
+	            	<field name="invoice_ok" invisible="1"/>
+					<group col="4" colspan="4" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
 	            	    <separator string="Signatures du DST et d'un Elu" colspan="4"/>
 	            	    <group col="4" colspan="2">
 		            		<field name="check_dst" colspan="2"/>
 		            		<field name="procuration_dst" colspan="2"/>
-		            		<!-- TODO: Rajouter le champs procuration_dst dans l'affichage ou non des bouttons qui suivent -->
-		            		<!-- TODO: Voir s'il ne faudrait pas mettre les memes noms de boutons pour procuration DST que pour Elu  -->
 		            		<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
 							<button name="signal_except_check" string="Refuser Par Procuration" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>
 						</group>
@@ -201,8 +196,12 @@
 							<button name="procuration_dst" string="Déléguer Signature au DST" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
 						</group>
 	            	</group>
-	            	<field name="justif_check" colspan="4"/>
-	            	<field name="attach_ids" nolabel="1" colspan="4">
+	            	<group col="2" colspan="1">
+		            	<field name="reception_ok"/>
+		            	<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
+	            	</group>
+	            	<field name="justif_check" colspan="3"/>
+            	    <field name="attach_ids" nolabel="1" colspan="4">
 	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
 	            		    <field name="datas_fname"/>
 	            		    <field name="create_uid"/>
@@ -219,12 +218,7 @@
 	            	</field>
 	            	<field name="justificatif_refus" attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}"/>
 	            	<group col="6" colspan="1">
-						<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
-						<button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/>
-						<!-- <button name="terminate_engage" type="object" string="Clore Engagement (Si Facture payée)" states = "engage_to_terminate"/> -->
-						<!-- <button name="signal_to_terminate" string="Valider pour paiement" states = "waiting_invoice_validated"/> -->	
-						<!-- <button name="signal_to_except_invoice" string="Refus pour Paiement" states = "waiting_invoice_validated"/> -->
-						<!-- <button name="engage_done" type="object" string="test"/> -->
+						<!-- <button name="real_invoice_attached" type="object" string="Facture Fournisseur Jointe" states = "waiting_invoice"/> -->
 					</group>
 					<field name="state" widget="statusbar" statusbar_visible="draft,to_validate,waiting_reception,engage_to_terminate,done"/>
 				</form>

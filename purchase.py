@@ -48,7 +48,7 @@ class purchase_order_line(osv.osv):
         #'analytic_account_id':fields.selection(_sel_account_user,'Compte associé à l\'achat'),
         'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
         'tx_erosion': fields.float('Taux Erosion de votre Service', digits=(2,2)),
-        'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible', digits=(6,2), readonly=True),
+        'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible (Euros)', digits=(6,2), readonly=True),
         'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service (%)', type="float", digits=(2,2), readonly=True),
         'dispo':fields.boolean('Budget OK',readonly=True),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Regroupement des Besoins'),

@@ -181,17 +181,27 @@
 							</field>
 					    </group>
 				    </group>
-					<group col="2" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
-	            	    <separator string="Signatures du DST et d'un Elu" colspan="2"/>
-	            	    <group col="4" colspan="2">
-		            		<field name="check_dst"/>
-		            		<button name="check_elu" string="Signature Elu" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
-						</group>
-	            	</group>
 	            	<group col="2" colspan="2">
 	            	    <field name="reception_ok"/>
 	            	    <field name="invoice_ok" invisible="1"/>
 	            	</group>
+					<group col="4" colspan="2" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
+	            	    <separator string="Signatures du DST et d'un Elu" colspan="4"/>
+	            	    <group col="4" colspan="2">
+		            		<field name="check_dst" colspan="2"/>
+		            		<field name="procuration_dst" colspan="2"/>
+		            		<!-- TODO: Rajouter le champs procuration_dst dans l'affichage ou non des bouttons qui suivent -->
+		            		<!-- TODO: Voir s'il ne faudrait pas mettre les memes noms de boutons pour procuration DST que pour Elu  -->
+		            		<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
+							<button name="signal_except_check" string="Refuser Par Procuration" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>
+						</group>
+						<group col="2" colspan="2">
+						    <button name="%(open_engage_check_elu_wizard)d" string="Valider l'Engagement (Signature)" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+							<button name="signal_except_check" string="Refuser l'Engagement" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+							<button name="procuration_dst" string="Déléguer Signature au DST" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+						</group>
+	            	</group>
+	            	<field name="justif_check" colspan="4"/>
 	            	<field name="attach_ids" nolabel="1" colspan="4">
 	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
 	            		    <field name="datas_fname"/>
@@ -376,12 +386,12 @@
 			</field>
         </record>
 	    
-	     <record id="openstc_open_engage_refuse_inv_wizard" model="ir.ui.view">
+	    <record id="openstc_open_engage_refuse_inv_wizard" model="ir.ui.view">
             <field name="name">openstc.open.engage.refuse.inv.wizard.form</field>
             <field name="model">openstc.open.engage.refuse.inv.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-				<form string="Réapprovisionner pour répondre A ces Besoins">
+				<form>
 				    <label string="Veuillez Saisir la raison de votre refus pour le paiement de la facture sélectionnée" colspan="4"/>
 				    <field name="justif_refuse" colspan="4" nolabel="1"/>
 				    <button special="cancel" string="Anuler" icon="gtk-cancel"/>
@@ -389,6 +399,24 @@
 				</form>
 			</field>
         </record>
+        
+
+	    <record id="openstc_open_engage_check_elu_wizard" model="ir.ui.view">
+            <field name="name">open.engagement.check.elu.wizard.form</field>
+            <field name="model">open.engagement.check.elu.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+				<form string="Donner une note explicative pour votre Autorisation">
+				    <label string="Veuillez Saisir la raison de votre autorisation du Bon d'Engagement" colspan="4"/>
+				    <field name="justif_check" colspan="4" nolabel="1"/>
+				    <button special="cancel" string="Anuler" icon="gtk-cancel"/>
+				    <button name="check_elu" type="object" string="Valider" icon="gtk-go-forward"/>
+				</form>
+			</field>
+		</record>
+        
+	     
+	     
         <record id="openstc_ir_attachment_inherit_form" model="ir.ui.view">
             <field name="name">ir.attachment.inherit.form</field>
             <field name="model">ir.attachment</field>

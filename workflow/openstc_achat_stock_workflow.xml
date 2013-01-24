@@ -78,6 +78,15 @@
             <field name="flow_stop" eval="True"/>
         </record>
         
+        <record id="wkf_open_engage_except_check" model="workflow.activity">
+            <field name="name">Engagement Refusé par DST ou Elu</field>
+            <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'except_check'})</field>
+            <field name="flow_stop" eval="True"/>
+        </record>
+        
+        
        <!-- 
                                Transitions Engagement
         -->
@@ -98,6 +107,12 @@
             <field name="act_from" ref="wkf_open_engage_to_validate"/>
             <field name="act_to" ref="wkf_open_engage_validate_po_and_invoice"/>
         	<field name="condition">check_achat()</field>
+        </record>
+		
+        <record id="wkf_ask_trans_to_validate_except_check" model="workflow.transition">
+            <field name="act_from" ref="wkf_open_engage_to_validate"/>
+            <field name="act_to" ref="wkf_open_engage_except_check"/>
+        	<field name="signal">signal_except_check</field>
         </record>
 		
         <record id="wkf_ask_trans_validate_po_invoice_waiting_reception" model="workflow.transition">

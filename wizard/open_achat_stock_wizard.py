@@ -199,3 +199,23 @@ class openstc_merge_line_ask_po_wizard(osv.osv_memory):
     
 openstc_merge_line_ask_po_wizard()
 
+
+class open_engagement_check_elu_wizard(osv.osv_memory):
+    _name = "open.engagement.check.elu.wizard"
+    _columns = {
+        'justif_check':fields.text('Justification de l\'Autorisation', required=True),
+        }
+    
+    def check_elu(self, cr, uid ,ids, context=None):
+        if 'engage_id' in context:
+            if isinstance(ids, list):
+                ids = ids[0]
+            wizard = self.browse(cr, uid, ids, context)
+            self.pool.get("open.engagement").write(cr, uid, context['engage_id'], {'justif_check':wizard.justif_check})
+            return self.pool.get("open.engagement").check_elu(cr, uid, [context['engage_id']], context)
+
+        return False    
+    
+open_engagement_check_elu_wizard()
+    
+

@@ -254,7 +254,7 @@ class open_engagement(osv.osv):
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
                                ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement Bon Pour Paiement'),
                                ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
-                               ('done','Clos')]
+                               ('done','Clos'),('except_check','Engagement Refusé')]
     _name="open.engagement"
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
@@ -275,11 +275,15 @@ class open_engagement(osv.osv):
         'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints'),
         'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
         'supplier_id':fields.related('purchase_order_id','partner_id', string='Fournisseur', type='many2one', relation='res.partner'),
+        'justif_check':fields.text('Justification de la décision',state={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],
+                                                                         'readonly':[('check_dst','=',True)]}),
+        'procuration_dst':fields.boolean('Procuration DST ?',readonly=True),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
             'state':'draft',
             'user_id':lambda self,cr,uid,context:uid,
+            'procuration_dst': lambda *a: 0,
             }
     
     def check_achat(self, cr, uid, ids, context=None):
@@ -294,10 +298,29 @@ class open_engagement(osv.osv):
             if not engage.check_dst:
                 raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
             po_ids.append(engage.purchase_order_id.id)
-            self.pool.get("purchase.order").write(cr, uid, po_ids, {'validation':'done'})
+            self.pool.get("purchase.order").write(cr, uid, [engage.purchase_order_id.id], {'validation':'done'})
             wf_service = netsvc.LocalService('workflow')
             wf_service.trg_validate(uid, 'open.engagement', engage.id, 'signal_validated', cr)
-        return
+        return {
+            'type':'ir.actions.act_window',
+            'res_model':'open.engagement',
+            'res_id':ids[0],
+            'view_mode':'form',
+            'view_type':'form',
+            'target':'current',
+            }
+    
+    def procuration_dst(self,cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'procuration_dst':True}, context=context)
+        #TODO: faire un res.log au DST
+        return {
+            'type':'ir.actions.act_window',
+            'res_model':'open.engagement',
+            'res_id':ids[0],
+            'view_mode':'form',
+            'view_type':'form',
+            'target':'current',
+            }
     
     def link_engage_po(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state':'to_validate'}, context)
@@ -647,7 +670,7 @@ class openstc_merge_line_ask(osv.osv):
         'merge_ask_done':fields.function(_calc_merge_ask_donable_done, multi='ask_done', type='boolean',string='Besoin Satisfait', store={'stock.move':(_get_moved_merge_ids, ['merge_ask_id'],10),'openstc.merge.line.ask':(lambda self,cr,uid,ids,context={}:ids,['product_qty','stock_move_ids'],10)})
         }
     
-    _order = "product_id"
+    _order = "product_id,service_id,site_id"
     
     """
     @param ids: merge_ask ids

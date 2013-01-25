@@ -134,6 +134,15 @@
             <field name="target">new</field>
         </record>
 	    
+	    <record id="openstc_report_service_site_cost_wizard" model="ir.actions.act_window">
+            <field name="name">Rapport des Coûts des Sites et Services</field>
+            <field name="res_model">openstc.report.service.site.cost.wizard</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+	    
 	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10" 
 	        groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user"/>
 	    
@@ -169,6 +178,8 @@
 		
 	    <menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
 	        sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view"/>
+	    <menuitem id="menu_openstc_report_service_site_cost"
+	        sequence="2" parent="menu_open_achat_stock_budgets" action="openstc_report_service_site_cost_wizard"/>
 	    
 	    <menuitem id="menu_open_achat_stock_achat_logs"
 	        sequence="1" parent="menu_open_achat_stock_logs" action="openstc_achat_stock_action_view_logs"/>

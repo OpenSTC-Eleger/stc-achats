@@ -72,5 +72,4 @@
 "acess_account_budget_post_compta","account_budget_post compta","account_budget.model_account_budget_post","account.group_account_user","1","1","1","1"
 "acess_account_budget_post_manager","account_budget_post manager","account_budget.model_account_budget_post","openstc.openstc_manager","1","1","1","1"
 
-
-
+"acess_ir_attachment_compta","ir_attachment compta","base.model_ir_attachment","account.group_account_user","1","1","1","0"

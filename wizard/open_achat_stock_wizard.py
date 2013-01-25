@@ -217,5 +217,16 @@ class open_engagement_check_elu_wizard(osv.osv_memory):
         return False    
     
 open_engagement_check_elu_wizard()
+
+class openstc_report_service_site_cost(osv.osv):
+    _name = "openstc.report.service.site.cost.wizard"
+    _columns = {
+        }
+    
+    def print_report(self, cr, uid, ids, context=None):
+        return {'type':'ir.actions.report.xml','report_name':'jasper.brunoreport'}
+
+openstc_report_service_site_cost()
+    
     
 

@@ -24,6 +24,18 @@
 			</field>
 		</record>
         
+        <record model="ir.ui.view" id="openstc_view_service_site_cost_wizard">
+			<field name="name">openstc.report.service.site.cost.wizard</field>
+			<field name="model">openstc.report.service.site.cost.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+			    <label string="Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'année A aujourd'hui."/>
+			    <newline/>
+			    <button special="cancel" string="Annuler" icon="gtk-cancel"/>
+			    <button name="print_report" type="object" string="Imprimer" icon="gtk-go-forward"/>
+			</field>
+		</record>
+        
         <!-- <record id="action_openstc_pret_view_checkout" model="ir.actions.act_window">
 			<field name="name">Voir Etats des Lieux</field>
 			<field name="type">ir.actions.act_window</field>

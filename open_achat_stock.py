@@ -935,21 +935,5 @@ class ir_attachment(osv.osv):
     
 ir_attachment()
 
-"""class email_template(osv.osv):
-    _inherit = "email.template"
-    _name = "email.template"
-    _columns = {
-        }
-    
-    def generate_email(self, cr, uid, template_id, res_id, context=None):
-        ret = super(email_template, self).generate_email(cr, uid, template_id, res_id, context)
-        if 'headers' in ret and isinstance(ret['headers'], dict):
-            ret['headers'].update({'Disposition-Notification-To':ret['email_from']})
-        else:
-            ret.update({'headers':{'Disposition-Notification-To':ret['email_from']}})
-        return ret
-        
-email_template()"""
-    
     
 

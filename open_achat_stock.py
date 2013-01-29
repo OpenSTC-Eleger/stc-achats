@@ -24,7 +24,9 @@
 
 from osv import osv, fields
 from datetime import datetime
+import time
 import re
+import base64
 import unicodedata
 import netsvc
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
@@ -278,13 +280,53 @@ class open_engagement(osv.osv):
         'justif_check':fields.text('Justification de la décision de l\'Elu',state={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],
                                                                          'readonly':[('check_dst','=',True)]}),
         'procuration_dst':fields.boolean('Procuration DST ?',readonly=True),
+        'id':fields.integer('Id'),
+        'current_url':fields.char('URL Courante',size=256),
         }
     _defaults = {
-            'name':lambda self,cr,uid,context:self._custom_sequence(cr, uid, context),
+            'name':lambda self,cr,uid,context:self.pool.get("ir.sequence").next_by_code(cr, uid, 'open.engagement',context),
             'state':'draft',
             'user_id':lambda self,cr,uid,context:uid,
             'procuration_dst': lambda *a: 0,
             }
+    #Construction dynamique de l'url à envoyer dans les mails
+    #http://127.0.0.1:8069/web/webclient/home#id=${object.id}&view_type=page&model=open.engagement
+    def compute_current_url(self, cr, uid, id, context=None):
+        web_root_url = self.pool.get('ir.config_parameter').get_param(cr, uid, 'web.base.url')
+        model = self._name
+        #does http protocol present in web_root_url ?
+        if web_root_url.find("http") < 0:
+            web_root_url = "http://" + web_root_url
+        ret = "%s/web/webclient/home#id=%s&view_type=page&model=%s" % (web_root_url, id, model)
+        return ret
+    
+    def _create_report_attach(self, cr, uid, record, context=None):
+        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        ir_actions_report = self.pool.get('ir.actions.report.xml')
+        matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
+                                                              ('report_type','=','jasper')])
+        ret = False
+        if matching_reports:
+            report = ir_actions_report.browse(cr, uid, matching_reports[0])
+            report_service = 'report.' + report.report_name
+            service = netsvc.LocalService(report_service)
+            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+            eval_context = {'time': time, 'object': record}
+            if not report.attachment or not eval(report.attachment, eval_context):
+                # no auto-saving of report as attachment, need to do it manually
+                result = base64.b64encode(result)
+                file_name = record.name_get()[0][1]
+                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                file_name += ".pdf"
+                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                      {'name': file_name,
+                                                                       'datas': result,
+                                                                       'datas_fname': file_name,
+                                                                       'res_model': self._name,
+                                                                       'res_id': record.id},
+                                                                      context=context)
+                ret = ir_attachment
+        return ret
     
     def check_achat(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
@@ -294,20 +336,23 @@ class open_engagement(osv.osv):
     
     def check_elu(self, cr, uid, ids, context=None):
         po_ids = []
-        for engage in self.browse(cr, uid, ids):
-            if not engage.check_dst:
-                raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
-            po_ids.append(engage.purchase_order_id.id)
-            self.pool.get("purchase.order").write(cr, uid, [engage.purchase_order_id.id], {'validation':'done'})
-            wf_service = netsvc.LocalService('workflow')
-            wf_service.trg_validate(uid, 'open.engagement', engage.id, 'signal_validated', cr)
+        if isinstance(ids, list):
+            ids = ids[0]
+        engage = self.browse(cr, uid, ids)
+        if not engage.check_dst:
+            raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
+        po_ids.append(engage.purchase_order_id.id)
+        self.pool.get("purchase.order").write(cr, uid, [engage.purchase_order_id.id], {'validation':'done'})
+        wf_service = netsvc.LocalService('workflow')
+        wf_service.trg_validate(uid, 'open.engagement', engage.id, 'signal_validated', cr)
         return {
             'type':'ir.actions.act_window',
             'res_model':'open.engagement',
-            'res_id':ids[0],
+            'res_id':ids,
             'view_mode':'form',
             'view_type':'form',
             'target':'current',
+            'context':{'service_id':engage.service_id.id}
             }
     
     def procuration_dst(self,cr, uid, ids, context=None):
@@ -359,6 +404,9 @@ class open_engagement(osv.osv):
             #puis on associe les engage.lines crées A l'engagement en cours
             self.write(cr, uid, [engage.id], {'engage_lines':[(4,x) for x in engage_line], 'date_engage_validated':fields.date.context_today(self, cr, uid, context)}, context=context)
             self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context=context)
+            #force cursor commit to give up-to-date data to jasper report
+            cr.commit()
+            ret = self._create_report_attach(cr, uid, engage, context)
         return True
     
     def validate_po_invoice(self, cr, uid, ids,context=None):
@@ -434,6 +482,12 @@ class open_engagement(osv.osv):
         wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
         return True"""
     
+    def create(self, cr, uid, vals, context=None):
+        res_id = super(open_engagement, self).create(cr, uid, vals, context)
+        url = self.compute_current_url(cr, uid, res_id, context)
+        self.write(cr, uid, [res_id], {'current_url':url}, context=context)
+        return res_id
+    
     def write(self, cr, uid, ids, vals, context=None):
         if 'check_dst' in vals and vals['check_dst']:
             #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
@@ -490,12 +544,18 @@ class open_engagement_line(osv.osv):
                 ret[line.id] += po_line.price_subtotal
         return ret
     
+    def _get_engage_ids(self, cr, uid, ids, context=None):
+        ret = []
+        for engage in self.browse(cr, uid, ids, context):
+            ret.extend([x.id for x in engage.engage_lines])
+        return ret
+    
     _name = "open.engagement.line"
     _columns = {
         'name':fields.char('Numéro d\'Engagement',size=32, required=True),
         'order_line':fields.one2many('purchase.order.line','engage_line_id',string='Lignes d\'achats associées'),
-        'amount':fields.function(_calc_amount,type='float',string='Montant de l\'Engagement'),
-        'account_analytic_id':fields.related('order_line','account_analytic_id',string='Ligne Budgétaire Engagée', type='many2one', relation="account.analytic.account"),
+        'amount':fields.function(_calc_amount,type='float',string='Montant de l\'Engagement', store={'open.engagement':[_get_engage_ids,['purchase_order_id'],9],'open.engagement.line':[lambda self,cr,uid,ids,context={}:ids,['order_line'],8]}),
+        'account_analytic_id':fields.related('order_line','account_analytic_id',string='Ligne Budgétaire Engagée', type='many2one', relation="account.analytic.account",store=True),
         'engage_id':fields.many2one('open.engagement','Engagement Associé'),
         }
     

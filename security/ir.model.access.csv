@@ -4,6 +4,11 @@
 "acess_open_engage_compta","open_engagement compta","model_open_engagement","account.group_account_user","1","1","1","1"
 "acess_open_engage_manager","open_engagement manager","model_open_engagement","openstc.openstc_manager","1","1","1","1"
 
+"acess_open_engage_line_dst","open_engagement_line dst","model_open_engagement_line","openstc.openstc_dst","1","1","1","1"
+"acess_open_engage_line_elu","open_engagement_line elu","model_open_engagement_line","openstc_elu","1","1","1","1"
+"acess_open_engage_line_compta","open_engagement_line compta","model_open_engagement_line","account.group_account_user","1","1","1","1"
+"acess_open_engage_line_manager","open_engagement_line manager","model_open_engagement_line","openstc.openstc_manager","1","1","1","1"
+
 "acess_account_analytic_dst","account_analytic dst","model_account_analytic_account","openstc.openstc_dst","1","1","1","1"
 "acess_account_analytic_elu","account_analytic elu","model_account_analytic_account","openstc_elu","1","1","1","1"
 "acess_account_analytic_manager","account_analytic manager","model_account_analytic_account","openstc.openstc_manager","1","1","1","1"

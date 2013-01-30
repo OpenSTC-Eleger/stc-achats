@@ -429,9 +429,28 @@ class open_engagement(osv.osv):
         for engage in self.browse(cr, uid, ids):
             lines = [x.id for x in engage.purchase_order_id.order_line]
             stock_ids.extend(self.pool.get("stock.move").search(cr, uid, [('purchase_line_id','in',lines)]))
-        res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','action_open_achat_stock_reception_picking_move', context)
+        """res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','action_open_achat_stock_reception_picking_move', context)
         res_action.update({'domain':[('id','in',stock_ids)]})
-        return res_action
+        context.update({'return_to_engage_id':ids[0]})
+        if 'context' in res_action:
+            res_action['context'] = res_action['context'][:-1]
+            res_action['context'] += ",'return_to_engage_id':%s}" %(ids[0])
+        else:
+            res_action.update({'context':context})
+        print(res_action['context'])"""
+        #We modify the active_ids context key to bypass the stock_move step interface (wizard actually wait for stock_move active_ids)
+        active_ids = context.get('active_ids',[])
+        active_model = context.get('active_model')
+        context.update({'active_ids':stock_ids,'old_active_ids':active_ids,'active_model':'stock.move','old_active_model':active_model})
+        if not 'active_id' in context:
+            context.update({'active_id':ids[0]})
+        return {
+            'type':'ir.actions.act_window',
+            'res_model':'stock.partial.move',
+            'context':context,
+            'view_mode':'form',
+            'target':'new',
+            }
     
     def real_invoice_attached(self, cr, uid, ids):
         #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
@@ -525,14 +544,15 @@ class open_engagement_line(osv.osv):
         prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
         service = None
         if 'service_id' in context:
-            service = context['service_id']
-        for group in user.groups_id:
-            if prog.search(group.name):
-                if isinstance(user.service_ids, list) and not service:
-                    service = user.service_ids[0]
-                else:
-                    service = self.pool.get("openstc.service").browse(cr, uid, service)
-                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+            service_id = context['service_id']
+            service = self.pool.get("openstc.service").browse(cr, uid, service_id,context)
+        else:
+            for group in user.groups_id:
+                if prog.search(group.name):
+                    if isinstance(user.service_ids, list) and not service:
+                        service = user.service_ids[0]
+        if service:
+            seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
                 
         return seq
     
@@ -863,6 +883,17 @@ class res_users(osv.osv):
     
 res_users()
 
+class res_company(osv.osv):
+    _inherit = "res.company"
+    _name = "res.company"
+    _columns = {
+        'base_seuil_po':fields.float('Seuil (Commande Hors Marché) Maximal', digit=(5,2), help='Seuil Maximal pour une Commande hors marché avec qu\'une validation d\'un Elu ne soit nécessaire.'),
+        }
+    _defaults = {
+        'base_seuil_po':0.0}
+    
+res_company()
+    
 class product_product(osv.osv):
     _inherit = "product.product"
     _name = "product.product"
@@ -995,5 +1026,27 @@ class ir_attachment(osv.osv):
     
 ir_attachment()
 
+#Override in order to switch to engage if the user clicked on "Voir Produits A Réceptionnés" of this engage
+class stock_partial_move(osv.osv_memory):
+    _inherit = "stock.partial.move"
+    _name = "stock.partial.move"
+    _columns = {
+        }
     
-
+    def do_partial(self, cr, uid, ids, context=None):
+        res = super(stock_partial_move, self).do_partial(cr, uid, ids, context)
+        if 'old_active_ids' in context:
+            #We put the original active_ids to keep the OpenERP mind (we just cheated the active_ids for this wizard)
+            context.update({'active_ids':context['old_active_ids']})
+            context.update({'active_model':context['old_active_model']})
+            return {
+                'type':'ir.actions.act_window',
+                'view_mode':'form',
+                'res_id':context['active_id'],
+                'target':'current',
+                'res_model':'open.engagement',
+                'context':context,
+                }
+        return res
+    
+stock_partial_move()

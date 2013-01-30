@@ -238,7 +238,8 @@ class purchase_order(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         #   Initialisation des seuils du user
-        seuils = self.pool.get("res.users").read(cr, uid, uid, ['max_po_amount','max_total_amount'], context)
+        seuils = self.pool.get("res.users").read(cr, uid, uid, ['max_po_amount','max_total_amount','company_id'], context)
+        company = self.pool.get("res.company").browse(cr, uid, seuils['company_id'][0], context)
         #seuil par bon de commande
         max_po_autorise = seuils['max_po_amount']
         #seuil sur l'année
@@ -252,7 +253,7 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context):
             #Commande "hors_marché", soit lorsqu'une commande est crée avec une demande de devis
             #if not po.po_ask_id:
-            return po.amount_total < 300
+            return po.amount_total < company.base_seuil_po
             #Commande dans le cadre d'un marché
             """else:
                 #Test seuil par bon de commande

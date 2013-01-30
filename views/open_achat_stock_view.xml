@@ -187,8 +187,8 @@
 	            	    <group col="4" colspan="2">
 		            		<field name="check_dst" colspan="2"/>
 		            		<field name="procuration_dst" colspan="2"/>
-		            		<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
-							<button name="signal_except_check" string="Refuser Par Procuration" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>
+		            		<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
+							<button name="signal_except_check" string="Refuser Par Procuration" type="workflow" attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>
 						</group>
 						<group col="2" colspan="2">
 						    <button name="%(open_engage_check_elu_wizard)d" string="Valider l'Engagement (Signature)" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
@@ -426,5 +426,19 @@
 	   			</group>
 	   		</field>
 	   	</record>
+	   	
+         <record id="openstc_res_company_inherit_form" model="ir.ui.view">
+            <field name="name">res.company.inherit.form</field>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+			    <page string="Configuration" position="inside">
+			    	<separator string="Paramètres de la Collectivité" colspan="4"/>
+			    	<field name="base_seuil_po"/>
+			    </page>
+	   		</field>
+	   	</record>
+        
 	</data>
 </openerp>

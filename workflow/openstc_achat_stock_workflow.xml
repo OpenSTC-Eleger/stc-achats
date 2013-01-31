@@ -23,7 +23,7 @@
             <field name="name">A Valider</field>
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
             <field name="kind">function</field>
-            <field name="action">link_engage_po()</field>
+            <field name="action">link_engage_po(),to_validated_engage()</field>
             <field name="split_mode">OR</field>
         </record>
         

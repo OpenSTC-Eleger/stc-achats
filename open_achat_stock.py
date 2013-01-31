@@ -236,7 +236,7 @@ class open_engagement(osv.osv):
                     where a.res_id in %s and a.res_model = %s
                     or res_id in %s and a.res_model = %s 
                     group by a.res_id, a.id
-                    order by a.res_id''',(tuple(ids), self._name, tuple(po_ids),'purchase.order'))
+                    order by a.create_date DESC''',(tuple(ids), self._name, tuple(po_ids),'purchase.order'))
         ret = {}
         search_ids = []
         search_ids.extend(ids)
@@ -282,6 +282,7 @@ class open_engagement(osv.osv):
         'procuration_dst':fields.boolean('Procuration DST ?',readonly=True),
         'id':fields.integer('Id'),
         'current_url':fields.char('URL Courante',size=256),
+        'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self.pool.get("ir.sequence").next_by_code(cr, uid, 'open.engagement',context),
@@ -299,6 +300,12 @@ class open_engagement(osv.osv):
             web_root_url = "http://" + web_root_url
         ret = "%s/web/webclient/home#id=%s&view_type=page&model=%s" % (web_root_url, id, model)
         return ret
+    
+    def get_elu_attached(self, cr, uid, id, context=None):
+        service_id = self.browse(cr, uid, id, context).service_id.id
+        groups_id = self.pool.get("res.groups").search(cr, uid, [('name','like','%Elu%')], context=context)
+        elu_id = self.pool.get("res.users").search(cr, uid, ['&',('service_ids','=',service_id),('groups_id','in',groups_id),('name','not like','%Admin')], context=context)
+        return elu_id and elu_id[0] or False
     
     def _create_report_attach(self, cr, uid, record, context=None):
         #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
@@ -368,9 +375,14 @@ class open_engagement(osv.osv):
             }
     
     def link_engage_po(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state':'to_validate'}, context)
         for engage in self.browse(cr, uid, ids, context):
             self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'engage_id':engage.id}, context)
+        return True
+    
+    def to_validated_engage(self, cr, uid, ids ,context=None):
+        self.write(cr, uid, ids, {'state':'to_validate'}, context)
+        for engage in self.browse(cr, uid, ids, context):
+            self.write(cr, uid, engage.id,{'elu_id':self.get_elu_attached(cr, uid, engage.id, context)},context=context)
         return True
     
     def validated_engage(self, cr, uid, ids, context=None):
@@ -917,12 +929,15 @@ class ir_attachment(osv.osv):
          'action_date':fields.datetime('Date de la derniere action', readonly=True),
          'engage_done':fields.boolean('Engagement Clos',readonly=True),
          'attach_made_done':fields.boolean('Cette Facture Clos l\'engagement', readonly=True),
-         'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]})
+         'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]}),
         }
     
     _defaults = {
         'state':'not_invoice',
         }
+    
+    _order = "create_date"
+    
     #Override to put an attach as a pdf invoice if it responds to the pattern 
     def create(self, cr, uid, vals, context=None):
         attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)

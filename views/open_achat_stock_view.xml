@@ -200,8 +200,11 @@
 		            	<field name="reception_ok"/>
 		            	<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
 	            	</group>
-	            	<field name="justif_check" colspan="3"/>
-            	    <field name="attach_ids" nolabel="1" colspan="4">
+	            	<group colspan="3" col="3">
+	            			<field name="elu_id"/>
+	            			<field name="justif_check" colspan="3"/>
+					</group>
+	            	<field name="attach_ids" nolabel="1" colspan="4">
 	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
 	            		    <field name="datas_fname"/>
 	            		    <field name="create_uid"/>

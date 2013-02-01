@@ -67,29 +67,66 @@ class purchase_order_ask(osv.osv):
                             return False
         return one_selection
     
+    def _create_report_attach(self, cr, uid, record, context=None):
+        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        ir_actions_report = self.pool.get('ir.actions.report.xml')
+        matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
+                                                              ('report_type','=','jasper')])
+        ret = False
+        if matching_reports:
+            report = ir_actions_report.browse(cr, uid, matching_reports[0])
+            report_service = 'report.' + report.report_name
+            service = netsvc.LocalService(report_service)
+            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+            eval_context = {'time': time, 'object': record}
+            if not report.attachment or not eval(report.attachment, eval_context):
+                # no auto-saving of report as attachment, need to do it manually
+                result = base64.b64encode(result)
+                file_name = record.name_get()[0][1]
+                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                file_name += ".pdf"
+                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                      {'name': file_name,
+                                                                       'datas': result,
+                                                                       'datas_fname': file_name,
+                                                                       'res_model': self._name,
+                                                                       'res_id': record.id},
+                                                                      context=context)
+                ret = ir_attachment
+        return ret
+    
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for ask in self.read(cr, uid, ids,['id', 'name','sequence']):
-            res.append((ask['id'], '%s : %s' % (ask['sequence'], ask['name'])))
+            res.append((ask['id'], '%s:%s' % (ask['sequence'], ask['name'])))
         return res
     
     def send_ask(self, cr, uid, ids, context=None):
-        #Envoi d'un mail aux 3 fournisseurs
+        #Envoi d'un mail aux fournisseurs potentiels
         #Puis on passe à l'étape d'après
         ask_lines = []
         ask_partners = []
         for ask in self.browse(cr, uid, ids):
-            ask_partners.extend([x.id for x in ask.suppliers_id])
+            ir_attach_id = self._create_report_attach(cr, uid, ask, context)
+            for supplier_line in ask.suppliers_id:
+                ask_partners.append(supplier_line.id)
+                #pour chaque partner, en envoi un mail à son adresse mail
+                email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
+                mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
+                self.pool.get("mail.message").write(cr, uid, [mail_id], {'email_to':supplier_line.partner_address_id.email, 'attachment_ids':[(4,ir_attach_id)]},context=context)
+                self.pool.get("mail.message").send(cr, uid, [mail_id], context)
+                #Pour l'instant, les mails seront envoyés via le threader (envoi périodique des mails en attentes)
             ask_lines.extend([x.id for x in ask.order_lines])
         self.pool.get("purchase.order.ask.partners").write(cr, uid, ask_partners, {'state':'waiting_selection'})
         self.pool.get("purchase.order.ask.line").write(cr, uid, ask_lines, {'state':'waiting_pu'})
         self.write(cr, uid ,ids, {'state':'waiting_supplier'})
-        return"""  {
+        return{
             'view_mode':'form',
             'target':'current',
-            'res_model':'purchase.order.line',
-            'res_id':ids[0]
-            }"""
+            'res_model':'purchase.order.ask',
+            'res_id':ids[0],
+            'type':'ir.actions.act_window'
+            }
     
     def validate_supplier(self, cr, uid, ids, context=None):
         if not self._check_supplier_selection(cr, uid, ids, context):

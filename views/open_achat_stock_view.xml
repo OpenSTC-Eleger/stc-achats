@@ -215,7 +215,9 @@
 	            		    <field name="attach_made_done"/>
 	            		    <button name="send_invoice_to_pay" type="object" icon="gtk-go-forward" help="Valide et Envoie la Facture au service compta pour paiement" states="to_check,except_send_mail"/>
 	            			<button name="action_refuse_invoice_to_pay" type="object" icon="gtk-cancel" help="Refuser la facture pour paiement, vous allez saisir un bref justificatif" states="to_check,except_send_mail"/>
-	            			<button name="engage_complete" type="object" icon="gtk-ok" help="Indiquer que la commande est entiérement soldée, cela clos l'engagement" attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"/>
+	            			<button name="engage_complete" type="object" icon="gtk-ok" help="Indiquer que la commande est entiérement soldée, cela clos l'engagement"
+	            			    attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"
+	            			    confirm="Attention, vous allez clore l'engagement. Ce qui signifie que tous les produits ont été reçus et que l'ensemble de la commande a été payée par la compta. Si ce n'est pas le cas, veuillez cliquez sur Annuler."/>
 	            			<button name="dummy" icon="gtk-help" help="Ceci indique que c'est cette facture qui A permis de clore l'engagement" attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}"/>
 	            		</tree>
 	            	</field>

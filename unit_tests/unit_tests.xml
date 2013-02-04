@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
-	<data noupdate="1">  
-		<function model="openstc.ask.prod" name="all_in_stock">
-		    <value eval="[26]"/>
-		</function>
-	</data>
-	
 	<data noupdate="1">
-	    <function model="product.pricelist" name="price_get">
-	        <value eval=""/>
-	    </function>
+	    
 	</data>
 </openerp>

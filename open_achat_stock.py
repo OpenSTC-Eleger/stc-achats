@@ -164,7 +164,7 @@ class purchase_order_ask(osv.osv):
         if isinstance(entrepot_id, list):
             entrepot_id = entrepot_id[0]
         entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
-        ret = {'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions}
+        ret = {'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions, 'description':ask.name}
         ret.update(partner_infos)
         ret.update(entrepot_infos)
         context.update({'from_ask':'1'})
@@ -291,7 +291,7 @@ class open_engagement(osv.osv):
     
     
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
-                               ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Engagement Bon Pour Paiement'),
+                               ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Tous les Produits sont réceptionnés'),
                                ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
                                ('done','Clos'),('except_check','Engagement Refusé')]
     _name="open.engagement"
@@ -900,7 +900,7 @@ class stock_picking(osv.osv):
             ids = [ids]
         for picking in self.browse(cr ,uid, ids, context):
             for move_id in picking.move_lines:
-                engage_id = move_id.purchase_line_id.order_id.engage_id and move_id.purchase_line_id.order_id.engage_id.id or False
+                engage_id = move_id.purchase_line_id and move_id.purchase_line_id.order_id.engage_id and move_id.purchase_line_id.order_id.engage_id.id or False
                 if engage_id and not (engage_id in engage_ids):
                     engage_ids.append(engage_id)
         wf_service = netsvc.LocalService('workflow')

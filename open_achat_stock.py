@@ -988,6 +988,9 @@ class ir_attachment(osv.osv):
             self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
             engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)
+            print(attach.datas_fname)
+            print(fields.date.context_today(self, cr, uid, context))
+            print(engage.name)
             self.log(cr, engage.user_id.id, attach_id,'Vous devez vérifier la facture %s ajoutée le %s sur votre engagement %s' %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
         return attach_id
     

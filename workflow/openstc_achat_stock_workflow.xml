@@ -32,7 +32,7 @@
             <field name="wkf_id" ref="wkf_openstc_achat_stock_open_engage"/>
             <field name="kind">function</field>
             <field name="split_mode">AND</field>
-            <field name="action">validated_engage(),validate_po_invoice()</field>
+            <field name="action">validated_engage()</field>
         </record>
         
         <record id="wkf_open_engage_waiting_reception" model="workflow.activity">

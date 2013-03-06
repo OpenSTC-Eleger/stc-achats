@@ -228,5 +228,12 @@ class openstc_report_service_site_cost(osv.osv):
 
 openstc_report_service_site_cost()
     
+class openstc_pret_emprunt_wizard(osv.osv):
+    _inherit = "openstc.pret.emprunt.wizard"
     
-
+    def prepare_sale_order(self, cr, uid, default_location_id, partner_id, purchase_lines, origin=False):
+        res = super(openstc_pret_emprunt_wizard, self).prepare_sale_order(cr, uid, default_location_id, partner_id, purchase_lines, origin)
+        res.update({'validation':'done'})
+        return res
+    
+openstc_pret_emprunt_wizard()

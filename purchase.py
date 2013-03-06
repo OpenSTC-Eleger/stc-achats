@@ -192,7 +192,7 @@ class purchase_order(osv.osv):
     _defaults = {
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
-        'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
+        'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
         'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context)
         }
     
@@ -225,7 +225,7 @@ class purchase_order(osv.osv):
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         ok = True
         for po in self.browse(cr, uid, ids):
-            if po.validation <> 'done':
+            if po.validation <> 'done' and po.amount_total > 0.0:
                 ok = False
                 if po.validation == 'budget_to_check':
                     raise osv.except_osv('Budget A Vérifier','Le Budget doit être vérifié et disponible pour valider un Bon de Commande')

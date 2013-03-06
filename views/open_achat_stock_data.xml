@@ -13,12 +13,14 @@
     	<field name="password">elu1</field>
     	<field name="groups_id" eval="[(4, ref('openstc_elu'))]"/>
     </record>
-    
+</data>
+
+<data>
 	<record id="openstc_email_template_engage_inv_valid" model="email.template">
         <field name="name">Facture Validée</field>
         <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'user@siclic-test.fr'}</field>
-		<field name="email_to">compta@siclic-test.fr</field>
+    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
+		<field name="email_to">bruno.plancher@siclic.fr</field>
 		<field name="subject">Engagement ${object.name or 'inconnu'} : Une Facture est Validée pour paiement</field>
 		<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
@@ -38,13 +40,13 @@
 	<record id="openstc_email_template_engage_inv_refused" model="email.template">
         <field name="name">Facture Refusée</field>
         <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'user@siclic-test.fr'}</field>
-		<field name="email_to">compta@siclic-test.fr</field>
+    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
+		<field name="email_to">bruno.plancher@siclic.fr</field>
 		<field name="subject">Engagement ${object.name or 'inconnu'} : Une Facture est refusée pour paiement</field>
 		<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
-		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement {object.name or 'inconnu'}, pour la raison suivante : </p>
+		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}, pour la raison suivante : </p>
 		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
@@ -60,27 +62,40 @@
 	<record id="openstc_email_template_engage_to_validate" model="email.template">
         <field name="name">Engagement A Valider par Elu</field>
         <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'user@siclic-test.fr'}</field>
-		<field name="email_to">elu@siclic-test.fr</field>
+    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
+		<field name="email_to">bruno.plancher@siclic.fr</field>
 		<field name="subject">L'Engagement ${object.name or 'inconnu'} Nécessite votre signature</field>
 		<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
 		    <p>${object.user_id.name or 'inconnu'} A créé l'Engagement ${object.name or 'inconnu'} sur OpenERP.</p>
 		    
-		    <p>Celui-ci A besoin de votre signature pour pouvoir engager la commande associée. Pour cela, ouvrez 
-		    votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel et allez dans la section Engagement A Valider. Ouvrez
-		    l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.</p>
+		    <p>Celui-ci A besoin de votre signature pour pouvoir engager la commande associée.</p>
+		    % if object.current_url:
+		    <p>Pour cela, veuillez cliquer sur <a href="${object.current_url}">ce lien</a>, et cliquer sur 
+		    Valider Engagement ou Refuser Engagement, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>
+		    % endif
+		    % if not object.current_url:
+		    <p>Pour cela, ouvrez  votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel 
+		    et allez dans la section Engagement A Valider. 
+		    Ouvrez l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.</p>
+			% endif
 		    ]]></field>
 		<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
 		    ${object.user_id.name or 'inconnu'} A créé l'Engagement ${object.name or 'inconnu'} sur OpenERP.
+		    Celui-ci A besoin de votre signature pour pouvoir engager la commande associée. Pour cela, ouvrez 
 		    
-			Celui-ci A besoin de votre signature pour pouvoir engager la commande associée. Pour cela, ouvrez 
-		    votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel et allez dans la section Engagement A Valider. Ouvrez
-		    l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.
-		    ]]></field>
+			% if object.current_url:
+		    <p>Pour cela, veuillez suivre ce lien : ${object.current_url}, et cliquer sur 
+		    Valider Engagement ou Refuser Engagement, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>
+		    % endif
+		    % if not object.current_url:
+		    Pour cela, ouvrez votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel et allez dans la section Engagement A Valider. 
+		    Ouvrez l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.
+		    % endif
+			]]></field>
     </record>
 	
 	<record id="openstc_email_template_ask_prod" model="email.template">

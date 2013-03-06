@@ -32,17 +32,17 @@ import netsvc
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
-                             ('waiting_purchase_order','Bon pour création de Commandes'),('done','Marché Clos')]
+                             ('waiting_purchase_order','Bon pour création de Commandes'),('done','Devis Clos')]
     _name = "purchase.order.ask"
     
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
         'name':fields.char('Nom',size=64),
-        'sequence':fields.char('Numéro Marché',size=4, required=True),
+        'sequence':fields.char('Numéro Devis',size=4, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
-        'date_order':fields.date('Date d\'Obtention du Marché', required=True),
+        'date_order':fields.date('Date d\'Obtention du Devis', required=True),
         'user_id':fields.many2one('res.users','Utilisateur Demandeur', readonly=True),
         'service_id':fields.many2one('openstc.service','Service Demandeur',required=True),
     }
@@ -108,12 +108,17 @@ class purchase_order_ask(osv.osv):
         ask_partners = []
         for ask in self.browse(cr, uid, ids):
             ir_attach_id = self._create_report_attach(cr, uid, ask, context)
+            mail_values = {}
+            if ir_attach_id:
+                mail_values.update({'attachment_ids':[(4,ir_attach_id)]})
+            #{'email_to':supplier_line.partner_address_id.email}
             for supplier_line in ask.suppliers_id:
+                mail_values.update({'email_to':supplier_line.partner_address_id.email})
                 ask_partners.append(supplier_line.id)
                 #pour chaque partner, en envoi un mail à son adresse mail
                 email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
                 mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
-                self.pool.get("mail.message").write(cr, uid, [mail_id], {'email_to':supplier_line.partner_address_id.email, 'attachment_ids':[(4,ir_attach_id)]},context=context)
+                self.pool.get("mail.message").write(cr, uid, [mail_id], mail_values,context=context)
                 self.pool.get("mail.message").send(cr, uid, [mail_id], context)
                 #Pour l'instant, les mails seront envoyés via le threader (envoi périodique des mails en attentes)
             ask_lines.extend([x.id for x in ask.order_lines])
@@ -389,6 +394,7 @@ class open_engagement(osv.osv):
         self.pool.get("purchase.order").write(cr, uid, [engage.purchase_order_id.id], {'validation':'done'})
         wf_service = netsvc.LocalService('workflow')
         wf_service.trg_validate(uid, 'open.engagement', engage.id, 'signal_validated', cr)
+        wf_service.trg_write(uid, 'open.engagement',engage.id,cr)
         return {
             'type':'ir.actions.act_window',
             'res_model':'open.engagement',
@@ -453,6 +459,7 @@ class open_engagement(osv.osv):
             #puis on associe les engage.lines crées A l'engagement en cours
             self.write(cr, uid, [engage.id], {'engage_lines':[(4,x) for x in engage_line], 'date_engage_validated':fields.date.context_today(self, cr, uid, context)}, context=context)
             self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context=context)
+            self.validate_po_invoice(cr, uid, ids, context)
             #force cursor commit to give up-to-date data to jasper report
             cr.commit()
             ret = self._create_report_attach(cr, uid, engage, context)
@@ -478,17 +485,9 @@ class open_engagement(osv.osv):
         for engage in self.browse(cr, uid, ids):
             lines = [x.id for x in engage.purchase_order_id.order_line]
             stock_ids.extend(self.pool.get("stock.move").search(cr, uid, [('purchase_line_id','in',lines)]))
-        """res_action = self.pool.get("ir.actions.act_window").for_xml_id(cr, uid, 'openstc_achat_stock','action_open_achat_stock_reception_picking_move', context)
-        res_action.update({'domain':[('id','in',stock_ids)]})
-        context.update({'return_to_engage_id':ids[0]})
-        if 'context' in res_action:
-            res_action['context'] = res_action['context'][:-1]
-            res_action['context'] += ",'return_to_engage_id':%s}" %(ids[0])
-        else:
-            res_action.update({'context':context})
-        print(res_action['context'])"""
+
         #We modify the active_ids context key to bypass the stock_move step interface (wizard actually wait for stock_move active_ids)
-        active_ids = context.get('active_ids',[])
+        active_ids = context.get('active_ids',ids)
         active_model = context.get('active_model')
         context.update({'active_ids':stock_ids,'old_active_ids':active_ids,'active_model':'stock.move','old_active_model':active_model})
         if not 'active_id' in context:
@@ -577,7 +576,7 @@ class open_engagement(osv.osv):
         #En principe, aucun engagement ne doit etre supprimé
         engages = self.browse(cr, uid, ids)
         for engage in engages:
-            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check'}, context)
+            self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check','engage_id':False}, context)
         return super(open_engagement, self).unlink(cr, uid, ids, context)
     
 open_engagement()
@@ -950,7 +949,7 @@ class product_product(osv.osv):
         }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if 'force_product_uom' in context:
+        if context and 'force_product_uom' in context:
             args.extend([('isroom','=',False),('active','=',True)])
         return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
 
@@ -1094,14 +1093,15 @@ class stock_partial_move(osv.osv_memory):
             #We put the original active_ids to keep the OpenERP mind (we just cheated the active_ids for this wizard)
             context.update({'active_ids':context['old_active_ids']})
             context.update({'active_model':context['old_active_model']})
-            return {
+            """return {
                 'type':'ir.actions.act_window',
                 'view_mode':'form',
                 'res_id':context['active_id'],
                 'target':'current',
                 'res_model':'open.engagement',
                 'context':context,
-                }
+                }"""
+            return {"type":"ir.actions.act_window_close"}
         return res
     
 stock_partial_move()

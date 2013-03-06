@@ -33,7 +33,7 @@
         </record>
 	    
 	    <record id="action_view_valid_purchase" model="ir.actions.act_window">
-            <field name="name">Commandes Validés</field>
+            <field name="name">Commandes Validées</field>
             <field name="res_model">purchase.order</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>

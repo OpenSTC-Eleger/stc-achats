@@ -80,6 +80,9 @@
 				    <field name="in_stock_info"/>
 				    <field name="in_stock" invisible="1"/>
 				</xpath>
+				<field name="product_id" position="attributes">
+					<attribute name="domain">[('type_prod','=','fourniture')]</attribute>
+				</field>
             </field>
         </record>
         
@@ -109,7 +112,7 @@
 					<newline/>
 					<field name="order_lines" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Produits de la Demande" editable="top">
-						    <field name="product_id" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
+						    <field name="product_id" domain="[('type_prod','=','fourniture')]" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="qte" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="price_unit" attrs="{'readonly':[('state','&lt;&gt;', 'waiting_pu')],'required':[('state','=','waiting_pu')]}"/>
 						    <field name="date_order" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>

@@ -29,6 +29,7 @@ import re
 import base64
 import unicodedata
 import netsvc
+
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
@@ -161,6 +162,8 @@ class purchase_order_ask(osv.osv):
             prod_values = pol_obj.onchange_product_id(cr, uid, [], partner_infos['pricelist_id'], prod_ctx['prod_id'], prod_ctx['qte'],
                                                        False, supplier_id, price_unit=prod_ctx['price_unit'],
                                                        date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
+            if 'taxes_id' in prod_values:
+                prod_values.update({'taxes_id':[(4,x) for x in prod_values['taxes_id']]})
             prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id'], 'merge_line_ids':prod_ctx['merge_line_ids']})
             prod_actions.append((0,0,prod_values))
         entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
@@ -244,11 +247,6 @@ purchase_order_ask_partners()
 class open_engagement(osv.osv):
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
-    
-    def test(self, cr, uid, context=None):
-        acc_ids = self.pool.get("account.analytic.account").search(cr, 12, [])
-        acc = self.pool.get("account.analytic.account").read(cr, 12, acc_ids,[])
-        return
     
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
@@ -610,6 +608,13 @@ class open_engagement_line(osv.osv):
             for po_line in line.order_line:
                 ret.setdefault(line.id,0.0)
                 ret[line.id] += po_line.price_subtotal
+                """
+                ret.setdefault(line.id,0.0)
+                amount = line.price_subtotal
+                for c in self.pool.get('account.tax').compute_all(cr, uid, po_line.taxes_id, po_line.price_unit, po_line.product_qty, po_line.order_id.partner_address_id.id, po_line.product_id.id, po_line.order.partner_id)['taxes']:
+                    amount += c.get('amount', 0.0)
+                ret[line.id] += amount
+                """
         return ret
     
     def _get_engage_ids(self, cr, uid, ids, context=None):
@@ -945,9 +950,16 @@ res_company()
 class product_product(osv.osv):
     _inherit = "product.product"
     _name = "product.product"
-    _columns = {
+    
+    def return_type_prod_values(self, cr, uid, context=None):
+        ret = super(product_product, self).return_type_prod_values(cr, uid, context)
+        ret.extend([('fourniture','Fourniture Achetable')])
+        return ret
+    
+    _columns = {    
         }
 
+    #TOREMOVE ?
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context and 'force_product_uom' in context:
             args.extend([('isroom','=',False),('active','=',True)])

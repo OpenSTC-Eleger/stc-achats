@@ -27,6 +27,8 @@ from datetime import datetime
 import re
 import netsvc
 import unicodedata
+import time
+import base64
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -176,6 +178,34 @@ class purchase_order(osv.osv):
                 
         return seq
     
+    def _create_report_attach(self, cr, uid, record, context=None):
+        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        ir_actions_report = self.pool.get('ir.actions.report.xml')
+        matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
+                                                              ('report_type','=','jasper')])
+        ret = False
+        if matching_reports:
+            report = ir_actions_report.browse(cr, uid, matching_reports[0])
+            report_service = 'report.' + report.report_name
+            service = netsvc.LocalService(report_service)
+            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+            eval_context = {'time': time, 'object': record}
+            if not report.attachment or not eval(report.attachment, eval_context):
+                # no auto-saving of report as attachment, need to do it manually
+                result = base64.b64encode(result)
+                file_name = record.name_get()[0][1]
+                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                file_name += ".pdf"
+                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                      {'name': file_name,
+                                                                       'datas': result,
+                                                                       'datas_fname': file_name,
+                                                                       'res_model': self._name,
+                                                                       'res_id': record.id},
+                                                                      context=context)
+                ret = ir_attachment
+        return ret
+    
     AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Engagement A Vérifier'),
                                   ('done','Bon de Commande Validable')]
     _inherit = 'purchase.order'
@@ -224,16 +254,21 @@ class purchase_order(osv.osv):
     
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         ok = True
+        res = False
         for po in self.browse(cr, uid, ids):
+            #TOCHECK: no need budget and engage validation if purchase order amount equals zero ?
             if po.validation <> 'done' and po.amount_total > 0.0:
                 ok = False
                 if po.validation == 'budget_to_check':
                     raise osv.except_osv('Budget A Vérifier','Le Budget doit être vérifié et disponible pour valider un Bon de Commande')
                 elif po.validation == 'engagement_to_check':
                     raise osv.except_osv('Engagement A Vérifier','L\'engagement doit être vérifié et compet pour valider un Bon de Commande')
+            elif po.amount_total > 0.0:
+                self._create_report_attach(cr, uid, po, context)
         if ok:
-            return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
-
+             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
+        return False
+            
     def check_achat(self, cr, uid, ids, context=None):
         if not isinstance(ids, list):
             ids = [ids]

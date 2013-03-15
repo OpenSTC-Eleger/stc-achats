@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
 	<data>
-
+		<function model="account.invoice.line" name="move_line_get">
+		    <value eval="15"/>
+		</function>
 	</data>
 </openerp>

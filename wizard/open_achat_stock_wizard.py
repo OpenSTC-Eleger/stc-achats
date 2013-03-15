@@ -66,7 +66,7 @@ class purchase_order_ask_verif_budget(osv.osv_memory):
                 line_id = line_id[0]
                 #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
             line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
-            res = abs(line.planned_amount) - abs(line.practical_amount)
+            res = abs(line.planned_amount) - abs(line.openstc_practical_amount)
             #TODO: Intégrer le taux d'érosion d'un service
             return {'value':{'budget_dispo_info':res,'budget_dispo':res,'service_id':line.analytic_account_id.service_id.id}}
         return {'value':{}}

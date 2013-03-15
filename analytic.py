@@ -27,6 +27,7 @@ from datetime import datetime
 import re
 import unicodedata
 import netsvc
+import decimal_precision as dp
 
 class crossovered_budget(osv.osv):
     _inherit = "crossovered.budget"
@@ -54,11 +55,42 @@ class crossovered_budget(osv.osv):
     
 crossovered_budget()
 
-"""class account_analytic_default(osv.osv):
-    _inherit = "account.analytic.default"
+class crossovered_budget_lines(osv.osv):
     
+    #custom field for public account : returns amount with taxes included
+    def _openstc_pract(self, cr, uid, ids, name, args, context=None):
+        """ret = {}
+        name_grouped = []
+        for line in self.browse(cr, uid, ids, context):
+            #first, get all move_analytic_line that matches dates and the analytic account of current line
+            analytic_line_ids = self.pool.get("account.analytic.line").search(cr, uid, [('date','<=', line.date_to),('date','>=',line.date_from),('account_id','=',line.account_analytic_id.id)])
+            analytic_lines = self.pool.get("account.analytic.line").browse(cr, uid, analytic_line_ids, context)
+            #next, we get all invoices relating to those analytic accounts
+            for al in analytic_lines:
+                if al.ref not in name_grouped:
+                    name_grouped.append(al.ref)
+            #next, we get all """
+        #first, we get engage_lines that matches dates and current budget line analytic account
+        ret = {}
+        for line in self.browse(cr, uid, ids, context):
+            engage_line_ids = self.pool.get("open.engagement.line").search(cr, uid, [('account_analytic_id','=',line.analytic_account_id.id),('engage_id.date_engage_validated','<=', line.date_to),('engage_id.date_engage_validated','>=',line.date_from)])
+            amount = 0.0
+            #next, if we found engage_lines, we compute with them, 
+            #else, we use default openerp practical amount (for example to display sales amount which doesn't work with engages)
+            if engage_line_ids:
+                for engage_line in self.pool.get("open.engagement.line").browse(cr, uid, engage_line_ids, context):
+                    amount += engage_line.amount
+            else:
+                amount = line.practical_amount
+            ret[line.id] = amount
+        return ret
+    
+    _inherit = "crossovered.budget.lines"
     _columns = {
-        'site_id':fields.mane2one('openstc.site', 'Site'),
+            'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Balance Actuelle", type="float", digits_compute=dp.get_precision('Account')),
         }
+
+
     
-account_analytic_default()"""
+crossovered_budget_lines()
+    

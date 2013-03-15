@@ -89,8 +89,8 @@ class purchase_order_line(osv.osv):
                 line_id = line_id[0]
                 #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
             line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
-            res = abs(line.planned_amount) - abs(line.practical_amount)
-            res_erosion = abs(line.practical_amount) / abs(line.planned_amount) * 100
+            res = abs(line.planned_amount) - abs(line.openstc_practical_amount)
+            res_erosion = abs(line.openstc_practical_amount) / abs(line.planned_amount) * 100
             #TODO: Intégrer le taux d'érosion d'un service
             return {'value':{'budget_dispo_info':res,'budget_dispo':res,'tx_erosion':res_erosion,'tx_erosion_info':res_erosion}}
         return {'value':{'budget_dispo_info':0.0,'budget_dispo':0.0,'tx_erosion':0.0,'tx_erosion_info':0.0}}
@@ -352,13 +352,14 @@ class purchase_order(osv.osv):
                 #raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat:' + line.name + ' x ' + str(line.product_qty) + '(' + str(line.price_subtotal) + ' euros)')
         self.pool.get("purchase.order.line").write(cr, uid, line_ok, {'dispo':True})
         self.pool.get("purchase.order.line").write(cr, uid, line_not_ok, {'dispo':False})
-        return not line_not_ok
+        return line_not_ok
     
     def open_engage(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
         po = self.browse(cr, uid, ids, context)
-        if self.verif_budget(cr, uid, ids, context):
+        line_errors = self.verif_budget(cr, uid, ids, context)
+        if not line_errors:
             #On vérifie si on a un budget suffisant pour chaque ligne d'achat
             #On gère aussi le cas de plusieurs lignes référants au même compte analytique
             if not po.engage_id:
@@ -380,8 +381,13 @@ class purchase_order(osv.osv):
                 'view_mode':'form',
                 'res_id':res_id
                 }
-        #else:
-            #raise osv.except_osv('Erreur','Une partie de votre commande ne rentre pas dans votre budget.')
+        else:
+            msg_error = ""
+            cpt = 0
+            for error in self.pool.get("purchase.order.line"):
+                cpt += 1
+                msg_error = "%s %s" %("," if cpt >1 else "", error.name)
+            raise osv.except_osv('Erreur','Une partie de votre commande ne rentre pas dans votre budget : %s' %(msg_error,))
             #self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
             #self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
         return

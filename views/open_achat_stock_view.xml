@@ -267,7 +267,21 @@
 				</field>
             </field>
         </record>
-	
+        
+		<record id="open_achat_stock_budget_form_view" model="ir.ui.view">
+            <field name="name">open.achat.stock.crossovered.budget.form</field>
+            <field name="model">crossovered.budget</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account_budget.crossovered_budget_view_form"/>
+            <field name="arch" type="xml">
+			    <field name="theoritical_amount" position="replace"/>
+			    <field name="percentage" position="replace"/>
+			    <field name="practical_amount" position="replace">
+			        <field name="openstc_practical_amount"/>
+			    </field>
+            </field>
+        </record>
+        
 	    
 	    <record id="openstc_ask_prod_form" model="ir.ui.view">
             <field name="name">openstc.ask.prod.form</field>

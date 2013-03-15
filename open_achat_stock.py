@@ -606,15 +606,15 @@ class open_engagement_line(osv.osv):
         ret = {}
         for line in self.browse(cr, uid, ids, context):
             for po_line in line.order_line:
+                """ret.setdefault(line.id,0.0)
+                ret[line.id] += po_line.price_subtotal"""
+                
                 ret.setdefault(line.id,0.0)
-                ret[line.id] += po_line.price_subtotal
-                """
-                ret.setdefault(line.id,0.0)
-                amount = line.price_subtotal
-                for c in self.pool.get('account.tax').compute_all(cr, uid, po_line.taxes_id, po_line.price_unit, po_line.product_qty, po_line.order_id.partner_address_id.id, po_line.product_id.id, po_line.order.partner_id)['taxes']:
+                amount = po_line.price_subtotal
+                for c in self.pool.get('account.tax').compute_all(cr, uid, po_line.taxes_id, po_line.price_unit, po_line.product_qty, po_line.order_id.partner_address_id.id, po_line.product_id.id, po_line.order_id.partner_id)['taxes']:
                     amount += c.get('amount', 0.0)
                 ret[line.id] += amount
-                """
+                
         return ret
     
     def _get_engage_ids(self, cr, uid, ids, context=None):

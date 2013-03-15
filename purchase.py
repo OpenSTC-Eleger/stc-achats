@@ -93,11 +93,14 @@ class purchase_order_line(osv.osv):
             res_erosion = abs(line.practical_amount) / abs(line.planned_amount) * 100
             #TODO: Intégrer le taux d'érosion d'un service
             return {'value':{'budget_dispo_info':res,'budget_dispo':res,'tx_erosion':res_erosion,'tx_erosion_info':res_erosion}}
-        return {'value':{}}
+        return {'value':{'budget_dispo_info':0.0,'budget_dispo':0.0,'tx_erosion':0.0,'tx_erosion_info':0.0}}
+    
+    #override to add merge_line asks and to include account.analytic.default (base OpenERP module)
     def onchange_product_id(self, cr, uid, ids, pricelist_id, product_id, qty, uom_id,
             partner_id, date_order=False, fiscal_position_id=False, date_planned=False,
-            name=False, price_unit=False, notes=False, context=None):
+            name=False, price_unit=False, notes=False, context=None, account_analytic_id=False):
         
+        #1- adding merge_asks
         merge_action = []
         for pol in self.browse(cr, uid, ids ,context):
             merge_action.extend([(1,x.id, {'product_id':product_id}) for x in pol.merge_line_ids])
@@ -105,8 +108,18 @@ class purchase_order_line(osv.osv):
         ret = super(purchase_order_line, self).onchange_product_id(cr, uid, ids, pricelist_id, product_id, qty, uom_id,
             partner_id, date_order, fiscal_position_id, date_planned,
             name, price_unit, notes, context)
-    
         ret['value'].update({'merge_line_ids':merge_action})
+        
+        #2- adding default analytic account if exists
+        if account_analytic_id:
+            ret['value'].update({'account_analytic_id':account_analytic_id})
+        
+        """#2- adding account.analytic.default if exists
+        acc = self.pool.get("account.analytic.default").account_get(cr, uid, product_id=product_id, partner_id=partner_id, user_id=uid, date=fields.date.context_today(self, cr, uid, context), context=context) 
+        if acc:
+            ret['value'].update({'account_analytic_id':acc.analytic_id.id})
+        else:
+            ret['value'].update({'account_analytic_id':False})"""
         return ret
     
     def onchange_merge_line_ids(self, cr, uid, ids, merge_line_ids=False, product_qty=False, context=None):
@@ -218,6 +231,7 @@ class purchase_order(osv.osv):
             'description':fields.char('Description',size=128),
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
+            'account_analytic_id':fields.many2one('account.analytic.account', 'Compte Analytique Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat.")
             }
     _defaults = {
         'validation':'budget_to_check',

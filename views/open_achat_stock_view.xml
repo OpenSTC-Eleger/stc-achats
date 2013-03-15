@@ -37,6 +37,9 @@
 					<field name="user_id" readonly="1"/>
 					<field name="service_id"/>
 				</field>
+				<field name="origin" position="after">
+				    <field name="account_analytic_id" domain="[('crossovered_budget_line','&lt;&gt;', False)]" groups="base.group_extended"/>
+				</field>
 				<tree string="Purchase Order Lines" position="replace">
 	                <tree string="Purchase Order Lines" colors="red:dispo==False">
 		                <field name="date_planned"/>
@@ -65,7 +68,7 @@
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
 				<xpath expr="//notebook/page[@string='Order Line']/field[@name='account_analytic_id']" position="replace">
-				    <field name="account_analytic_id" required="1" colspan="4" groups="analytic.group_analytic_accounting" domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('parent_id', '!=', False),('service_id','!=',False)]" on_change="onchange_account_analytic_id(account_analytic_id)"/>
+				    <field name="account_analytic_id" string="Ligne Budgétaire" required="1" colspan="4" groups="analytic.group_analytic_accounting" domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('crossovered_budget_line','&lt;&gt;',False)]" on_change="onchange_account_analytic_id(account_analytic_id)"/>
 				    <field name="budget_dispo_info"/>
 				    <field name="budget_dispo" invisible="1"/>
 				    <field name="tx_erosion_info"/>
@@ -80,8 +83,9 @@
 				    <field name="in_stock_info"/>
 				    <field name="in_stock" invisible="1"/>
 				</xpath>
-				<field name="product_id" position="attributes">
-					<attribute name="domain">[('type_prod','=','fourniture')]</attribute>
+				<field name="product_id" position="replace">
+					<field name="product_id" domain="[('type_prod','=','fourniture')]" required="True" colspan="4"
+					    on_change="onchange_product_id(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,context,parent.account_analytic_id)"/>					
 				</field>
             </field>
         </record>

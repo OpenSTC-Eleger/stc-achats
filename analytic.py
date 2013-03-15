@@ -53,26 +53,12 @@ class crossovered_budget(osv.osv):
         }
     
 crossovered_budget()
-"""
-class account_analytic_line(osv.osv):
-    _inherit = "account.analytic.line"
-    _name = "account.analytic.line"
 
+"""class account_analytic_default(osv.osv):
+    _inherit = "account.analytic.default"
+    
     _columns = {
-        'merge_line_ids':fields.one2many('openstc.merge.line.ask','analytic_line_id','Regroupement du Besoin'),
+        'site_id':fields.mane2one('openstc.site', 'Site'),
         }
     
-    def _check_prod(self, cr, uid, ids, context=None):
-        for analytic_line in self.browse(cr, uid, ids, context):
-            for merge_line in analytic_line.merge_line_ids:
-                if not merge_line.product_id or merge_line.product_id.id <> analytic_line.product_id.id:
-                    return False
-            return True
-        return True
-    
-    _constraints = [(_check_prod,'Erreur, Vous avez regroupé un besoin comportant au moins un produit différent par rapport auqel cette écriture analytique fait référence',['product_id','merge_line_ids'])]
-
-
-account_analytic_line()
-
-"""
+account_analytic_default()"""

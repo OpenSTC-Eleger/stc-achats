@@ -39,18 +39,21 @@ class crossovered_budget(osv.osv):
             pract = 0.0
             theo = 0.0
             planned = 0.0
+            openstc_practical = 0.0
             #Pour chaque budget, on ajoute les montants de toutes leurs lignes budgétaires
             for line in budget.crossovered_budget_line:
                 pract += line.practical_amount
                 theo += line.theoritical_amount
                 planned += line.planned_amount
-            res.update({budget.id:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned}})
+                openstc_practical += line.openstc_practical_amount
+            res.update({budget.id:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned, 'openstc_practical_amount':openstc_practical}})
         return res
     
     _columns = {
         'planned_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Plannifié", type='float'),
         'pract_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Pratique", type='float'),
         'theo_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Théorique", type='float'),
+        'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Consommé", type='float'),
         }
     
 crossovered_budget()
@@ -85,9 +88,16 @@ class crossovered_budget_lines(osv.osv):
             ret[line.id] = amount
         return ret
     
+    def _openstc_erosion(self, cr, uid, ids, name, args, context=None):
+        ret = {}
+        for line in self.browse(cr, uid, ids, context):
+            ret[line.id] = line.openstc_practical_amount * 100.0 / line.planned_amount
+        return ret
+    
     _inherit = "crossovered.budget.lines"
     _columns = {
             'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Balance Actuelle", type="float", digits_compute=dp.get_precision('Account')),
+            'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits=(3,2)),
         }
 
 

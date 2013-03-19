@@ -263,7 +263,7 @@
             <field name="arch" type="xml">
 				<field name="date_to" position="after">
 				    <field name="planned_amount" sum="Montant Plannifié"/>
-				    <field name="pract_amount" sum="Montant Pratique"/>
+				    <field name="openstc_practical_amount" sum="Montant Consommé"/>
 				</field>
             </field>
         </record>
@@ -274,11 +274,14 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account_budget.crossovered_budget_view_form"/>
             <field name="arch" type="xml">
-			    <field name="theoritical_amount" position="replace"/>
-			    <field name="percentage" position="replace"/>
-			    <field name="practical_amount" position="replace">
-			        <field name="openstc_practical_amount"/>
-			    </field>
+	       	    <xpath expr="//form/field[@name='crossovered_budget_line']/tree" position="replace">
+	       	    	<tree string="Budget Lines">
+	       	    	    <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>
+	       	    	    <field name="planned_amount" sum="Montant Planifié"/>
+	       	    	    <field name="openstc_practical_amount" sum="Montant consommé"/>
+	       	    	    <field name="openstc_erosion"/>
+	       	    	</tree>
+	       	    </xpath>
             </field>
         </record>
         

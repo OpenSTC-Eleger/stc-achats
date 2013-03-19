@@ -42,7 +42,17 @@
         </record>
         
 	    <record id="action_view_engagements" model="ir.actions.act_window">
-            <field name="name">Voir Engagements</field>
+            <field name="name">Mes Engagements</field>
+            <field name="res_model">open.engagement</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('user_id','=',uid)]</field>
+            <field name="context">{'search_default_in_progress':'1'}</field>
+        </record>
+	    
+	    <record id="action_view_all_engagements" model="ir.actions.act_window">
+            <field name="name">Tous les Engagements</field>
             <field name="res_model">open.engagement</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -171,10 +181,12 @@
 	        sequence="2" parent="menu_open_achat_stock_achats" action="action_view_draft_purchase"/>
 		<menuitem id="menu_open_achat_stock_achats_view_purchase"
 	        sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase"/>
-		<menuitem id="menu_open_achat_stock_view_engagements" name="Engagements"
+		<menuitem id="menu_open_achat_stock_view_engagements" name="Mes Engagements"
 	        sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements"/>
+		<menuitem id="menu_open_achat_stock_view_all_engagements" name="Tous les Engagements"
+	        sequence="5" parent="menu_open_achat_stock_achats" groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements"/>
 		<menuitem id="menu_open_achat_stock_achats_view_invoice" name="Factures"
-	        sequence="5" parent="menu_open_achat_stock_achats" action="account.action_invoice_tree"/>
+	        sequence="6" parent="menu_open_achat_stock_achats" action="account.action_invoice_tree"/>
 		
 	    <menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
 	        sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view"/>

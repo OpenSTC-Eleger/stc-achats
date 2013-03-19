@@ -53,7 +53,7 @@ class purchase_order_line(osv.osv):
         'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible (Euros)', digits=(6,2), readonly=True),
         'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service (%)', type="float", digits=(2,2), readonly=True),
         'dispo':fields.boolean('Budget OK',readonly=True),
-        'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Regroupement des Besoins'),
+        'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Ventilation des Besoins'),
         'in_stock':fields.float('Qté qui sera Stockée', digits=(3,2)),
         'in_stock_info':fields.related('in_stock',type='float', digits=(3,2), string='Qté qui sera Stockée', readonly=True),
         'engage_line_id':fields.many2one('open.engagement.line', 'Numéro d\'Engagement')
@@ -225,13 +225,13 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
-            'engage_id':fields.many2one('open.engagement','Engagement associé',readonly=True),
+            'engage_id':fields.many2one('open.engagement','Bon d\'Engagement associé',readonly=True),
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
-            'description':fields.char('Description',size=128),
+            'description':fields.char('Objet de l\'achat',size=128),
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
-            'account_analytic_id':fields.many2one('account.analytic.account', 'Compte Analytique Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat.")
+            'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat.")
             }
     _defaults = {
         'validation':'budget_to_check',
@@ -339,11 +339,15 @@ class purchase_order(osv.osv):
         #On gère aussi le cas de plusieurs lignes référants au même compte analytique
         po = self.browse(cr, uid, ids)
         for line in po.order_line:
+            #compute line amount with taxes
+            amount_line = line.price_subtotal
+            for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, line.order_id.partner_address_id.id, line.product_id.id, line.order_id.partner_id)['taxes']:
+                    amount_line += c.get('amount', 0.0)
             restant = -1
             if not line.account_analytic_id.id in dict_line_account:
-                restant = line.budget_dispo - line.price_subtotal
+                restant = line.budget_dispo - amount_line
             else:
-                restant = dict_line_account[line.account_analytic_id.id] - line.price_subtotal
+                restant = dict_line_account[line.account_analytic_id.id] - amount_line
             dict_line_account.update({line.account_analytic_id.id:restant})
             if restant >= 0:
                 line_ok.append(line.id)
@@ -384,7 +388,7 @@ class purchase_order(osv.osv):
         else:
             msg_error = ""
             cpt = 0
-            for error in self.pool.get("purchase.order.line"):
+            for error in self.pool.get("purchase.order.line").browse(cr, uid, line_errors):
                 cpt += 1
                 msg_error = "%s %s" %("," if cpt >1 else "", error.name)
             raise osv.except_osv('Erreur','Une partie de votre commande ne rentre pas dans votre budget : %s' %(msg_error,))

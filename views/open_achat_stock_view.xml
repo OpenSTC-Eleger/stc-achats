@@ -26,7 +26,6 @@
 				    <group col="6" colspan="4">
 					    <field name="validation"/>
 					    <field name="engage_id"/>
-					    <button name="open_engage" string="Créer/Gérer Engagement" type="object"/>
 				    </group>
 				</xpath>
 				<xpath expr="//notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="before">
@@ -57,7 +56,9 @@
                 	<field name="description" required="1"/>
                     <newline/>
                 </field>
-                
+                <button name="purchase_confirm" position="replace">
+                    <button name="open_engage" string="Créer/Gérer Engagement" type="object" icon="gtk-edit"/>
+                </button>
             </field>
         </record>
         
@@ -106,21 +107,24 @@
                 	<field name="service_id"/>
 					<newline/>
 					<field name="suppliers_id" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
-						<tree string="Fournisseurs potentiels" editable="top">
+						<tree string="Fournisseurs potentiels" editable="top"  colors="red:notif_state=='error_mail';orange:notif_state=='nothing';green:notif_state=='mail'">
 						    <field name="partner_id" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" domain="[('supplier','=',True)]"/>
 						    <field name="partner_address_id" domain="[('partner_id','=',partner_id)]" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="selected" attrs="{'readonly':[('state','&lt;&gt;', 'waiting_selection')]}"/>
 						    <field name="state"/>
+						    <field name="notif_state" attrs="{'readonly':[('state','&lt;&gt;', 'waiting_selection')]}"/>
 						</tree>
 					</field>
 					<newline/>
 					<field name="order_lines" nolabel="1" colspan="4" attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Produits de la Demande" editable="top">
-						    <field name="product_id" domain="[('type_prod','=','fourniture')]" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
+						    <field name="product_id" domain="[('type_prod','=','fourniture')]" on_change="onchange_product_id(product_id)"
+						        attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
+						    <field name="description" required="1" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="qte" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
 						    <field name="price_unit" attrs="{'readonly':[('state','&lt;&gt;', 'waiting_pu')],'required':[('state','=','waiting_pu')]}"/>
 						    <field name="date_order" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"/>
-						    <field name="description"/>
+						    <field name="infos"/>
 						    <field name="state"/>
 						</tree>
 					</field>
@@ -131,7 +135,7 @@
 					<button name="validate_supplier" string="Valider Fourniseur" type="object" states="waiting_supplier" />
 					<button name="send_ask" string="Envoyer demande (mails)" type="object" states="draft"/>
 					<button name="to_draft_po" string="Créer un Bon de Commande" type="object" states="waiting_purchase_order"/>
-            		<button name="do_terminate" string="Clore marché" type="object" states="waiting_purchase_order"/>
+            		<button name="do_terminate" string="Clore Devis" type="object" states="waiting_purchase_order"/>
             	</form>
             </field>
         </record>

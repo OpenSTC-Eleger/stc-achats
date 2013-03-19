@@ -38,12 +38,12 @@ class purchase_order_ask(osv.osv):
     
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
-        'name':fields.char('Nom',size=64),
+        'name':fields.char('Objet de l\'achat',size=64),
         'sequence':fields.char('Numéro Devis',size=4, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
-        'date_order':fields.date('Date d\'Obtention du Devis', required=True),
+        'date_order':fields.date('Date du Devis', required=True),
         'user_id':fields.many2one('res.users','Utilisateur Demandeur', readonly=True),
         'service_id':fields.many2one('openstc.service','Service Demandeur',required=True),
     }
@@ -86,6 +86,9 @@ class purchase_order_ask(osv.osv):
                 file_name = record.name_get()[0][1]
                 file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
                 file_name += ".pdf"
+                """cr.execute("select id from ir_attachment where res_model = %s and res_id = %s and datas_fname like %s", (self._name, record.id, file_name))
+                for id in cr.fetchall():
+                    """
                 ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
                                                                       {'name': file_name,
                                                                        'datas': result,
@@ -110,19 +113,36 @@ class purchase_order_ask(osv.osv):
         for ask in self.browse(cr, uid, ids):
             ir_attach_id = self._create_report_attach(cr, uid, ask, context)
             mail_values = {}
+            mail_ids = []
             if ir_attach_id:
                 mail_values.update({'attachment_ids':[(4,ir_attach_id)]})
             #{'email_to':supplier_line.partner_address_id.email}
+            supplier_lines_states = {'nothing':[],'error_mail':[],'mail':[]}
             for supplier_line in ask.suppliers_id:
-                mail_values.update({'email_to':supplier_line.partner_address_id.email})
-                ask_partners.append(supplier_line.id)
-                #pour chaque partner, en envoi un mail à son adresse mail
-                email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
-                mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
-                self.pool.get("mail.message").write(cr, uid, [mail_id], mail_values,context=context)
-                self.pool.get("mail.message").send(cr, uid, [mail_id], context)
-                #Pour l'instant, les mails seront envoyés via le threader (envoi périodique des mails en attentes)
+                if not supplier_line.partner_id.opt_out and supplier_line.partner_address_id:
+                    mail_values.update({'email_to':supplier_line.partner_address_id.email})
+                    ask_partners.append(supplier_line.id)
+                    #pour chaque partner, on envoi un mail à son adresse mail
+                    email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
+                    mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
+                    mail_ids.append(mail_id)
+                    self.pool.get("mail.message").write(cr, uid, [mail_id], mail_values,context=context)
+                    self.pool.get("mail.message").send(cr, uid, [mail_id], context)
+                    #get if mail is correctly sent or not
+                    if self.pool.get("mail.message").browse(cr, uid, mail_id, context).state == 'exception':
+                        supplier_lines_states['error_mail'].append(supplier_line.id)
+                    else:
+                        supplier_lines_states['mail'].append(supplier_line.id)
+                else:
+                    supplier_lines_states['nothing'].append(supplier_line.id)
             ask_lines.extend([x.id for x in ask.order_lines])
+        
+        #write notif_states for each supplier line
+        supplier_lines_states['mail'].append(supplier_line.id)
+        ask_partners_obj = self.pool.get("purchase.order.ask.partners")
+        for key, value in supplier_lines_states.items():
+            if value:
+                ask_partners_obj.write(cr, uid, value, {'notif_state':key})
         self.pool.get("purchase.order.ask.partners").write(cr, uid, ask_partners, {'state':'waiting_selection'})
         self.pool.get("purchase.order.ask.line").write(cr, uid, ask_lines, {'state':'waiting_pu'})
         self.write(cr, uid ,ids, {'state':'waiting_supplier'})
@@ -154,7 +174,7 @@ class purchase_order_ask(osv.osv):
         for line in ask.order_lines:
             if line.price_unit <= 0.0:
                 raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
-            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
+            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description or False, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
         partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
         prod_actions = []
         pol_obj = self.pool.get("purchase.order.line")
@@ -164,7 +184,11 @@ class purchase_order_ask(osv.osv):
                                                        date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
             if 'taxes_id' in prod_values:
                 prod_values.update({'taxes_id':[(4,x) for x in prod_values['taxes_id']]})
-            prod_values.update({'price_unit':prod_ctx['price_unit'], 'product_id':prod_ctx['prod_id'], 'merge_line_ids':prod_ctx['merge_line_ids']})
+            prod_values.update({'price_unit':prod_ctx['price_unit'], 
+                                'product_id':prod_ctx['prod_id'], 
+                                'merge_line_ids':prod_ctx['merge_line_ids']})
+            if prod_ctx['description']:
+                prod_values.update({'name':prod_ctx['description']})
             prod_actions.append((0,0,prod_values))
         entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
         if not entrepot_id:
@@ -215,6 +239,7 @@ class purchase_order_ask_line(osv.osv):
         'qte':fields.integer('Quantitié', required=True),
         'price_unit':fields.float('Prix Unitaire convenu',digit=(3,2)),
         'description':fields.char('Description',size=256),
+        'infos':fields.char('Infos Supplémentaires',size=256),
         'date_order':fields.date('Date Souhaitée'),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask', 'po_ask_line_id','Besoins Associés'),
         'state':fields.selection([('draft','Brouillon'),('waiting_pu','Attente PU'),('done','Terminé')], 'Etat',invisible=True)
@@ -224,18 +249,32 @@ class purchase_order_ask_line(osv.osv):
         'state':'draft'
         }
     
+    def onchange_product_id(self, cr, uid, ids, product_id=False):
+        ret = {}
+        if product_id:
+            prod = self.pool.get("product.product").browse(cr, uid, product_id)
+            ret.update({'description':prod.name_template})
+        else:
+            ret.update({'description':''})
+        return {'value':ret}
+                                                                  
+    
 purchase_order_ask_line()
 
 
 class purchase_order_ask_partners(osv.osv):
+    
+    _AVAILABLE_NOTIF_STATES = [('nothing','Non notifié'),('error_mail','Non notifié(erreur envoi de mail)'),('mail','Mail Envoyé')]
+    
     _name = "purchase.order.ask.partners"
     _columns = {
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande associée'),
             'partner_id':fields.many2one('res.partner','Fournisseur', required=True),
-            'partner_address_id':fields.many2one('res.partner.address','Contact', required=True),
+            'partner_address_id':fields.many2one('res.partner.address','Contact'),
             'selected':fields.boolean('Choisir ce fournisseur'),
             'state':fields.selection([('draft','Brouillon'),('waiting_selection','En Attente Sélection'),('done','Terminé')],
                                  'Etat',readonly=True, invisible=True),
+            'notif_state':fields.selection(_AVAILABLE_NOTIF_STATES ,'Notification'),
             }
     _defaults = {
             'state':'draft'

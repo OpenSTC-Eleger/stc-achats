@@ -115,7 +115,7 @@
 		    <br />
 		    <p>Cordialement,</p>
 		    <p>${object.user_id.name}</p>
-		    <p>Société ${object.user_id.company_id.name}</p>
+		    <p>${object.user_id.company_id.name}</p>
 		    ]]></field>
 		<field name="body_text"><![CDATA[
 		    Message Automatique
@@ -128,7 +128,7 @@
 		    
 		    Cordialement,
 		    ${object.user_id.name}
-		    Société ${object.user_id.company_id.name}
+		    ${object.user_id.company_id.name}
 		    ]]></field>
     </record>
 	

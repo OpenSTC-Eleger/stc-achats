@@ -46,13 +46,63 @@ class purchase_order_line(osv.osv):
         account_analytic = self.pool.get("account.analytic.account").name_get(cr, uid,account_analytic_ids, context)
         return account_analytic
     
+    def _get_budget_dispo(self, cr, uid, ids, name ,args, context=None):
+        ret = {}.fromkeys(ids, 0.0)
+        for line in self.browse(cr, uid, ids, context):
+            #we compute only for draft purchases 
+            if not line.order_id or line.order_id.state == 'draft':
+                line_id = self.pool.get("crossovered.budget.lines").search(cr, uid, [('analytic_account_id','=',line.account_analytic_id.id)])
+                if line_id:
+                    #return {'warning':{'title':'Erreur','message':'Ce compte Analytique n appartient a aucune ligne budgetaire'}}
+                    if isinstance(line_id, list):
+                        line_id = line_id[0]
+                    budget_line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
+                    res = abs(budget_line.planned_amount) - abs(budget_line.openstc_practical_amount)
+                    ret[line.id] = res
+        return ret
+    
+    def _get_amount_ttc(self, cr, uid, ids, name, args, context=None):
+        ret = {}.fromkeys(ids, 0.0)
+        for line in self.browse(cr, uid, ids, context):
+            amount_line = line.price_subtotal
+            for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, line.order_id.partner_address_id.id, line.product_id.id, line.order_id.partner_id)['taxes']:
+                    amount_line += c.get('amount', 0.0)
+            ret[line.id] = amount_line
+        return ret
+    
+    #return all lines concerned by the same purchase order and the same account analytic line
+    def _get_line_dispo(self, cr, uid, ids, name, args, context=None):
+        #dict of dict : {po_id:{account_id1:[line1,line2], account_id2:[line1,line2,line3]}}
+        grouped_lines = {}
+        for line in self.browse(cr, uid, ids, context):
+            grouped_lines.setdefault(line.order_id.id,{})
+            grouped_lines[line.order_id.id].setdefault(line.account_analytic_id.id, [])
+            grouped_lines[line.order_id.id][line.account_analytic_id.id].append(line)
+        
+        line_ok = []
+        line_not_ok = []
+        ret = {}
+        for order_id, values in grouped_lines.items():
+            for account_id, lines in values.items():
+                restant = lines[0].budget_dispo
+                for line in lines:
+                    restant -= line.amount_ttc
+                if restant > 0.0:
+                    ret.update({}.fromkeys([x.id for x in lines],True))
+                else:
+                    ret.update({}.fromkeys([x.id for x in lines],False))
+        
+        return ret
+    
     _columns = {
-        #'analytic_account_id':fields.selection(_sel_account_user,'Compte associé à l\'achat'),
-        'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
+        #'budget_dispo':fields.float('Budget Disponible', digits=(6,2)),
+        'budget_dispo':fields.function(_get_budget_dispo, method=True, type="float", string="Budget Disponible"),
         'tx_erosion': fields.float('Taux Erosion de votre Service', digits=(2,2)),
         'budget_dispo_info':fields.related('budget_dispo', type="float", string='Budget Disponible (Euros)', digits=(6,2), readonly=True),
         'tx_erosion_info': fields.related('tx_erosion', string='Taux Erosion de votre Service (%)', type="float", digits=(2,2), readonly=True),
-        'dispo':fields.boolean('Budget OK',readonly=True),
+        #'dispo':fields.boolean('Budget OK',readonly=True),
+        'dispo':fields.function(_get_line_dispo, string='Budget OK', method=True, type='boolean'),
+        'amount_ttc':fields.function(_get_amount_ttc, method=True, string="Montant", type="float", store={'purchase.order.line':[lambda self,cr,uid,ids,ctx:ids,['product_qty','price_unit','taxes_id'],10]}),
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Ventilation des Besoins'),
         'in_stock':fields.float('Qté qui sera Stockée', digits=(3,2)),
         'in_stock_info':fields.related('in_stock',type='float', digits=(3,2), string='Qté qui sera Stockée', readonly=True),
@@ -340,9 +390,7 @@ class purchase_order(osv.osv):
         po = self.browse(cr, uid, ids)
         for line in po.order_line:
             #compute line amount with taxes
-            amount_line = line.price_subtotal
-            for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, line.order_id.partner_address_id.id, line.product_id.id, line.order_id.partner_id)['taxes']:
-                    amount_line += c.get('amount', 0.0)
+            amount_line = line.amount_ttc
             restant = -1
             if not line.account_analytic_id.id in dict_line_account:
                 restant = line.budget_dispo - amount_line

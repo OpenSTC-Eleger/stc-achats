@@ -12,7 +12,7 @@
             <field name="view_id" ref="stock.view_move_tree_reception_picking"/>
             <field name="context" eval="'{\'search_default_receive\':1, \'search_default_available\':1, \'product_receive\' : True, \'default_location_id\':%d, \'default_location_dest_id\':%d}' % (ref('stock.stock_location_suppliers'),ref('stock.stock_location_stock') )"/>
             <field name="search_view_id" ref="stock.view_move_search_reception_incoming_picking"/>
-            <field name="help">Here you can receive individual products, no matter what purchase order or picking order they come from. You will find the list of all products you are waiting for. Once you receive an order, you can filter based on the name of the supplier or the purchase order reference. Then you can confirm all products received using the buttons on the right of each line.</field>
+<!--             <field name="help">Here you can receive individual products, no matter what purchase order or picking order they come from. You will find the list of all products you are waiting for. Once you receive an order, you can filter based on the name of the supplier or the purchase order reference. Then you can confirm all products received using the buttons on the right of each line.</field> -->
         </record>
 	    
 	    <record id="action_view_po_ask" model="ir.actions.act_window">

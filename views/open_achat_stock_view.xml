@@ -44,10 +44,10 @@
 		                <field name="date_planned"/>
 		                <field name="product_id"/>
 		                <field name="product_qty"/>
-		                <field name="price_unit"/>
-		                <field name="price_subtotal"/>
-		                <field name="account_analytic_id"/>
+<!-- 		                <field name="price_unit"/> -->
+		                <field name="amount_ttc"/>
 		                <field name="budget_dispo_info"/>
+		                <field name="account_analytic_id" string="Ligne Budgétaire"/>
 		                <field name="dispo"/>
 		                <field name="engage_line_id"/>
 		            </tree>
@@ -213,7 +213,8 @@
 	            	</group>
 	            	<group colspan="3" col="3">
 	            			<field name="elu_id"/>
-	            			<field name="justif_check" colspan="3"/>
+	            			<field name="justif_check" colspan="3" groups="openstc_achat_stock.openstc_elu"/>
+	            			<field name="justif_check_infos" readonly="1" colspan="3" groups="openstc.openstc_manager,openstc.openstc_dst"/>
 					</group>
 	            	<field name="attach_ids" nolabel="1" colspan="4">
 	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">

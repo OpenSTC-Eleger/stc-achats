@@ -39,7 +39,7 @@ class purchase_order_ask(osv.osv):
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
         'name':fields.char('Objet de l\'achat',size=64),
-        'sequence':fields.char('Numéro Devis',size=4, required=True),
+        'sequence':fields.char('Numéro Devis',size=32, required=True),
         'state':fields.selection(AVAILABLE_ETAT_PO_ASK,'Etat', readonly=True),
         'suppliers_id':fields.one2many('purchase.order.ask.partners','po_ask_id','Fournisseurs potentiels'),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
@@ -49,11 +49,31 @@ class purchase_order_ask(osv.osv):
     }
     _defaults={
             'state':'draft',
-            'sequence': lambda self, cr, uid, context: self.pool.get("ir.sequence").next_by_code(cr, uid, 'marche.po.number',context),
+            'sequence': lambda self,cr,uid,ctx={}: self._custom_sequence(cr, uid, ctx),
             'date_order':lambda self, cr, uid, context: fields.date.context_today(self ,cr ,uid ,context),
             'user_id':lambda self, cr, uid, context: uid,
             'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
     }
+    
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'po_ask.number',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+        for group in user.groups_id:
+            if prog.search(group.name):
+                if isinstance(user.service_ids, list) and not service:
+                    service = user.service_ids[0]
+                else:
+                    service = self.pool.get("openstc.service").browse(cr, uid, service)
+                seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
+                
+        return seq
     
     def _check_supplier_selection(self, cr, uid, ids, context=None):
         one_selection = True
@@ -174,7 +194,7 @@ class purchase_order_ask(osv.osv):
         for line in ask.order_lines:
             if line.price_unit <= 0.0:
                 raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
-            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description or False, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
+            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
         partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
         prod_actions = []
         pol_obj = self.pool.get("purchase.order.line")
@@ -356,8 +376,9 @@ class open_engagement(osv.osv):
         'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints'),
         'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
         'supplier_id':fields.related('purchase_order_id','partner_id', string='Fournisseur', type='many2one', relation='res.partner'),
-        'justif_check':fields.text('Justification de la décision de l\'Elu',state={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],
-                                                                         'readonly':[('check_dst','=',True)]}),
+        'justif_check':fields.text('Justification de la décision de l\'Elu'),
+        #attrs={'invisible':['|',('check_dst','=',False),('state','=','to_validate')],'readonly':[('check_dst','=',True)]}
+        'justif_check_infos':fields.related('justif_check', type="text", string='Justification de la décision de l\'Elu', store=True),
         'procuration_dst':fields.boolean('Procuration DST ?',readonly=True),
         'id':fields.integer('Id'),
         'current_url':fields.char('URL Courante',size=256),

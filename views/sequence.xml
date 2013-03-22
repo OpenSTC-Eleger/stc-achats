@@ -59,5 +59,16 @@
             <field name="padding">4</field>
         </record>
         
+        	<record id="sequence_po_ask_number_type" model="ir.sequence.type">
+            <field name="name">Numéro de Demande Devis</field>
+            <field name="code">po_ask.number</field>
+        </record>
+        <record id="sequence_po_ask_number" model="ir.sequence">
+            <field name="name">Numéro de Demande de Devis</field>
+            <field name="code">po_ask.number</field>
+            <field name="prefix">D-xxx/%(year)s-%(month)s-%(day)s/</field>
+            <field name="padding" eval="4"/>
+        </record>
+        
     </data>
 </openerp>

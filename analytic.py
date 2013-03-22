@@ -96,7 +96,7 @@ class crossovered_budget_lines(osv.osv):
     
     _inherit = "crossovered.budget.lines"
     _columns = {
-            'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Balance Actuelle", type="float", digits_compute=dp.get_precision('Account')),
+            'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
             'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits=(3,2)),
         }
 

@@ -29,6 +29,7 @@ import netsvc
 import unicodedata
 import time
 import base64
+from tools.translate import _
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -39,7 +40,7 @@ class purchase_order_line(osv.osv):
         user = self.pool.get("res.users").browse(cr, uid, uid)
         service_ids = [x.id for x in user.service_ids]
         if not service_ids:
-            raise osv.except_osv('Erreur','Vous n\'etes associés a aucun service')
+            raise osv.except_osv(_('Error'),_('you are not in any service'))
         #Recherche des comptes analytiques en rapport avec les services du user
         account_analytic_ids = self.pool.get("account.analytic.account").search(cr, uid, [('service_id','in',service_ids)])
         #Récup du nom complet (avec hiérarchie) des comptes, name_get renvoi une liste de tuple de la meme forme que le retour attendu de notre fonction
@@ -123,18 +124,18 @@ class purchase_order_line(osv.osv):
                 if not merge_line.product_id or merge_line.product_id.id == line.product_id.id:
                     qte += merge_line.qty_remaining
                 else:
-                    raise osv.except_osv('Erreur','Vous avez associé des lignes de regroupement ne faisait pas référence au produit de la ligne de commande en cours')
+                    raise osv.except_osv(_('Error'),_('you associated merge lines that does not math the product of this order line'))
             return qte_ref >= qte
         return False
     
-    _constraints = [(_check_qte_merge_qte_po,'Erreur, la quantité du produit commandé est inférieure a la quantité obtenu par regroupement de la demande de différents services et sites',['product_id','merge_line_ids'])]
+    _constraints = [(_check_qte_merge_qte_po,_('Error, product qty is lower than summed merge lines product qty'),['product_id','merge_line_ids'])]
     
     def onchange_account_analytic_id(self, cr, uid, ids, account_analytic_id=False):
         #On récupère la ligne budgétaire en rapport a ce compte analytique 
         if account_analytic_id:
             line_id = self.pool.get("crossovered.budget.lines").search(cr, uid, [('analytic_account_id','=',account_analytic_id)])
             if not line_id:
-                return {'warning':{'title':'Erreur','message':'Ce compte Analytique n appartient a aucune ligne budgetaire'}}
+                return {'warning':{'title':'Error','message':_('this analytic account has not any budget line associated')}}
             if isinstance(line_id, list):
                 line_id = line_id[0]
                 #print("Warning, un meme compte analytique est present dans plusieurs lignes de budgets")
@@ -163,13 +164,6 @@ class purchase_order_line(osv.osv):
         #2- adding default analytic account if exists
         if account_analytic_id:
             ret['value'].update({'account_analytic_id':account_analytic_id})
-        
-        """#2- adding account.analytic.default if exists
-        acc = self.pool.get("account.analytic.default").account_get(cr, uid, product_id=product_id, partner_id=partner_id, user_id=uid, date=fields.date.context_today(self, cr, uid, context), context=context) 
-        if acc:
-            ret['value'].update({'account_analytic_id':acc.analytic_id.id})
-        else:
-            ret['value'].update({'account_analytic_id':False})"""
         return ret
     
     def onchange_merge_line_ids(self, cr, uid, ids, merge_line_ids=False, product_qty=False, context=None):
@@ -182,7 +176,7 @@ class purchase_order_line(osv.osv):
                     qte_restante -= self.pool.get("openstc.merge.line.ask").read(cr, uid, action[1], ['product_qty'],context=context)['product_qty']
         ret = {'value':{'in_stock':qte_restante,'in_stock_info':qte_restante}}
         if qte_restante < 0:
-            ret.update({'warning':{'title':'Attention','message':'Le Besoin que vous avez recensé est supérieur A ce que vous voulez acheter.'}})
+            ret.update({'warning':{'title':_('Warning'),'message':_('merge lines qty that you have planned is greater than product qty to purchase.')}})
         return ret
     
     def create(self, cr, uid, vals, context=None):
@@ -242,7 +236,7 @@ class purchase_order(osv.osv):
         return seq
     
     def _create_report_attach(self, cr, uid, record, context=None):
-        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
                                                               ('report_type','=','jasper')])
@@ -251,22 +245,26 @@ class purchase_order(osv.osv):
             report = ir_actions_report.browse(cr, uid, matching_reports[0])
             report_service = 'report.' + report.report_name
             service = netsvc.LocalService(report_service)
-            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
-            eval_context = {'time': time, 'object': record}
-            if not report.attachment or not eval(report.attachment, eval_context):
-                # no auto-saving of report as attachment, need to do it manually
-                result = base64.b64encode(result)
-                file_name = record.name_get()[0][1]
-                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
-                file_name += ".pdf"
-                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
-                                                                      {'name': file_name,
-                                                                       'datas': result,
-                                                                       'datas_fname': file_name,
-                                                                       'res_model': self._name,
-                                                                       'res_id': record.id},
-                                                                      context=context)
-                ret = ir_attachment
+            try:
+                (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+                eval_context = {'time': time, 'object': record}
+                if not report.attachment or not eval(report.attachment, eval_context):
+                    # no auto-saving of report as attachment, need to do it manually
+                    result = base64.b64encode(result)
+                    file_name = record.name_get()[0][1]
+                    file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                    file_name += ".pdf"
+                    ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                          {'name': file_name,
+                                                                           'datas': result,
+                                                                           'datas_fname': file_name,
+                                                                           'res_model': self._name,
+                                                                           'res_id': record.id},
+                                                                          context=context)
+                    ret = ir_attachment
+            except:
+                pass
+            
         return ret
     
     AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Engagement A Vérifier'),
@@ -290,21 +288,6 @@ class purchase_order(osv.osv):
         'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context)
         }
     
-    """def default_get(self, cr, uid, args, context=None):
-        ret = super.default_get(cr, uid, args, context=context)
-        if 'merge_ask_ids' in context:
-            #create one po_line per product, associate each merge_line to according po_line
-            #1st, associate prod to corresponding merges
-            prod_merges = {}
-            for merge in self.browse(cr, uid, context['merge_ask_ids'], context):
-                if merge.product_id.id in prod_merges:
-                    prod_merges.update({merge.product_id.id:[(4,merge.id)]})
-                else:
-                    prod_merges[merge.product_id.id].append((4,merge.id))
-            #2nd, create po_line actions
-            
-        return ret"""
-    
     def create(self, cr, uid, vals, context=None):
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
         return po_id
@@ -324,9 +307,9 @@ class purchase_order(osv.osv):
             if po.validation <> 'done' and po.amount_total > 0.0:
                 ok = False
                 if po.validation == 'budget_to_check':
-                    raise osv.except_osv('Budget A Vérifier','Le Budget doit être vérifié et disponible pour valider un Bon de Commande')
+                    raise osv.except_osv(_('Budget to check'),_('Budgets must be checked and available for this purchase'))
                 elif po.validation == 'engagement_to_check':
-                    raise osv.except_osv('Engagement A Vérifier','L\'engagement doit être vérifié et compet pour valider un Bon de Commande')
+                    raise osv.except_osv(_('Engage to check'),_('Engage must be check and validated for this purchase'))
             elif po.amount_total > 0.0:
                 self._create_report_attach(cr, uid, po, context)
         if ok:
@@ -354,15 +337,6 @@ class purchase_order(osv.osv):
             #if not po.po_ask_id:
             return po.amount_total < company.base_seuil_po
             #Commande dans le cadre d'un marché
-            """else:
-                #Test seuil par bon de commande
-                if po.amount_total > max_po_autorise :
-                    return False
-                #Test seuil annuel
-                elif po.amount_total + total_po_amount > max_total_autorise:
-                    return False
-                #Dans ce cas tout est ok, on peut valider automatiquement l'engagement
-                return True"""
         #Si on arrive ici, c'est qu'il y a un pb (la commande n'est plus associée à l'engagement)
         #TODO: mettre un message d'erreur, voir si on ne perds pas les instances de wkf
         return False
@@ -423,7 +397,7 @@ class purchase_order(osv.osv):
                                                                            'purchase_order_id':ids}, context)
                 if res_id:
                     engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-                    self.log(cr, uid, ids, u'Le Bond d\'engagement Numéro %s a été créé le %s' % (engage['name'], datetime.now()))
+                    self.log(cr, uid, ids, _('Engage %s was created at %s') % (engage['name'], datetime.now()))
             else:
                 res_id = po.engage_id.id
             return {
@@ -439,7 +413,7 @@ class purchase_order(osv.osv):
             for error in self.pool.get("purchase.order.line").browse(cr, uid, line_errors):
                 cpt += 1
                 msg_error = "%s %s" %("," if cpt >1 else "", error.name)
-            raise osv.except_osv('Erreur','Une partie de votre commande ne rentre pas dans votre budget : %s' %(msg_error,))
+            raise osv.except_osv(_('Error'),_('Some purchase order lines does not match amount budget line available : %s') %(msg_error,))
             #self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
             #self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
         return

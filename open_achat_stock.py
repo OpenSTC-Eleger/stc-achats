@@ -29,6 +29,7 @@ import re
 import base64
 import unicodedata
 import netsvc
+from tools.translate import _
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
@@ -89,7 +90,7 @@ class purchase_order_ask(osv.osv):
         return one_selection
     
     def _create_report_attach(self, cr, uid, record, context=None):
-        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
                                                               ('report_type','=','jasper')])
@@ -98,25 +99,26 @@ class purchase_order_ask(osv.osv):
             report = ir_actions_report.browse(cr, uid, matching_reports[0])
             report_service = 'report.' + report.report_name
             service = netsvc.LocalService(report_service)
-            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
-            eval_context = {'time': time, 'object': record}
-            if not report.attachment or not eval(report.attachment, eval_context):
-                # no auto-saving of report as attachment, need to do it manually
-                result = base64.b64encode(result)
-                file_name = record.name_get()[0][1]
-                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
-                file_name += ".pdf"
-                """cr.execute("select id from ir_attachment where res_model = %s and res_id = %s and datas_fname like %s", (self._name, record.id, file_name))
-                for id in cr.fetchall():
-                    """
-                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
-                                                                      {'name': file_name,
-                                                                       'datas': result,
-                                                                       'datas_fname': file_name,
-                                                                       'res_model': self._name,
-                                                                       'res_id': record.id},
-                                                                      context=context)
-                ret = ir_attachment
+            try:
+                (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+                eval_context = {'time': time, 'object': record}
+                if not report.attachment or not eval(report.attachment, eval_context):
+                    # no auto-saving of report as attachment, need to do it manually
+                    result = base64.b64encode(result)
+                    file_name = record.name_get()[0][1]
+                    file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                    file_name += ".pdf"
+                    ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                          {'name': file_name,
+                                                                           'datas': result,
+                                                                           'datas_fname': file_name,
+                                                                           'res_model': self._name,
+                                                                           'res_id': record.id},
+                                                                          context=context)
+                    ret = ir_attachment
+            except:
+                pass
+            
         return ret
     
     def name_get(self, cr, uid, ids, context=None):
@@ -176,7 +178,7 @@ class purchase_order_ask(osv.osv):
     
     def validate_supplier(self, cr, uid, ids, context=None):
         if not self._check_supplier_selection(cr, uid, ids, context):
-            raise osv.except_osv('Erreur','Vous devez choisir un Fournisseur pour la suite et un seul.')
+            raise osv.except_osv(_('Error'),_('You have to choose a supplier, and only one'))
         self.write(cr, uid, ids, {'state':'waiting_purchase_order'})
         return
     
@@ -193,7 +195,7 @@ class purchase_order_ask(osv.osv):
         #On récupère les produits demandés avec leur qté et PU
         for line in ask.order_lines:
             if line.price_unit <= 0.0:
-                raise osv.except_osv('Erreur','Il manque le prix unitaire d\'un ou plusieurs produits')
+                raise osv.except_osv(_('Error'),_('Price units of somes products are missing'))
             list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
         partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
         prod_actions = []
@@ -212,7 +214,7 @@ class purchase_order_ask(osv.osv):
             prod_actions.append((0,0,prod_values))
         entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
         if not entrepot_id:
-            raise osv.except_osv('Erreur','Vous devez définir un entrepot dans la configuration OpenERP avant de continuer.')
+            raise osv.except_osv(_('Error'),_('You have to configure a warehouse'))
         if isinstance(entrepot_id, list):
             entrepot_id = entrepot_id[0]
         entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
@@ -221,16 +223,6 @@ class purchase_order_ask(osv.osv):
         ret.update(entrepot_infos)
         context.update({'from_ask':'1'})
         po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
-        """return {
-            'view_mode':'form',
-            'target':'current',
-            'type':'ir.actions.act_window',
-            'res_model':'purchase.order',
-            'context':{'ask_supplier_id':supplier_id,
-                       'ask_prod_ids':list_prod,
-                       'ask_today':fields.date.context_today(self,cr,uid,context),
-                       'po_ask_id':ids}
-            }"""
         return {
             'view_mode':'form',
             'target':'current',
@@ -302,7 +294,7 @@ class purchase_order_ask_partners(osv.osv):
     
 purchase_order_ask_partners()
 
-#Modèle d'un num d'engagement : YYYY-SER-xxx (YYYY: année, SER: service sur 3 lettres majuscules, xxx num incremental (=> id ?))
+#engage number model : YYYY-SER-xxx (YYYY: année, SER: service name on 3 characters, xxx: number increment )
 class open_engagement(osv.osv):
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
@@ -408,7 +400,7 @@ class open_engagement(osv.osv):
         return elu_id and elu_id[0] or False
     
     def _create_report_attach(self, cr, uid, record, context=None):
-        #sources insipered by _edi_generate_report_attachment of EDIMIXIN module
+        #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
                                                               ('report_type','=','jasper')])
@@ -417,22 +409,26 @@ class open_engagement(osv.osv):
             report = ir_actions_report.browse(cr, uid, matching_reports[0])
             report_service = 'report.' + report.report_name
             service = netsvc.LocalService(report_service)
-            (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
-            eval_context = {'time': time, 'object': record}
-            if not report.attachment or not eval(report.attachment, eval_context):
-                # no auto-saving of report as attachment, need to do it manually
-                result = base64.b64encode(result)
-                file_name = record.name_get()[0][1]
-                file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
-                file_name += ".pdf"
-                ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
-                                                                      {'name': file_name,
-                                                                       'datas': result,
-                                                                       'datas_fname': file_name,
-                                                                       'res_model': self._name,
-                                                                       'res_id': record.id},
-                                                                      context=context)
-                ret = ir_attachment
+            try:
+                (result, format) = service.create(cr, uid, [record.id], {'model': self._name}, context=context)
+                eval_context = {'time': time, 'object': record}
+                if not report.attachment or not eval(report.attachment, eval_context):
+                    # no auto-saving of report as attachment, need to do it manually
+                    result = base64.b64encode(result)
+                    file_name = record.name_get()[0][1]
+                    file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                    file_name += ".pdf"
+                    ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                          {'name': file_name,
+                                                                           'datas': result,
+                                                                           'datas_fname': file_name,
+                                                                           'res_model': self._name,
+                                                                           'res_id': record.id},
+                                                                          context=context)
+                    ret = ir_attachment
+            except:
+                pass
+            
         return ret
     
     def check_achat(self, cr, uid, ids, context=None):
@@ -447,7 +443,7 @@ class open_engagement(osv.osv):
             ids = ids[0]
         engage = self.browse(cr, uid, ids)
         if not engage.check_dst:
-            raise osv.except_osv('Erreur','Le DST doit avoir signé l\'engagement avant que vous ne puissiez le faire')
+            raise osv.except_osv(_('Error'),_('DST have to check engage first'))
         po_ids.append(engage.purchase_order_id.id)
         self.pool.get("purchase.order").write(cr, uid, [engage.purchase_order_id.id], {'validation':'done'})
         wf_service = netsvc.LocalService('workflow')
@@ -504,7 +500,7 @@ class open_engagement(osv.osv):
                 if not line.account_analytic_id.service_id:
                     #On regroupe les montants par budget analytique
                     #TODO: Utiliser name_get si name ne rencoit pas le nom complet (cad avec le nom des comptes parents)
-                    raise osv.except_osv('Erreur','Le compte Analytique %s n\'est associé A aucun service technique.' % line.account_analytic_id.name)
+                    raise osv.except_osv(_('Error'),_('Analytic account %s has not any service associated') % line.account_analytic_id.name)
                 account_amount.setdefault(line.account_analytic_id.id,{'line_id':[],'service_id':0})
                 account_amount[line.account_analytic_id.id]['line_id'].append(line.id)
                 account_amount[line.account_analytic_id.id]['service_id'] = line.account_analytic_id.service_id.id
@@ -535,7 +531,8 @@ class open_engagement(osv.osv):
             wf_service.trg_write(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, cr)
             wf_service.trg_validate(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
         if not engage.account_invoice_id.id:
-            raise osv.except_osv('Erreur','Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.')    
+            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this engage is needed, can not update budgets without') % line.account_analytic_id.name)
+#            #raise osv.except_osv(_('Erreur'),_('Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.'))    
         return True
     
     def open_stock_moves(self, cr, uid, ids, context=None):
@@ -560,19 +557,7 @@ class open_engagement(osv.osv):
     
     def real_invoice_attached(self, cr, uid, ids):
         #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
-        """
-        if isinstance(ids, list):
-            ids = ids[0]
-        po_id = self.read(cr, uid, ids, ['purchase_order_id'], context)
-        attachment_ids = self.pool.get("ir.attachment").search(cr, uid, [('res_id','=',po_id),('res_model','=','purchase.order')])
-        attachments = self.pool.get("ir.attachment").read(cr, uid, attachment_ids, ['id','datas_fname'])
-        prog = re.compile("pattern_invoice")
-        for attachment in attachments:
-            if prog.search(attachment['datas_fname']):
-                self.write(cr, uid, ids, {'invoice_ok':True})
-                return True
-        return False"""
-        #Pour éviter boucle infinie
+
         if not isinstance(ids, list):
             ids = [ids]
         for engage in self.browse(cr, uid, ids):
@@ -599,14 +584,6 @@ class open_engagement(osv.osv):
         self.pool.get('ir.attachment').write(cr, uid, [x.id for x in engage.attach_ids], {'engage_done':True}, context=context)
         return True
     
-    """def terminate_engage(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        attach = self.browse(cr, uid, ids, context)
-        wf_service = netsvc.LocalService('workflow')
-        wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
-        return True"""
-    
     def create(self, cr, uid, vals, context=None):
         res_id = super(open_engagement, self).create(cr, uid, vals, context)
         url = self.compute_current_url(cr, uid, res_id, context)
@@ -625,13 +602,13 @@ class open_engagement(osv.osv):
             msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
             if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
                 del vals['check_dst']
-                self.log(cr, uid, ids, 'Erreur, Echec d\'envoi du mail A l\'élu, votre signature n\'est pas prise en compte pour cette fois.')
+                self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
         super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
         return True
     
     def unlink(self, cr, uid, ids, context=None):
-        #Si on supprimer un engagement, on doit forcer les documents associés à en générer un autre
-        #En principe, aucun engagement ne doit etre supprimé
+        #if engage is deleted, we force other objects to generate another one
+        #TODO: in production, engage deletion is forbidden
         engages = self.browse(cr, uid, ids)
         for engage in engages:
             self.pool.get("purchase.order").write(cr, uid, engage.purchase_order_id.id, {'validation':'budget_to_check','engage_id':False}, context)
@@ -733,32 +710,6 @@ class openstc_ask_prod(osv.osv):
                     return False
         return True
     
-    """#TOCHECK: Si une partie de la demande peut etre satisafaite, faisons-nous une livraison partielle ?
-    def check_stock(self, cr, uid, ids, context=None):
-        prod_qty = {}
-        for ask in self.browse(cr, uid, ids, context):
-            already_asked_prods = {}
-            #On récupère les produits ainsi que leurs quantités demandées
-            for merge in ask.merge_line_ask_id:
-                prod_qty.update({merge.product_id.id:merge.product_qty})
-                already_asked_prods.setdefault(merge.product_id.id,0)
-            #On récupère le stock réel de chaque produit
-            stock_prod = self.pool.get("product.product")._product_available(cr, uid, prod_qty.keys(), ['qty_available'])
-            #On récupère toutes les demandes référant aux produits de la demande actuel
-            cr.execute('''select line.product_id, sum(line.product_qty) as qty from openstc_ask_prod as ask, openstc_merge_line_ask as line
-                        where  ask.id = line.ask_prod_id and ask.id not in %s and ask.state not in %s 
-                        group by line.product_id''', (tuple(ids), ('draft','done','in_except')))
-            for value in cr.fetchall():
-                already_asked_prods.update({value[0]:value[1]})
-            prod_not_dispo = []
-            #Puis on vérifie la dispo de chaque produit en fct du stock et des autres demandes
-            for prod_id, qty in prod_qty.iteritems():
-                if stock_prod[prod_id]['qty_available'] < already_asked_prods[prod_id] + qty:
-                    prod_not_dispo.append(prod_id)
-            #On coche les lignes de la demande dont le produit est dispo de suite
-            self.write(cr, uid, ids, {'merge_line_ask_id':[(1,x.id,{'dispo':True}) for x in ask.merge_line_ask_id if x.product_id.id not in prod_not_dispo]})
-        return prod_qty and not prod_not_dispo or False"""
-    
     def create(self, cr, uid, vals, context=None):
         context.update({'service_id':vals['service_id'],'site_id':vals['site_id']})
         ask_id = super(openstc_ask_prod, self).create(cr, uid, vals, context)
@@ -776,15 +727,6 @@ class openstc_ask_prod(osv.osv):
         return True
     
     
-"""    def _check_service_site(self, cr, uid, ids, context=None):
-        for ask in self.browse(cr, uid, ids, context):
-            if ask.service_id and ask.site_id \
-             or not ask.service_id and not ask.site_id:
-                return False
-        return True
-
-    _constraints = [(_check_service_site,'Erreur, Vous devez obligatoirement saisir soit un service soit un site et non les deux pour votre Demande.',['service_id','site_id'])]
-    """
 openstc_ask_prod()
     
 class openstc_merge_line_ask(osv.osv):
@@ -809,7 +751,7 @@ class openstc_merge_line_ask(osv.osv):
             qty_available = merge.product_id.qty_available or 0.0
             for move in merge.stock_move_ids:
                 #check if move and merge belong to the same product
-                assert move.product_id.id == merge.product_id.id, 'Erreur, les mouvements de stocks associés au besoin ne correspondent pas au meme produit.'
+                assert move.product_id.id == merge.product_id.id, _('Erreur, stock move associated to merge lines does not rely to same product')
                 if move.state == 'done':
                     qty_delivered += move.product_qty
             ret.update({merge.id:{'qty_delivered':qty_delivered, 
@@ -832,7 +774,7 @@ class openstc_merge_line_ask(osv.osv):
             qty_delivered = 0
             for move in merge.stock_move_ids:
                 #check if move and merge belong to the same product
-                assert move.product_id.id == merge.product_id.id, 'Erreur, les mouvements de stocks associés au besoin ne correspondent pas au meme produit.'
+                assert move.product_id.id == merge.product_id.id, 'Error, stock moves doesn\'t match same products as merge lines'
                 if move.state == 'done':
                     qty_delivered += move.product_qty
             ret.update({merge.id:qty_delivered})
@@ -883,7 +825,7 @@ class openstc_merge_line_ask(osv.osv):
                 prod = merge.product_id
                 qty_available = prod.qty_available or 0.0
                 #TODO: check if qty_deliver + qty already delivered <= merge.product_qty, otherwise raise an exception 
-                assert item['qty'] <= qty_available, 'Erreur, Vous essayez de livrer une quantité de fourniture supérieure au stock disponible.'
+                assert item['qty'] <= qty_available, 'Error, you try to supply a qty of products bigger than qty available in stock'
                 #move creation
                 values = move_obj.onchange_product_id(cr, uid, [], prod_id=item['prod_id'])['value']
                 values.update({'product_id':prod.id,'product_qty':item['qty']})
@@ -908,7 +850,8 @@ class openstc_merge_line_ask(osv.osv):
             qty_available = merge.product_id.qty_available or 0.0
             #TODO: we can filter with qty_virtual_available to know if some prods are planned to be received                
             if qty_available == 0.0: 
-                raise osv.except_osv('Erreur', 'Vous ne pouvez pas répondre A ce besoin car la quantité en stock de cette fourniture est nul, procédez A une Réappro ou attendez q\'une Réappro soit faite')
+                raise osv.except_osv(_('Error'), _('you can\'t satisfy this need because stock product qty is null, make a delivering ask or wait for one.'))
+                #raise osv.except_osv(_('Error'), _('Vous ne pouvez pas répondre A ce besoin car la quantité en stock de cette fourniture est nul, procédez A une Réappro ou attendez q\'une Réappro soit faite'))
             #qty needed to response to the ask, we could have already done a partial delivering 
             qty_to_deliver = merge.product_qty - merge.qty_delivered
             #if user selected more than one ask, raise an exception if qty total desired of a product < qty_available of this product
@@ -918,7 +861,8 @@ class openstc_merge_line_ask(osv.osv):
                 else:
                     prod_qty_deliver.update({merge.product_id.id:qty_to_deliver})
                 if prod_qty_deliver[merge.product_id.id] > qty_available:
-                    raise osv.except_osv('Erreur','Les stocks du produit %s sont insuffisants pour répondre A une partie des besoins que vous avez sélectionnés.' %(merge.product_id.name))
+                    raise osv.except_osv(_('Error'), _('stock of the product %s is unavailable to stafisfy this need'))
+                    #raise osv.except_osv(_('Erreur'),_('Les stocks du produit %s sont insuffisants pour répondre A une partie des besoins que vous avez sélectionnés.') %(merge.product_id.name))
             #if user selected only one ask and qty_available < qty needed to terminate the ask, we do a partial delivering
             else:
                 qty_to_deliver = min(qty_available, qty_to_deliver)
@@ -971,7 +915,6 @@ class stock_picking(osv.osv):
         #On vérifie que toutes les réceptions de produits sont faites
         for engage_id in engage_ids:
             wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
-        #self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True})
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()
@@ -1062,7 +1005,7 @@ class ir_attachment(osv.osv):
             print(attach.datas_fname)
             print(fields.date.context_today(self, cr, uid, context))
             print(engage.name)
-            self.log(cr, engage.user_id.id, attach_id,'Vous devez vérifier la facture %s ajoutée le %s sur votre engagement %s' %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
+            self.log(cr, engage.user_id.id, attach_id,_('you have to check invoice %s added at %s on your engage %s') %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
         return attach_id
     
     def send_invoice_to_pay(self, cr, uid, ids, context=None):
@@ -1078,7 +1021,7 @@ class ir_attachment(osv.osv):
         self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail au service compta pour paiement de la facture %s'%(attach.datas_fname))
+            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail with invoice attached to accountant %s') %(attach.datas_fname))
             self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
         else:
             self.write(cr, uid, [ids], {'state':'validated','action_date':datetime.now()}, context)
@@ -1114,7 +1057,7 @@ class ir_attachment(osv.osv):
         self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, 'Erreur lors de l\'envoi du mail', context=context)
+            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail'), context=context)
             self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
         else:
             self.write(cr, uid, [ids], {'state':'refused','action_date':datetime.now()}, context)
@@ -1135,14 +1078,14 @@ class ir_attachment(osv.osv):
         attach = self.browse(cr, uid, ids, context)
         attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','in',('to_check','except_send_mail'))], context=context)
         if attach_ids:
-            raise osv.except_osv('Erreur','Vous ne pouvez pas clore l\'engagement car il reste des factures à traiter')
+            raise osv.except_osv(_('Error'), _('you can not end this engage because some invoices attached have to be checked'))
         else:
             if self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context).reception_ok:
                 self.write(cr, uid, [attach.id], {'attach_made_done':True},context=context)
                 wf_service = netsvc.LocalService('workflow')
                 wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
             else:
-                raise osv.except_osv('Erreur','Vous ne pouvez pas clore l\'engagement car il reste des produits A Réceptionner (dans OpenERP)')
+                raise osv.except_osv(_('Error'), _('you can not end this engage because some products are waiting for reception (do it in OpenERP)'))
         return {'res_model':'open.engagement',
                 'view_mode':'form,tree',
                 'target':'current',
@@ -1165,14 +1108,6 @@ class stock_partial_move(osv.osv_memory):
             #We put the original active_ids to keep the OpenERP mind (we just cheated the active_ids for this wizard)
             context.update({'active_ids':context['old_active_ids']})
             context.update({'active_model':context['old_active_model']})
-            """return {
-                'type':'ir.actions.act_window',
-                'view_mode':'form',
-                'res_id':context['active_id'],
-                'target':'current',
-                'res_model':'open.engagement',
-                'context':context,
-                }"""
             return {"type":"ir.actions.act_window_close"}
         return res
     

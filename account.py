@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 class account_analytic_account(osv.osv):
     _inherit = "account.analytic.account"
@@ -47,20 +48,15 @@ class account_invoice_line(osv.osv):
                 if not merge_line.product_id or merge_line.product_id.id == line.product_id.id:
                     qte += merge_line.qty_remaining
                 else:
-                    raise osv.except_osv('Erreur','Vous avez associé des lignes de regroupement ne faisait pas référence au produit de la ligne de commande en cours')
+                    raise osv.except_osv(_('Error'),_('you have associcated merge lines that does not rely to order line product'))
             if qte_ref < qte:
                 return False
             else:
                 return True
         return False
     
-    _constraints = [(_check_qte_merge_qte_invoice,'Erreur, la quantité du produit acheté est inférieure a la quantité obtenu par regroupement de la demande de différents services et sites',['product_id','merge_line_ids'])]
-    
-    """def move_line_get_item(self, cr, uid, line, context=None):
-        ret = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context)
-        ret.update({'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})
-        return ret"""
-    
+    _constraints = [(_check_qte_merge_qte_invoice,_('Error, product qty is lower than product qty of summed merge lines you have associated to this order line'),['product_id','merge_line_ids'])]
+        
 account_invoice_line()
  
 
@@ -105,8 +101,7 @@ class account_move_line(osv.osv):
                     return False
             return True
         return True
-    
-    _constraints = [(_check_prod,'Erreur, Vous avez regroupé un besoin comportant au moins un produit différent par rapport auqel cette écriture analytique fait référence',['product_id','merge_line_ids'])]
+    _constraints = [(_check_prod,_('Error, All merge lines associated to this move line does not match same product as this move line'),['product_id','merge_line_ids'])]
 
     
 account_move_line()

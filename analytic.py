@@ -62,17 +62,6 @@ class crossovered_budget_lines(osv.osv):
     
     #custom field for public account : returns amount with taxes included
     def _openstc_pract(self, cr, uid, ids, name, args, context=None):
-        """ret = {}
-        name_grouped = []
-        for line in self.browse(cr, uid, ids, context):
-            #first, get all move_analytic_line that matches dates and the analytic account of current line
-            analytic_line_ids = self.pool.get("account.analytic.line").search(cr, uid, [('date','<=', line.date_to),('date','>=',line.date_from),('account_id','=',line.account_analytic_id.id)])
-            analytic_lines = self.pool.get("account.analytic.line").browse(cr, uid, analytic_line_ids, context)
-            #next, we get all invoices relating to those analytic accounts
-            for al in analytic_lines:
-                if al.ref not in name_grouped:
-                    name_grouped.append(al.ref)
-            #next, we get all """
         #first, we get engage_lines that matches dates and current budget line analytic account
         ret = {}
         for line in self.browse(cr, uid, ids, context):

@@ -423,7 +423,7 @@ class purchase_order(osv.osv):
                                                                            'purchase_order_id':ids}, context)
                 if res_id:
                     engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-                    self.log(cr, uid, ids, 'Le Bond d\'engagement Numéro %s a été créé le %s' % (engage['name'], datetime.now()))
+                    self.log(cr, uid, ids, u'Le Bond d\'engagement Numéro %s a été créé le %s' % (engage['name'], datetime.now()))
             else:
                 res_id = po.engage_id.id
             return {

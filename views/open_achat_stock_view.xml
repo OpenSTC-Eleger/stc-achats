@@ -193,29 +193,25 @@
 					    </group>
 				    </group>
 	            	<field name="invoice_ok" invisible="1"/>
-					<group col="4" colspan="4" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}">
-	            	    <separator string="Signatures du DST et d'un Elu" colspan="4"/>
-	            	    <group col="4" colspan="2">
+					<group col="2" colspan="1" string="Signatures du DST et d'un Elu" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst" 
+					    attrs="{'invisible':[('state','not in',('draft','to_validate'))]}">
 		            		<field name="check_dst" colspan="2"/>
-		            		<field name="procuration_dst" colspan="2"/>
-		            		<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
+		            		<field name="procuration_dst" colspan="2" invisible="1"/>
+		            		<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply" string="Valider l'Engagement par l'Elu" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+		            		<button name="signal_except_check" string="Refuser l'Engagement par l'Elu" icon="gtk-cancel" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
+							<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration" type="action" attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>							
 							<button name="signal_except_check" string="Refuser Par Procuration" type="workflow" attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}" groups="openstc.openstc_dst" colspan="2"/>
-						</group>
-						<group col="2" colspan="2">
-						    <button name="%(open_engage_check_elu_wizard)d" string="Valider l'Engagement (Signature)" type="action" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
-							<button name="signal_except_check" string="Refuser l'Engagement" type="workflow" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
-							<button name="procuration_dst" string="Déléguer Signature au DST" type="object" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}" groups="openstc_achat_stock.openstc_elu"/>
-						</group>
 	            	</group>
-	            	<group col="2" colspan="1">
+	            	<group col="2" string="Réception de produits" colspan="1" attrs="{'invisible':[('state','in',('draft','to_validate'))]}">
 		            	<field name="reception_ok"/>
 		            	<button name="open_stock_moves" type="object" string="Voir Réception de Produits associée" states = "waiting_reception"/>
 	            	</group>
-	            	<group colspan="3" col="3">
+	            	<group colspan="2" col="2">
 	            			<field name="elu_id"/>
-	            			<field name="justif_check" colspan="3" groups="openstc_achat_stock.openstc_elu"/>
-	            			<field name="justif_check_infos" readonly="1" colspan="3" groups="openstc.openstc_manager,openstc.openstc_dst"/>
+	            			<field name="justif_check" colspan="2" groups="openstc_achat_stock.openstc_elu"/>
+	            			<field name="justif_check_infos" readonly="1" colspan="2" groups="openstc.openstc_manager,openstc.openstc_dst"/>
 					</group>
+	            	<newline/>
 	            	<field name="attach_ids" nolabel="1" colspan="4">
 	            		<tree string="Documents joints" colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
 	            		    <field name="datas_fname"/>

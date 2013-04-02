@@ -1,74 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data noupdate="1">
-	    
-	<record id="sequence_engage_number_type" model="ir.sequence.type">
-            <field name="name">Numéro d'engagement</field>
-            <field name="code">engage.number</field>
-        </record>
-        <record id="sequence_asset_number" model="ir.sequence">
-            <field name="name">Numéro d'engagement</field>
-            <field name="code">engage.number</field>
-            <field name="prefix">%(year)s-xxx-</field>
-            <field name="padding" eval="4"/>
-        </record>
-    	<record id="sequence_marche_purchase_order" model="ir.sequence.type">
-            <field name="name">Numéro Marché aux Bons de Commandes</field>
-            <field name="code">marche.po.number</field>
-        </record>
-        <record id="sequence_marche_purchase_order_number" model="ir.sequence">
-            <field name="name">Numéro Marché aux Bons de Commandes</field>
-            <field name="code">marche.po.number</field>
-            <field name="prefix"></field>
-            <field name="padding" eval="3"/>
-        </record>
-        
-        <record id="sequence_openstc_ask_prod" model="ir.sequence.type">
-            <field name="name">Numéro Demandes de Fournitures</field>
-            <field name="code">openstc.ask.prod.number</field>
-        </record>
-        
-        <record id="sequence_openstc_ask_prod_number" model="ir.sequence">
-            <field name="name">Numéro Demandes de Fournitures</field>
-            <field name="code">openstc.ask.prod.number</field>
-            <field name="prefix"></field>
-            <field name="padding" eval="3"/>
-        </record>
-        
-        <record id="sequence_openstc_purchase_order_custom_type" model="ir.sequence.type">
-            <field name="name">OpenSTC Purchase Order</field>
-            <field name="code">openstc.purchase.order</field>
-        </record>
-        
-        <record id="seq_openstc_purchase_order_custom" model="ir.sequence">
-            <field name="name">OpenSTC Purchase Order</field>
-            <field name="code">openstc.purchase.order</field>
-            <field name="prefix">BC-xxx-%(year)s-%(month)s-%(day)s-</field>
-            <field name="padding">4</field>
-        </record>
-        
-        <record id="sequence_open_engage_order_custom_type" model="ir.sequence.type">
-            <field name="name">OpenSTC Open Engage</field>
-            <field name="code">open.engagement</field>
-        </record>
-        
-        <record id="seq_open_engage" model="ir.sequence">
-            <field name="name">OpenSTC Open Engage</field>
-            <field name="code">open.engagement</field>
-            <field name="prefix">BE-%(year)s-%(month)s-</field>
-            <field name="padding">4</field>
-        </record>
-        
-        	<record id="sequence_po_ask_number_type" model="ir.sequence.type">
-            <field name="name">Numéro de Demande Devis</field>
-            <field name="code">po_ask.number</field>
-        </record>
-        <record id="sequence_po_ask_number" model="ir.sequence">
-            <field name="name">Numéro de Demande de Devis</field>
-            <field name="code">po_ask.number</field>
-            <field name="prefix">D-xxx/%(year)s-%(month)s-%(day)s/</field>
-            <field name="padding" eval="4"/>
-        </record>
-        
-    </data>
+
+		<record id="sequence_engage_number_type" model="ir.sequence.type">
+			<field name="name">Numéro d'engagement</field>
+			<field name="code">engage.number</field>
+		</record>
+		<record id="sequence_asset_number" model="ir.sequence">
+			<field name="name">Numéro d'engagement</field>
+			<field name="code">engage.number</field>
+			<field name="prefix">%(year)s-xxx-</field>
+			<field name="padding" eval="4" />
+		</record>
+		<record id="sequence_marche_purchase_order" model="ir.sequence.type">
+			<field name="name">Numéro Marché aux Bons de Commandes</field>
+			<field name="code">marche.po.number</field>
+		</record>
+		<record id="sequence_marche_purchase_order_number" model="ir.sequence">
+			<field name="name">Numéro Marché aux Bons de Commandes</field>
+			<field name="code">marche.po.number</field>
+			<field name="prefix"></field>
+			<field name="padding" eval="3" />
+		</record>
+
+		<record id="sequence_openstc_ask_prod" model="ir.sequence.type">
+			<field name="name">Numéro Demandes de Fournitures</field>
+			<field name="code">openstc.ask.prod.number</field>
+		</record>
+
+		<record id="sequence_openstc_ask_prod_number" model="ir.sequence">
+			<field name="name">Numéro Demandes de Fournitures</field>
+			<field name="code">openstc.ask.prod.number</field>
+			<field name="prefix"></field>
+			<field name="padding" eval="3" />
+		</record>
+
+		<record id="sequence_openstc_purchase_order_custom_type" model="ir.sequence.type">
+			<field name="name">OpenSTC Purchase Order</field>
+			<field name="code">openstc.purchase.order</field>
+		</record>
+
+		<record id="seq_openstc_purchase_order_custom" model="ir.sequence">
+			<field name="name">OpenSTC Purchase Order</field>
+			<field name="code">openstc.purchase.order</field>
+			<field name="prefix">BC-xxx-%(year)s-%(month)s-%(day)s-</field>
+			<field name="padding">4</field>
+		</record>
+
+		<record id="sequence_open_engage_order_custom_type" model="ir.sequence.type">
+			<field name="name">OpenSTC Open Engage</field>
+			<field name="code">open.engagement</field>
+		</record>
+
+		<record id="seq_open_engage" model="ir.sequence">
+			<field name="name">OpenSTC Open Engage</field>
+			<field name="code">open.engagement</field>
+			<field name="prefix">BE-%(year)s-%(month)s-</field>
+			<field name="padding">4</field>
+		</record>
+
+		<record id="sequence_po_ask_number_type" model="ir.sequence.type">
+			<field name="name">Numéro de Demande Devis</field>
+			<field name="code">po_ask.number</field>
+		</record>
+		<record id="sequence_po_ask_number" model="ir.sequence">
+			<field name="name">Numéro de Demande de Devis</field>
+			<field name="code">po_ask.number</field>
+			<field name="prefix">D-xxx/%(year)s-%(month)s-%(day)s/</field>
+			<field name="padding" eval="4" />
+		</record>
+
+	</data>
 </openerp>

@@ -21,6 +21,7 @@
 #
 ##############################################################################
 
+import base
 import open_achat_stock
 import wizard
 import account

@@ -1,201 +1,224 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data>
-	    
-	    <record id="action_open_achat_stock_reception_picking_move" model="ir.actions.act_window">
-            <field name="name">Réception par Produits</field>
-            <field name="res_model">stock.move</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">['|','&amp;',('picking_id','=',False),('location_id.usage', 'in', ['customer','supplier']),'&amp;',('picking_id','!=',False),('picking_id.type','=','in'),('name','not ilike','%emprunt%')]</field>
-            <field name="view_id" ref="stock.view_move_tree_reception_picking"/>
-            <field name="context" eval="'{\'search_default_receive\':1, \'search_default_available\':1, \'product_receive\' : True, \'default_location_id\':%d, \'default_location_dest_id\':%d}' % (ref('stock.stock_location_suppliers'),ref('stock.stock_location_stock') )"/>
-            <field name="search_view_id" ref="stock.view_move_search_reception_incoming_picking"/>
-<!--             <field name="help">Here you can receive individual products, no matter what purchase order or picking order they come from. You will find the list of all products you are waiting for. Once you receive an order, you can filter based on the name of the supplier or the purchase order reference. Then you can confirm all products received using the buttons on the right of each line.</field> -->
-        </record>
-	    
-	    <record id="action_view_po_ask" model="ir.actions.act_window">
-            <field name="name">Demandes de Devis</field>
-            <field name="res_model">purchase.order.ask</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-	    
-	    <record id="action_view_draft_purchase" model="ir.actions.act_window">
-            <field name="name">Commandes soumises à Validation</field>
-            <field name="res_model">purchase.order</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','=','draft'),('is_emprunt','=',False)]</field>
-        </record>
-	    
-	    <record id="action_view_valid_purchase" model="ir.actions.act_window">
-            <field name="name">Commandes Validées</field>
-            <field name="res_model">purchase.order</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','&lt;&gt;','draft'),('is_emprunt','=',False)]</field>
-        </record>
-        
-	    <record id="action_view_engagements" model="ir.actions.act_window">
-            <field name="name">Mes Engagements</field>
-            <field name="res_model">open.engagement</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('user_id','=',uid)]</field>
-            <field name="context">{'search_default_in_progress':'1'}</field>
-        </record>
-	    
-	    <record id="action_view_all_engagements" model="ir.actions.act_window">
-            <field name="name">Tous les Engagements</field>
-            <field name="res_model">open.engagement</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_in_progress':'1'}</field>
-        </record>
-	    
-	    <record id="openstc_achat_stock_action_view_products" model="ir.actions.act_window">
-            <field name="name">Voir Fournitures</field>
-            <field name="res_model">product.product</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('active','=',True),('purchase_ok','=',True),('type_prod','=','fourniture')]</field>
-        </record>
-	    
-	    <record id="openstc_ask_prod_action_view" model="ir.actions.act_window">
-            <field name="name">Demandes de Fournitures</field>
-            <field name="res_model">openstc.ask.prod</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-	    
-	    <record id="openstc_merge_line_ask_view" model="ir.actions.act_window">
-            <field name="name">Besoins en Fournitures Exprimés</field>
-            <field name="res_model">openstc.merge.line.ask</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain"> [('merge_ask_done','=',False)]</field>
-            <field name="context" eval="'{\'default_location_id\':%d, \'default_location_dest_id\':%d}' % (ref('stock.stock_location_stock'),ref('stock.stock_location_customers'))"/>
-        </record>
-	    
-	    <record id="openstc_achat_stock_action_view_logs" model="ir.actions.act_window">
-            <field name="name">Vos Messages Internes</field>
-            <field name="res_model">res.log</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_my':'1'}</field>
-        </record>
-	    
-	    <record id="openstc_merge_line_to_respond_action_wizard" model="ir.actions.act_window">
-            <field name="name">Répondre A ces Besoins</field>
-            <field name="res_model">openstc.merge.line.ask.respond.wizard</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-			<field name="src_model">openstc.merge.line.ask</field>
-            <field name="context" eval="'{\'default_location_id\':%d, \'default_location_dest_id\':%d,\'merge_ask_ids\':active_ids}' % (ref('stock.stock_location_stock'),ref('stock.stock_location_customers'))"/>
-            <field name="target">new</field>
-        </record>
 
-	    <record model="ir.values" id="openstc_merge_ask_to_respond">
-            <field name="name">Répondre A ces Beoins</field>
-            <field name="key2">client_action_multi</field>
-            <field name="value" eval="'ir.actions.act_window,' + str(ref('openstc_merge_line_to_respond_action_wizard'))" />
-            <field name="key">action</field>
-            <field name="model">openstc.merge.line.ask</field>
-        </record>
-	    
-	    <record id="openstc_merge_line_to_po_action_wizard" model="ir.actions.act_window">
-            <field name="name">Créer une commande pour Réapprovisionner</field>
-            <field name="res_model">openstc.merge.line.ask.po.wizard</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-			<field name="src_model">openstc.merge.line.ask</field>
-            <field name="context">{'merge_ask_ids':active_ids}</field>
-            <field name="target">new</field>
-        </record>
+		<record id="action_open_achat_stock_reception_picking_move"
+			model="ir.actions.act_window">
+			<field name="name">Réception par Produits</field>
+			<field name="res_model">stock.move</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">['|','&amp;',('picking_id','=',False),('location_id.usage','in',['customer','supplier']),
+			    '&amp;',('picking_id','!=',False),('picking_id.type','=','in'),('name','not ilike','%emprunt%')]</field>
+			<field name="view_id" ref="stock.view_move_tree_reception_picking" />
+			<field name="context"
+				eval="'{\'search_default_receive\':1, \'search_default_available\':1, \'product_receive\' : True, \'default_location_id\':%d, \'default_location_dest_id\':%d}' % (ref('stock.stock_location_suppliers'),ref('stock.stock_location_stock') )" />
+			<field name="search_view_id" ref="stock.view_move_search_reception_incoming_picking" />
+			<!-- <field name="help">Here you can receive individual products, no matter 
+				what purchase order or picking order they come from. You will find the list 
+				of all products you are waiting for. Once you receive an order, you can filter 
+				based on the name of the supplier or the purchase order reference. Then you 
+				can confirm all products received using the buttons on the right of each 
+				line.</field> -->
+		</record>
 
-	    <record model="ir.values" id="openstc_merge_ask_to_po">
-            <field name="name">Créer une commande pour Réapprovisionner</field>
-            <field name="key2">client_action_multi</field>
-            <field name="value" eval="'ir.actions.act_window,' + str(ref('openstc_merge_line_to_po_action_wizard'))" />
-            <field name="key">action</field>
-            <field name="model">openstc.merge.line.ask</field>
-        </record>
-	    
-	    <record id="open_engage_check_elu_wizard" model="ir.actions.act_window">
-            <field name="name">Signature de l'Elu</field>
-            <field name="res_model">open.engagement.check.elu.wizard</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="context">{'engage_id':active_id}</field>
-            <field name="target">new</field>
-        </record>
-	    
-	    <record id="openstc_report_service_site_cost_wizard" model="ir.actions.act_window">
-            <field name="name">Rapport des Coûts des Sites et Services</field>
-            <field name="res_model">openstc.report.service.site.cost.wizard</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="target">new</field>
-        </record>
-	    
-	    <menuitem id="menu_open_achat_stock" name="Achats-Stocks" sequence="10" 
-	        groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user"/>
-	    
-	    <menuitem id="menu_open_achat_stock_stocks" name="Stocks" sequence="1" parent="menu_open_achat_stock"/>
-	    <menuitem id="menu_open_achat_stock_achats" name="Achats" sequence="2" parent="menu_open_achat_stock"/>
-	    <menuitem id="menu_open_achat_stock_budgets" name="Budgets" sequence="3" parent="menu_open_achat_stock"/>
-	    <menuitem id="menu_open_achat_stock_logs" name="Vos Messages Internes" sequence="4" parent="menu_open_achat_stock"/>
-	    
-	    <menuitem id="menu_open_achat_stock_stock_view_picking_move" name="Récéption par Produits"
-	        sequence="1" parent="menu_open_achat_stock_stocks" action="action_open_achat_stock_reception_picking_move"/>
-	    <menuitem id="menu_open_achat_stock_stock_view_inventory_form" name="Inventaire Physique"
-	        sequence="2" parent="menu_open_achat_stock_stocks" action="stock.action_inventory_form"/>
-	    <menuitem id="menu_open_achat_stock_stock_view_product" name="Fournitures"
-	        sequence="3" parent="menu_open_achat_stock_stocks" action="openstc_achat_stock_action_view_products"/>
-	    <menuitem id="menu_open_achat_stock_stock_view_ask_prod"
-	        sequence="4" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view"/>
+		<record id="action_view_po_ask" model="ir.actions.act_window">
+			<field name="name">Demandes de Devis</field>
+			<field name="res_model">purchase.order.ask</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+		<record id="action_view_draft_purchase" model="ir.actions.act_window">
+			<field name="name">Commandes soumises à Validation</field>
+			<field name="res_model">purchase.order</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('state','=','draft'),('is_emprunt','=',False)]</field>
+		</record>
+
+		<record id="action_view_valid_purchase" model="ir.actions.act_window">
+			<field name="name">Commandes Validées</field>
+			<field name="res_model">purchase.order</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('state','&lt;&gt;','draft'),('is_emprunt','=',False)]</field>
+		</record>
+
+		<record id="action_view_engagements" model="ir.actions.act_window">
+			<field name="name">Mes Engagements</field>
+			<field name="res_model">open.engagement</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('user_id','=',uid)]</field>
+			<field name="context">{'search_default_in_progress':'1','search_default_to_validate':'1','search_default_to_pay':'1'}</field>
+		</record>
+
+		<record id="action_view_all_engagements" model="ir.actions.act_window">
+			<field name="name">Tous les Engagements</field>
+			<field name="res_model">open.engagement</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="context">{'search_default_in_progress':'1','search_default_to_validate':'1','search_default_to_pay':'1'}</field>
+		</record>
+
+		<record id="openstc_achat_stock_action_view_products" model="ir.actions.act_window">
+			<field name="name">Voir Fournitures</field>
+			<field name="res_model">product.product</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('active','=',True),('purchase_ok','=',True),('type_prod','=','fourniture')]</field>
+		</record>
+
+		<record id="openstc_ask_prod_action_view" model="ir.actions.act_window">
+			<field name="name">Demandes de Fournitures</field>
+			<field name="res_model">openstc.ask.prod</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+		<record id="openstc_merge_line_ask_view" model="ir.actions.act_window">
+			<field name="name">Besoins en Fournitures Exprimés</field>
+			<field name="res_model">openstc.merge.line.ask</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain"> [('merge_ask_done','=',False)]</field>
+			<field name="context"
+				eval="'{\'default_location_id\':%d, \'default_location_dest_id\':%d}' % (ref('stock.stock_location_stock'),ref('stock.stock_location_customers'))" />
+		</record>
+
+		<record id="openstc_achat_stock_action_view_logs" model="ir.actions.act_window">
+			<field name="name">Vos Messages Internes</field>
+			<field name="res_model">res.log</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="context">{'search_default_my':'1'}</field>
+		</record>
+
+		<record id="openstc_merge_line_to_respond_action_wizard" model="ir.actions.act_window">
+			<field name="name">Répondre A ces Besoins</field>
+			<field name="res_model">openstc.merge.line.ask.respond.wizard</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="src_model">openstc.merge.line.ask</field>
+			<field name="context"
+				eval="'{\'default_location_id\':%d, \'default_location_dest_id\':%d,\'merge_ask_ids\':active_ids}' % (ref('stock.stock_location_stock'),ref('stock.stock_location_customers'))" />
+			<field name="target">new</field>
+		</record>
+
+		<record model="ir.values" id="openstc_merge_ask_to_respond">
+			<field name="name">Répondre A ces Beoins</field>
+			<field name="key2">client_action_multi</field>
+			<field name="value"
+				eval="'ir.actions.act_window,' + str(ref('openstc_merge_line_to_respond_action_wizard'))" />
+			<field name="key">action</field>
+			<field name="model">openstc.merge.line.ask</field>
+		</record>
+
+		<record id="openstc_merge_line_to_po_action_wizard" model="ir.actions.act_window">
+			<field name="name">Créer une commande pour Réapprovisionner</field>
+			<field name="res_model">openstc.merge.line.ask.po.wizard</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="src_model">openstc.merge.line.ask</field>
+			<field name="context">{'merge_ask_ids':active_ids}</field>
+			<field name="target">new</field>
+		</record>
+
+		<record model="ir.values" id="openstc_merge_ask_to_po">
+			<field name="name">Créer une commande pour Réapprovisionner</field>
+			<field name="key2">client_action_multi</field>
+			<field name="value"
+				eval="'ir.actions.act_window,' + str(ref('openstc_merge_line_to_po_action_wizard'))" />
+			<field name="key">action</field>
+			<field name="model">openstc.merge.line.ask</field>
+		</record>
+
+		<record id="open_engage_check_elu_wizard" model="ir.actions.act_window">
+			<field name="name">Signature de l'Elu</field>
+			<field name="res_model">open.engagement.check.elu.wizard</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="context">{'engage_id':active_id}</field>
+			<field name="target">new</field>
+		</record>
+
+		<record id="openstc_report_service_site_cost_wizard" model="ir.actions.act_window">
+			<field name="name">Rapport des Coûts des Sites et Services</field>
+			<field name="res_model">openstc.report.service.site.cost.wizard</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+
+		<menuitem id="menu_open_achat_stock" name="Achats-Stocks"
+			sequence="10"
+			groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user" />
+
+		<menuitem id="menu_open_achat_stock_stocks" name="Stocks"
+			sequence="1" parent="menu_open_achat_stock" />
+		<menuitem id="menu_open_achat_stock_achats" name="Achats"
+			sequence="2" parent="menu_open_achat_stock" />
+		<menuitem id="menu_open_achat_stock_budgets" name="Budgets"
+			sequence="3" parent="menu_open_achat_stock" />
+		<menuitem id="menu_open_achat_stock_logs" name="Vos Messages Internes"
+			sequence="4" parent="menu_open_achat_stock" />
+
+		<menuitem id="menu_open_achat_stock_stock_view_picking_move"
+			name="Récéption par Produits" sequence="1" parent="menu_open_achat_stock_stocks"
+			action="action_open_achat_stock_reception_picking_move" />
+		<menuitem id="menu_open_achat_stock_stock_view_inventory_form"
+			name="Inventaire Physique" sequence="2" parent="menu_open_achat_stock_stocks"
+			action="stock.action_inventory_form" />
+		<menuitem id="menu_open_achat_stock_stock_view_product" name="Fournitures"
+			sequence="3" parent="menu_open_achat_stock_stocks" action="openstc_achat_stock_action_view_products" />
+		<menuitem id="menu_open_achat_stock_stock_view_ask_prod"
+			sequence="4" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view" />
 		<menuitem id="menu_open_achat_stock_stock_view_merge_line_ask"
-	        sequence="5" parent="menu_open_achat_stock_stocks" action="openstc_merge_line_ask_view"/>
-		
-		<menuitem id="menu_open_achat_stock_stock_view_supplier" name="Fournisseurs"
-	        sequence="3" parent="menu_open_achat_stock_stocks" action="base.action_partner_supplier_form"/>
-		
-		<menuitem id="menu_open_achat_stock_achat_po_ask"
-	        sequence="1" parent="menu_open_achat_stock_achats" action="action_view_po_ask"/>
-	    <menuitem id="menu_open_achat_stock_stock_view_draft_purchase" name="Commandes soumises à Validation"
-	        sequence="2" parent="menu_open_achat_stock_achats" action="action_view_draft_purchase"/>
+			sequence="5" parent="menu_open_achat_stock_stocks" action="openstc_merge_line_ask_view" />
+
+		<menuitem id="menu_open_achat_stock_stock_view_supplier"
+			name="Fournisseurs" sequence="3" parent="menu_open_achat_stock_stocks"
+			action="base.action_partner_supplier_form" />
+
+		<menuitem id="menu_open_achat_stock_achat_po_ask" sequence="1"
+			parent="menu_open_achat_stock_achats" action="action_view_po_ask" />
+		<menuitem id="menu_open_achat_stock_stock_view_draft_purchase"
+			name="Commandes soumises à Validation" sequence="2"
+			parent="menu_open_achat_stock_achats" action="action_view_draft_purchase" />
 		<menuitem id="menu_open_achat_stock_achats_view_purchase"
-	        sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase"/>
+			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" />
 		<menuitem id="menu_open_achat_stock_view_engagements" name="Mes Engagements"
-	        sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements"/>
-		<menuitem id="menu_open_achat_stock_view_all_engagements" name="Tous les Engagements"
-	        sequence="5" parent="menu_open_achat_stock_achats" groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements"/>
-		<menuitem id="menu_open_achat_stock_achats_view_invoice" name="Factures"
-	        sequence="6" parent="menu_open_achat_stock_achats" action="account.action_invoice_tree"/>
-		
-	    <menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
-	        sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view"/>
-	    <menuitem id="menu_openstc_report_service_site_cost"
-	        sequence="2" parent="menu_open_achat_stock_budgets" action="openstc_report_service_site_cost_wizard"/>
-	    
-	    <menuitem id="menu_open_achat_stock_achat_logs"
-	        sequence="1" parent="menu_open_achat_stock_logs" action="openstc_achat_stock_action_view_logs"/>
-	    
-	    
+			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
+		<menuitem id="menu_open_achat_stock_view_all_engagements"
+			name="Tous les Engagements" sequence="5" parent="menu_open_achat_stock_achats"
+			groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements" />
+		<menuitem id="menu_open_achat_stock_achats_view_invoice"
+			name="Factures" sequence="6" parent="menu_open_achat_stock_achats"
+			action="account.action_invoice_tree" />
+
+		<menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
+			sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view" />
+		<menuitem id="menu_openstc_report_service_site_cost"
+			sequence="2" parent="menu_open_achat_stock_budgets" action="openstc_report_service_site_cost_wizard" />
+
+		<menuitem id="menu_open_achat_stock_achat_logs" sequence="1"
+			parent="menu_open_achat_stock_logs" action="openstc_achat_stock_action_view_logs" />
+
+
 	</data>
 </openerp>

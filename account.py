@@ -106,6 +106,11 @@ class account_move_line(osv.osv):
     
 account_move_line()
     
-    
-    
-
+class account_tax(osv.osv):
+    _inherit = "account.tax"
+    _name = "account.tax"
+    _columns = {
+        'code_tax_ciril':fields.char('Ciril Tax Code', size=8, help="this field refer to Tax Code from Ciril instance"),
+        }
+        
+account_tax()

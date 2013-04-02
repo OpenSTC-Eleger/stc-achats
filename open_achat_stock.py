@@ -30,6 +30,8 @@ import base64
 import unicodedata
 import netsvc
 from tools.translate import _
+from ciril_template_files import template_ciril_txt_file_engagement
+
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
@@ -554,6 +556,22 @@ class open_engagement(osv.osv):
             'view_mode':'form',
             'target':'new',
             }
+
+    def open_purchase(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        engage = self.browse(cr, uid, ids, context=context)
+        if engage.purchase_order_id:
+            return {
+                'type':'ir.actions.act_window',
+                'res_model':'purchase.order',
+                'res_id':ids,
+                'context':context,
+                'target':'new',
+                'view_mode':'form',
+                }
+        raise osv.except_osv(_('Error'), _('No purchase found for this engage, please create a new one'))
+        return False
     
     def real_invoice_attached(self, cr, uid, ids):
         #A mettre lorsque le client aura précisé le pattern du nom de fichier de ses factures fournisseurs
@@ -563,6 +581,22 @@ class open_engagement(osv.osv):
         for engage in self.browse(cr, uid, ids):
             if not engage.invoice_ok:
                 self.write(cr, uid, ids, {'invoice_ok':True, 'date_invoice_received':fields.date.context_today(self, cr, uid, None)})
+        return True
+    
+    def write_ciril_engage(self, cr, uid, ids, context=None):
+        ret = ''
+        template = template_ciril_txt_file_engagement()
+        
+        for engage in self.browse(cr, uid, ids ,context=context):
+            ret += template.create_file(engage)
+            #write content in an ir.attachment
+            ret = base64.b64encode(ret)
+            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
+                                                            'datas_fname':'engages.txt',
+                                                            'datas':ret,
+                                                            'res_model':self._name,
+                                                            'res_id':engage.id
+                                                            })
         return True
     
     def all_reception_done(self, cr, uid, ids):
@@ -928,27 +962,9 @@ class stock_move(osv.osv):
     
 stock_move()
 
-class res_users(osv.osv):
-    _inherit = "res.users"
-    _name = "res.users"
-    
-    _columns = {
-        'max_po_amount':fields.float('Montant par Bon de Commande', digit=(4,2), help="Montant Max autorisé par Bon de Commande"),
-        'max_total_amount':fields.float('Montant Annuel max', digit=(5,2)),
-        }
-    
-res_users()
 
-class res_company(osv.osv):
-    _inherit = "res.company"
-    _name = "res.company"
-    _columns = {
-        'base_seuil_po':fields.float('Seuil (Commande Hors Marché) Maximal', digit=(5,2), help='Seuil Maximal pour une Commande hors marché avec qu\'une validation d\'un Elu ne soit nécessaire.'),
-        }
-    _defaults = {
-        'base_seuil_po':0.0}
-    
-res_company()
+
+
     
 class product_product(osv.osv):
     _inherit = "product.product"
@@ -971,129 +987,7 @@ class product_product(osv.osv):
 product_product()
 
 
-class ir_attachment(osv.osv):
-    _inherit = "ir.attachment"
-    _name = "ir.attachment"
-    _columns = {
-        'state':fields.selection([('to_check','A Traiter'),('validated','Facture Validée'),
-                                  ('refused','Facture Refusée'),('not_invoice','RAS'),('except_send_mail','Echec envoi du mail')], 'Etat', readonly=True),
-         'action_date':fields.datetime('Date de la derniere action', readonly=True),
-         'engage_done':fields.boolean('Engagement Clos',readonly=True),
-         'attach_made_done':fields.boolean('Cette Facture Clos l\'engagement', readonly=True),
-         'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]}),
-        }
-    
-    _defaults = {
-        'state':'not_invoice',
-        }
-    
-    _order = "create_date"
-    
-    #Override to put an attach as a pdf invoice if it responds to the pattern 
-    def create(self, cr, uid, vals, context=None):
-        attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
-        attach = self.browse(cr, uid, attach_id, context)
-        is_invoice = False
-        #invoice : F-yyyy-MM-dd-001
-        prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
-        #if attach.res_model == 'open.engagement':
-        is_invoice = prog.search(attach.datas_fname)
-        if is_invoice:
-            self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
-            #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
-            engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)
-            print(attach.datas_fname)
-            print(fields.date.context_today(self, cr, uid, context))
-            print(engage.name)
-            self.log(cr, engage.user_id.id, attach_id,_('you have to check invoice %s added at %s on your engage %s') %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
-        return attach_id
-    
-    def send_invoice_to_pay(self, cr, uid, ids, context=None):
-        #ids refer to attachment that need to be sent with mail
-        #Envoie de la piece jointe en mail au service compta
-        if isinstance(ids, list):
-            ids = ids[0]
-        attach = self.browse(cr, uid, ids, context)
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Valid%')], context=context)
-        if isinstance(template_id, list):
-            template_id = template_id[0]
-        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
-        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
-        self.pool.get("mail.message").send(cr, uid, [msg_id], context)
-        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail with invoice attached to accountant %s') %(attach.datas_fname))
-            self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
-        else:
-            self.write(cr, uid, [ids], {'state':'validated','action_date':datetime.now()}, context)
-        
-        return {'res_model':'open.engagement',
-                'view_mode':'form,tree',
-                'target':'current',
-                'res_id':attach.res_id,
-                'type':'ir.actions.act_window'
-                }
-    
-    def action_refuse_invoice_to_pay(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        return {'type':'ir.actions.act_window',
-                'res_model':'openstc.open.engage.refuse.inv.wizard',
-                'view_mode':'form',
-                'view_type':'form',
-                'target':'new',
-                'context':{'attach_id':ids}
-                }
-    
-    def refuse_invoice_to_pay(self, cr, uid, ids, context=None):
-        #ids refer to attachment that need to be sent with mail
-        #Envoie de la piece jointe en mail au service compta
-        if isinstance(ids, list):
-            ids = ids[0]
-        attach = self.browse(cr, uid, ids, context)
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Refus%')], context=context)
-        if isinstance(template_id, list):
-            template_id = template_id[0]
-        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
-        self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
-        self.pool.get("mail.message").send(cr, uid, [msg_id], context)
-        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail'), context=context)
-            self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
-        else:
-            self.write(cr, uid, [ids], {'state':'refused','action_date':datetime.now()}, context)
-        return {'res_model':'open.engagement',
-                'view_mode':'form,tree',
-                'target':'current',
-                'res_id':attach.res_id,
-                'type':'ir.actions.act_window'
-                }
-    
-    #Action du Boutton Permettant de Clore l'engagement
-    #Bloque s'il reste des factures à valider (état 'to_check' ou 'except_send_mail'
-    #TOCHECK: Faut-il envoyer un mail de confirmation au service compta etc... ?
-    def engage_complete(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        #TOCHECK: Vérifier s'il ne faudrait pas mettre ces tests dans une condition de wkf (A place de real_invoice_attached()) 
-        attach = self.browse(cr, uid, ids, context)
-        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','in',('to_check','except_send_mail'))], context=context)
-        if attach_ids:
-            raise osv.except_osv(_('Error'), _('you can not end this engage because some invoices attached have to be checked'))
-        else:
-            if self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context).reception_ok:
-                self.write(cr, uid, [attach.id], {'attach_made_done':True},context=context)
-                wf_service = netsvc.LocalService('workflow')
-                wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
-            else:
-                raise osv.except_osv(_('Error'), _('you can not end this engage because some products are waiting for reception (do it in OpenERP)'))
-        return {'res_model':'open.engagement',
-                'view_mode':'form,tree',
-                'target':'current',
-                'res_id':attach.res_id,
-                'type':'ir.actions.act_window'
-                }
-    
-ir_attachment()
+
 
 #Override in order to switch to engage if the user clicked on "Voir Produits A Réceptionnés" of this engage
 class stock_partial_move(osv.osv_memory):
@@ -1112,3 +1006,16 @@ class stock_partial_move(osv.osv_memory):
         return res
     
 stock_partial_move()
+
+#Override of openstc.service to add services linked with purchases
+class openstc_service(osv.osv):
+    _inherit = "openstc.service"
+    _name = "openstc.service"
+    
+    _columns = {
+        'accountant_service':fields.selection([('cost','cost center'),('production','production center')],'Service comptable'),
+        'code_serv_ciril':fields.char('Ciril Service Code',size=8, help="this field refer to service pkey from Ciril instance"),
+        }
+    
+openstc_service()
+    

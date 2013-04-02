@@ -1,76 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-<data noupdate="1">
+	<data noupdate="1">
 
-	<record id="openstc_elu" model="res.groups">
-        <field name="name">openstc/Elu</field>
-        <field name="category_id" ref="base.module_category_project_management"/>
-        <field name="impiled_ids" eval="[(4,ref('analytic.group_analytic_accounting'))]"/>
-    </record>
+		<record id="openstc_elu" model="res.groups">
+			<field name="name">openstc/Elu</field>
+			<field name="category_id" ref="base.module_category_project_management" />
+			<field name="impiled_ids" eval="[(4,ref('analytic.group_analytic_accounting'))]" />
+		</record>
 
-    <record id="openstc.openstc_manager" model="res.groups">
-        <field name="implied_ids" eval="[(4, ref('openstc_qualifier')),(4, ref('stock.group_stock_manager')),(4,ref('analytic.group_analytic_accounting'))]"/>
-    </record>
-    
-	<record id="openstc_elu_1" model="res.users">
-        <field name="name">Elu 1</field>
-        <field name="login">elu1</field>
-    	<field name="password">elu1</field>
-    	<field name="groups_id" eval="[(4, ref('openstc_elu'))]"/>
-    </record>
-</data>
+		<record id="openstc.openstc_manager" model="res.groups">
+			<field name="implied_ids"
+				eval="[(4, ref('openstc_qualifier')),(4, ref('stock.group_stock_manager')),(4,ref('analytic.group_analytic_accounting'))]" />
+		</record>
 
-<data>
-	<record id="openstc_email_template_engage_inv_valid" model="email.template">
-        <field name="name">Facture Validée</field>
-        <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-		<field name="email_to">bruno.plancher@siclic.fr</field>
-		<field name="subject">Engagement ${object.name or 'inconnu'} : Une Facture est Validée pour paiement</field>
-		<field name="body_html"><![CDATA[
+		<record id="openstc_elu_1" model="res.users">
+			<field name="name">Elu 1</field>
+			<field name="login">elu1</field>
+			<field name="password">elu1</field>
+			<field name="groups_id" eval="[(4, ref('openstc_elu'))]" />
+		</record>
+	</data>
+
+	<data>
+		<record id="openstc_email_template_engage_inv_valid" model="email.template">
+			<field name="name">Facture Validée</field>
+			<field name="model_id" ref="model_open_engagement" />
+			<field name="email_from">${object.user_id.user_email or
+				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="subject">Engagement ${object.name or 'inconnu'} : Une
+				Facture est Validée pour paiement</field>
+			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
 		    <p>${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}.</p>
 		    
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
-		<field name="body_text"><![CDATA[
+			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
 		    ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}.
 		    Vous pouvez voir cette facture en piéce jointe A ce mail.
 		    ]]></field>
-    </record>
-    
-	<record id="openstc_email_template_engage_inv_refused" model="email.template">
-        <field name="name">Facture Refusée</field>
-        <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-		<field name="email_to">bruno.plancher@siclic.fr</field>
-		<field name="subject">Engagement ${object.name or 'inconnu'} : Une Facture est refusée pour paiement</field>
-		<field name="body_html"><![CDATA[
+		</record>
+
+		<record id="openstc_email_template_engage_inv_refused" model="email.template">
+			<field name="name">Facture Refusée</field>
+			<field name="model_id" ref="model_open_engagement" />
+			<field name="email_from">${object.user_id.user_email or
+				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="subject">Engagement ${object.name or 'inconnu'} : Une
+				Facture est refusée pour paiement</field>
+			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
 		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}, pour la raison suivante : </p>
 		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
-		<field name="body_text"><![CDATA[
+			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
 		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée A l'engagement ${object.name or 'inconnu'}, pour les raisons suivantes :
 		    ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}
 		    Vous pouvez voir cette facture en piéce jointe A ce mail.
 		    ]]></field>
-    </record>
-	
-	<record id="openstc_email_template_engage_to_validate" model="email.template">
-        <field name="name">Engagement A Valider par Elu</field>
-        <field name="model_id" ref="model_open_engagement"/>
-    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-		<field name="email_to">bruno.plancher@siclic.fr</field>
-		<field name="subject">L'Engagement ${object.name or 'inconnu'} Nécessite votre signature</field>
-		<field name="body_html"><![CDATA[
+		</record>
+
+		<record id="openstc_email_template_engage_to_validate" model="email.template">
+			<field name="name">Engagement A Valider par Elu</field>
+			<field name="model_id" ref="model_open_engagement" />
+			<field name="email_from">${object.user_id.user_email or
+				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="subject">L'Engagement ${object.name or 'inconnu'} Nécessite
+				votre signature</field>
+			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
 		    <p>${object.user_id.name or 'inconnu'} A créé l'Engagement ${object.name or 'inconnu'} sur OpenERP.</p>
@@ -86,7 +93,7 @@
 		    Ouvrez l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.</p>
 			% endif
 		    ]]></field>
-		<field name="body_text"><![CDATA[
+			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
 		    ${object.user_id.name or 'inconnu'} A créé l'Engagement ${object.name or 'inconnu'} sur OpenERP.
@@ -101,15 +108,17 @@
 		    Ouvrez l'engagement indiqué dans ce mail et cliquez sur le bouton "signature Elu" si vous approuvez l'engagement.
 		    % endif
 			]]></field>
-    </record>
-	
-	<record id="openstc_email_template_ask_prod" model="email.template">
-        <field name="name">Demande de Devis Fournisseur</field>
-        <field name="model_id" ref="model_purchase_order_ask"/>
-    	<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-		<field name="email_to"></field>
-		<field name="subject">Demande de Devis (Ref ${object.sequence or 'Inconnue'})</field>
-		<field name="body_html"><![CDATA[
+		</record>
+
+		<record id="openstc_email_template_ask_prod" model="email.template">
+			<field name="name">Demande de Devis Fournisseur</field>
+			<field name="model_id" ref="model_purchase_order_ask" />
+			<field name="email_from">${object.user_id.user_email or
+				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to"></field>
+			<field name="subject">Demande de Devis (Ref ${object.sequence or
+				'Inconnue'})</field>
+			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
 		    <p>Bonjour,</p> 
@@ -122,7 +131,7 @@
 		    <p>${object.user_id.name}</p>
 		    <p>${object.user_id.company_id.name}</p>
 		    ]]></field>
-		<field name="body_text"><![CDATA[
+			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
 		    Bonjour, 
@@ -135,7 +144,7 @@
 		    ${object.user_id.name}
 		    ${object.user_id.company_id.name}
 		    ]]></field>
-    </record>
-	
-    </data>
+		</record>
+
+	</data>
 </openerp>

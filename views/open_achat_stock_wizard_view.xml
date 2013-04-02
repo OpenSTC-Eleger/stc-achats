@@ -1,49 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
-        
-        <record model="ir.ui.view" id="view_po_ask_verif_budget_wizard_form">
+	<data>
+
+		<record model="ir.ui.view" id="view_po_ask_verif_budget_wizard_form">
 			<field name="name">purchase.order.ask.verif.budget.wizard</field>
 			<field name="model">purchase.order.ask.verif.budget</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-			    <separator string="Choisir le compte Analytique associé" colspan="4"/>
-				<field name="analytic_account_id" on_change="onchange_analytic_account_id(analytic_account_id)"/>
-				<field name="service_id"/>
-				<newline/>
-				<separator string="Vérifier le budget de votre service" colspan="4"/>
+				<separator string="Choisir le compte Analytique associé"
+					colspan="4" />
+				<field name="analytic_account_id"
+					on_change="onchange_analytic_account_id(analytic_account_id)" />
+				<field name="service_id" />
+				<newline />
+				<separator string="Vérifier le budget de votre service"
+					colspan="4" />
 				<group col="2" colspan="2">
-					<field name="po_ammount"/>
-					<field name="budget_dispo_info"/>
+					<field name="po_ammount" />
+					<field name="budget_dispo_info" />
 				</group>
-				<field name="tx_erosion_info"/>
-				<field name="tx_erosion" invisible="1"/>
-				<field name="budget_dispo" invisible="1"/>
+				<field name="tx_erosion_info" />
+				<field name="tx_erosion" invisible="1" />
+				<field name="budget_dispo" invisible="1" />
 				<button special="cancel" string="Annuler" icon="gtk-cancel" />
-				<button name="to_draft_engage" type="object" string="Générer Engagement" icon="gtk-ok" />
+				<button name="to_draft_engage" type="object" string="Générer Engagement"
+					icon="gtk-ok" />
 			</field>
 		</record>
-        
-        <record model="ir.ui.view" id="openstc_view_service_site_cost_wizard">
+
+		<record model="ir.ui.view" id="openstc_view_service_site_cost_wizard">
 			<field name="name">openstc.report.service.site.cost.wizard</field>
 			<field name="model">openstc.report.service.site.cost.wizard</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-			    <label string="Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'année A aujourd'hui."/>
-			    <newline/>
-			    <button special="cancel" string="Annuler" icon="gtk-cancel"/>
-			    <button name="print_report" type="object" string="Imprimer" icon="gtk-go-forward"/>
+				<label
+					string="Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'année A aujourd'hui." />
+				<newline />
+				<button special="cancel" string="Annuler" icon="gtk-cancel" />
+				<button name="print_report" type="object" string="Imprimer"
+					icon="gtk-go-forward" />
 			</field>
 		</record>
-        
-        <!-- <record id="action_openstc_pret_view_checkout" model="ir.actions.act_window">
-			<field name="name">Voir Etats des Lieux</field>
-			<field name="type">ir.actions.act_window</field>
-			<field name="res_model">openstc.pret.checkout</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-		</record>
-		-->
-		
-    </data>
+
+		<!-- <record id="action_openstc_pret_view_checkout" model="ir.actions.act_window"> 
+			<field name="name">Voir Etats des Lieux</field> <field name="type">ir.actions.act_window</field> 
+			<field name="res_model">openstc.pret.checkout</field> <field name="view_type">form</field> 
+			<field name="view_mode">tree,form</field> </record> -->
+
+	</data>
 </openerp>

@@ -28,6 +28,7 @@ class account_analytic_account(osv.osv):
     
     _columns = {
         'service_id':fields.many2one('openstc.service','Service associé'),
+        'code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
         }
     
 account_analytic_account()

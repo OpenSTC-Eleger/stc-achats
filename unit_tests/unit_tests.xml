@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
 	<data>
-		
+<!-- 		<function model="open.engagement" name="write_ciril_engage"> -->
+<!-- 		    <value eval="[29]"/> -->
+<!-- 		</function> -->
 	</data>
 </openerp>

@@ -43,7 +43,7 @@
 		<record id="seq_openstc_purchase_order_custom" model="ir.sequence">
 			<field name="name">OpenSTC Purchase Order</field>
 			<field name="code">openstc.purchase.order</field>
-			<field name="prefix">BC-xxx-%(year)s-%(month)s-%(day)s-</field>
+			<field name="prefix">BC-xxx/%(year)s-%(month)s-%(day)s/</field>
 			<field name="padding">4</field>
 		</record>
 

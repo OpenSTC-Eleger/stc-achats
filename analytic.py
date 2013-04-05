@@ -90,9 +90,22 @@ class crossovered_budget_lines(osv.osv):
     _columns = {
             'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
             'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits=(3,2)),
+            'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
         }
-
-
     
+    def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False,context=None):
+        if openstc_general_account:
+            #we create an account.budget.post to respect base work of budget, even if we don't use it anymore
+            account = self.pool.get("account.account").browse(cr, uid, openstc_general_account,context=context)
+            post = self.pool.get("account.budget.post").search(cr, uid, [('account_ids','=',openstc_general_account)],context=context)
+            if not post:
+                post = self.pool.get("account.budget.post").create({'code':account.code,
+                                                                    'name':account.name,
+                                                                    'account_ids':[(6,0,[account.id])]}, 
+                                                                   context=context)
+            
+        return {'value':{'general_budget_id':post}}
+        
 crossovered_budget_lines()
+
     

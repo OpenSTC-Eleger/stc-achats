@@ -48,11 +48,9 @@
 		<record id="openstc_email_template_engage_inv_refused" model="email.template">
 			<field name="name">Facture Refusée</field>
 			<field name="model_id" ref="model_open_engagement" />
-			<field name="email_from">${object.user_id.user_email or
-				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">bruno.plancher@siclic.fr</field>
-			<field name="subject">Engagement ${object.name or 'inconnu'} : Une
-				Facture est refusée pour paiement</field>
+			<field name="subject">Engagement ${object.name or 'inconnu'} : Une Facture est refusée pour paiement</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
@@ -72,11 +70,9 @@
 		<record id="openstc_email_template_engage_to_validate" model="email.template">
 			<field name="name">Engagement A Valider par Elu</field>
 			<field name="model_id" ref="model_open_engagement" />
-			<field name="email_from">${object.user_id.user_email or
-				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">bruno.plancher@siclic.fr</field>
-			<field name="subject">L'Engagement ${object.name or 'inconnu'} Nécessite
-				votre signature</field>
+			<field name="subject">L'Engagement ${object.name or 'inconnu'} Nécessite votre signature</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
@@ -113,11 +109,9 @@
 		<record id="openstc_email_template_ask_prod" model="email.template">
 			<field name="name">Demande de Devis Fournisseur</field>
 			<field name="model_id" ref="model_purchase_order_ask" />
-			<field name="email_from">${object.user_id.user_email or
-				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to"></field>
-			<field name="subject">Demande de Devis (Ref ${object.sequence or
-				'Inconnue'})</field>
+			<field name="subject">Demande de Devis (Ref ${object.sequence or 'Inconnue'})</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    

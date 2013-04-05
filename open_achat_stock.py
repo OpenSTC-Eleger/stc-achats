@@ -39,6 +39,26 @@ class purchase_order_ask(osv.osv):
                              ('waiting_purchase_order','Bon pour création de Commandes'),('done','Devis Clos')]
     _name = "purchase.order.ask"
     
+    def remove_accents(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    def _custom_sequence(self, cr, uid, context):
+        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'po_ask.number',context)
+        user = self.pool.get("res.users").browse(cr, uid, uid)
+        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
+        service = None
+        if 'service_id' in context:
+            service = context['service_id']
+#        for group in user.groups_id:
+#            if prog.search(group.name):
+#                if isinstance(user.service_ids, list) and not service:
+#                    service = user.service_ids[0]
+#                else:
+        if service:
+            service = self.pool.get("openstc.service").browse(cr, uid, service)
+            seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
+        return seq
+    
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
         'name':fields.char('Objet de l\'achat',size=64),
@@ -58,25 +78,6 @@ class purchase_order_ask(osv.osv):
             'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
     }
     
-    def remove_accents(self, str):
-        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
-    
-    def _custom_sequence(self, cr, uid, context):
-        seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'po_ask.number',context)
-        user = self.pool.get("res.users").browse(cr, uid, uid)
-        prog = re.compile('[Oo]pen[a-zA-Z]{3}/[Mm]anager')
-        service = None
-        if 'service_id' in context:
-            service = context['service_id']
-        for group in user.groups_id:
-            if prog.search(group.name):
-                if isinstance(user.service_ids, list) and not service:
-                    service = user.service_ids[0]
-                else:
-                    service = self.pool.get("openstc.service").browse(cr, uid, service)
-                seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
-                
-        return seq
     
     def _check_supplier_selection(self, cr, uid, ids, context=None):
         one_selection = True
@@ -143,9 +144,9 @@ class purchase_order_ask(osv.osv):
             #{'email_to':supplier_line.partner_address_id.email}
             supplier_lines_states = {'nothing':[],'error_mail':[],'mail':[]}
             for supplier_line in ask.suppliers_id:
+                ask_partners.append(supplier_line.id)
                 if not supplier_line.partner_id.opt_out and supplier_line.partner_address_id:
                     mail_values.update({'email_to':supplier_line.partner_address_id.email})
-                    ask_partners.append(supplier_line.id)
                     #pour chaque partner, on envoi un mail à son adresse mail
                     email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
                     mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
@@ -162,7 +163,7 @@ class purchase_order_ask(osv.osv):
             ask_lines.extend([x.id for x in ask.order_lines])
         
         #write notif_states for each supplier line
-        supplier_lines_states['mail'].append(supplier_line.id)
+        #supplier_lines_states['mail'].append(supplier_line.id)
         ask_partners_obj = self.pool.get("purchase.order.ask.partners")
         for key, value in supplier_lines_states.items():
             if value:
@@ -220,10 +221,10 @@ class purchase_order_ask(osv.osv):
         if isinstance(entrepot_id, list):
             entrepot_id = entrepot_id[0]
         entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
-        ret = {'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions, 'description':ask.name}
+        ret = {'service_id':ask.service_id.id, 'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions, 'description':ask.name}
         ret.update(partner_infos)
         ret.update(entrepot_infos)
-        context.update({'from_ask':'1'})
+        context.update({'from_ask':'1','service_id':ask.service_id.id})
         po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
         return {
             'view_mode':'form',
@@ -242,6 +243,12 @@ class purchase_order_ask(osv.osv):
             self.pool.get("purchase.order.ask.partners").write(cr, uid, [x.id for x in ask.suppliers_id], {'state':'draft'})
         self.write(cr, uid, ids, {'state':'draft'})
         return
+   
+    def create(self, cr, uid, vals, context=None):
+       if 'service_id' in vals:
+           service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
+           vals['sequence'] = vals['sequence'].replace('xxx',self.remove_accents(service.name[:3]).upper())
+       return super(purchase_order_ask,self).create(cr, uid, vals, context=context)
    
 purchase_order_ask()
 
@@ -597,7 +604,7 @@ class open_engagement(osv.osv):
                                                             'res_model':self._name,
                                                             'res_id':engage.id
                                                             })
-        return True
+        return {'type':'ir.actions.act_window_close'}
     
     def all_reception_done(self, cr, uid, ids):
         if isinstance(ids, list):
@@ -972,7 +979,7 @@ class product_product(osv.osv):
     
     def return_type_prod_values(self, cr, uid, context=None):
         ret = super(product_product, self).return_type_prod_values(cr, uid, context)
-        ret.extend([('fourniture','Fourniture Achetable')])
+        #ret.extend([('fourniture','Fourniture Achetable')])
         return ret
     
     _columns = {    
@@ -985,7 +992,6 @@ class product_product(osv.osv):
         return super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
 
 product_product()
-
 
 
 
@@ -1015,6 +1021,9 @@ class openstc_service(osv.osv):
     _columns = {
         'accountant_service':fields.selection([('cost','cost center'),('production','production center')],'Service comptable'),
         'code_serv_ciril':fields.char('Ciril Service Code',size=8, help="this field refer to service pkey from Ciril instance"),
+        'purchase_order_ids':fields.one2many('purchase.order','service_id','Purchases made by this service'),
+        'purchase_order_ask_ids':fields.one2many('purchase.order.ask','service_id','Purchase Asks made by this service'),
+        'open_engagement_ids':fields.one2many('open.engagement','service_id','Engages made by this service'),
         }
     
 openstc_service()

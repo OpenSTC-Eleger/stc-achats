@@ -228,13 +228,13 @@
 						attrs="{'invisible':[('state','not in',('draft','to_validate'))]}">
 						<field name="check_dst" colspan="2" />
 						<field name="procuration_dst" colspan="2" invisible="1" />
-						<button name="open_purchase" type="object"
-							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
-							icon="gtk-edit" />
 						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
 							string="Valider l'Engagement par l'Elu" type="action"
 							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
 							groups="openstc_achat_stock.openstc_elu" />
+						<button name="open_purchase" type="object"
+							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
+							icon="gtk-edit" />
 						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
 							icon="gtk-cancel" type="workflow"
 							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
@@ -256,7 +256,14 @@
 						<field name="reception_ok" />
 						<button name="open_stock_moves" type="object"
 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
-							string="Voir Réception de Produits associée" states="waiting_reception" />
+							string="Voir Réception de Produits associée" states="waiting_reception"
+							icon="gtk-print-preview" />
+						<button name="write_ciril_engage" 
+						    type="object" 
+						    groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
+							string="Create Engage(s) export file" 
+							icon="gtk-execute"
+						    states="waiting_reception,engage_to_terminate,done"/>
 					</group>
 					<group colspan="2" col="2">
 						<field name="elu_id" />
@@ -323,7 +330,7 @@
 					<filter name="except" string="Litigieux"
 						domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement" />
 					<field name="name" string="Bon d'Engagement" filter_domain="[('name','ilike',self)]" />
-					<field name="service_id" string="Service concerné"
+					<field name="service_id" string="Service concerné" domain="[('open_engagement_ids','&lt;&gt;',False)]"
 						filter_domain="[('service_id','=',self)]" widget="selection" />
 					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]"
 						filter_domain="[('supplier_id','=',self)]" widget="selection" />
@@ -353,15 +360,40 @@
 				<xpath expr="//form/field[@name='crossovered_budget_line']/tree"
 					position="replace">
 					<tree string="Budget Lines">
+					    <field name="openstc_general_account"/>
 						<field name="analytic_account_id" groups="analytic.group_analytic_accounting" />
 						<field name="planned_amount" sum="Montant Planifié" />
 						<field name="openstc_practical_amount" sum="Montant consommé" />
 						<field name="openstc_erosion" />
 					</tree>
 				</xpath>
+				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='general_budget_id']"
+					position="attributes">
+					<attribute name="invisible">1</attribute>
+				</xpath>
+				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='general_budget_id']"
+					position="after">
+					<field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_account_general)"/>
+				</xpath>
+				
 			</field>
 		</record>
 
+		<record model="ir.ui.view" id="openstc_achat_crossovered_budget_line_form_inherit">
+            <field name="name">openstc.achat.crossovered.budget.line.form.inherit</field>
+            <field name="model">crossovered.budget.lines</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account_budget.view_crossovered_budget_line_form"/>
+            <field name="arch" type="xml">
+                    <field name="general_budget_id" position="attributes">
+                    	<attribute name="invisible">1</attribute>
+                    </field>
+                    <field name="general_budget_id" position="after">
+                        <field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_account_general)"/>
+                    </field>
+            </field>
+        </record>
+		
 
 		<record id="openstc_ask_prod_form" model="ir.ui.view">
 			<field name="name">openstc.ask.prod.form</field>
@@ -627,7 +659,25 @@
 	            	    widget="selection"/>
 	            	<newline/>
 	            </field>
-		        
+		    </field>
+		</record>
+		
+		<record id="view_openstc_po_ask_search" model="ir.ui.view">
+		    <field name="name">openstc.purchase.order.ask.search</field>
+		    <field name="model">purchase.order.ask</field>
+		    <field name="type">search</field>
+		    <field name="arch" type="xml">
+	            <search>
+		            <filter name="to_confirm" string="Ask to confirm"
+							domain="[('state','in',('draft','waiting_supplier'))]" help="Asks waiting for mail sending or waiting for supplier choose" />
+		            <filter name="confirm" string="Confirmed Ask"
+							domain="[('state','=','waiting_purchase_order')]" help="Asks being able to create purchase orders" />
+		            <filter name="done" string="Done Ask"
+							domain="[('state','=','done')]" help="Asks no longer available"/>
+		            	            
+		            <field name="service_id" domain="[('purchase_order_ask_ids', '&lt;&gt;', False)]"
+		                filter_domain="[('service_id','=',self)]" string="Service" widget="selection"/>
+		    	</search>
 		    </field>
 		</record>
 	</data>

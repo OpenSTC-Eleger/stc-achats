@@ -375,7 +375,10 @@
 					position="after">
 					<field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_account_general)"/>
 				</xpath>
-				
+				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='analytic_account_id']"
+				    position="attributes">
+					<attribute name="domain">['|','|',('parent_id','=',False),('name','not like','Projects'),('parent_id.name','not like','Projects')]</attribute>
+				</xpath>
 			</field>
 		</record>
 
@@ -390,6 +393,9 @@
                     </field>
                     <field name="general_budget_id" position="after">
                         <field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_account_general)"/>
+                    </field>
+                    <field name="analytic_account_id" position="attributes">
+                        <attribute name="domain">['|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>
                     </field>
             </field>
         </record>

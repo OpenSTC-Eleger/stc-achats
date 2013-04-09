@@ -165,6 +165,10 @@
 			<field name="target">new</field>
 		</record>
 
+		<record id="account.action_account_analytic_account_form" model="ir.actions.act_window">
+		    <field name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</field>
+		</record>
+		
 		<menuitem id="menu_open_achat_stock" name="Achats-Stocks"
 			sequence="10"
 			groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user" />
@@ -215,10 +219,15 @@
 			sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view" />
 		<menuitem id="menu_openstc_report_service_site_cost"
 			sequence="2" parent="menu_open_achat_stock_budgets" action="openstc_report_service_site_cost_wizard" />
-
+		<menuitem id="menu_openstc_achat_stock_analytic_config" name="Analytic accounting" parent="menu_open_achat_stock_budgets"/>
+		<menuitem id="menu_openstc_achat_stock_account_analytic_view" sequence="1" name="Analytic accounts"
+		     parent="menu_openstc_achat_stock_analytic_config" action="account.action_account_analytic_account_form" groups="analytic.group_analytic_accounting"/>
+        <menuitem id="menu_openstc_achat_stock_journal_analytic_view" sequence="2" name="Analytic journals"
+             parent="menu_openstc_achat_stock_analytic_config" action="account.action_account_analytic_journal_form" groups="analytic.group_analytic_accounting"/>
+        		
+		
 		<menuitem id="menu_open_achat_stock_achat_logs" sequence="1"
 			parent="menu_open_achat_stock_logs" action="openstc_achat_stock_action_view_logs" />
-
 
 	</data>
 </openerp>

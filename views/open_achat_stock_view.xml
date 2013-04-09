@@ -377,7 +377,7 @@
 				</xpath>
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='analytic_account_id']"
 				    position="attributes">
-					<attribute name="domain">['|','|',('parent_id','=',False),('name','not like','Projects'),('parent_id.name','not like','Projects')]</attribute>
+					<attribute name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>
 				</xpath>
 			</field>
 		</record>

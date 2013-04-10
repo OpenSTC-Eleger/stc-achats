@@ -54,8 +54,12 @@ class crossovered_budget(osv.osv):
         'pract_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Pratique", type='float'),
         'theo_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Théorique", type='float'),
         'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Consommé", type='float'),
+        'code_budget_ciril':fields.char('CIRIL Budget Code', size=16),
         }
     
+    _defaults = {
+        'code_budget_ciril':lambda *a: '0',
+        }
 crossovered_budget()
 
 class crossovered_budget_lines(osv.osv):
@@ -91,6 +95,7 @@ class crossovered_budget_lines(osv.osv):
             'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
             'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits=(3,2)),
             'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
+            'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
         }
     
     def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False,context=None):

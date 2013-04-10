@@ -30,6 +30,7 @@ class item_file(object):
 class template_ciril_txt_file_engagement(object):
     
     _vars = {}
+    _version = ''
     
     def format_float(self, value):
         ret = ''
@@ -57,7 +58,9 @@ class template_ciril_txt_file_engagement(object):
                         ret += it['value'] + ''.join([' 'for i in range(missing)])
         return ret
     
-#    def __init__(self, version='B'):
+    def __init__(self, version='B'):
+        self._version = version
+        _logger.info('Initialized template file for engages at version %s' % self._version)
 #        lengths, mandatory and default values of each field 
 #        if version == 'B':
 #            self._vars = {'code_tiers':item_file(pos=1),
@@ -105,7 +108,6 @@ class template_ciril_txt_file_engagement(object):
                     'origin':{'length':2,'required':True,'value':'S','pos':15},
                     'num_market':{'length':10,'required':False,'value':'','pos':20},
                     'num_lot':{'length':10,'required':False,'value':'','pos':21},
-                    'num_engage_openstc':{'length':64,'required':False,'value':'','pos':27},
                     'num_commande_openstc':{'length':64,'required':False,'value':'','pos':28},
                     }
     
@@ -126,7 +128,8 @@ class template_ciril_txt_file_engagement(object):
                     'motif_rejet':{'length':50,'required':False,'value':'','pos':23},
                     'type_depense':{'length':2,'required':False,'value':'','pos':24},
                     'objectif':{'length':11,'required':False,'value':'','pos':25},
-                    'version':{'length':1,'required':True,'value':'','pos':26},
+                    'version':{'length':1,'required':True,'value':self._version,'pos':26},
+                    'num_engage_openstc':{'length':64,'required':False,'value':'','pos':27},
                     }
     
     def create_file(self, record, code_gest='TECHN'):
@@ -152,8 +155,6 @@ class template_ciril_txt_file_engagement(object):
         
         #TOREPLACE: change it when we will have real tiers id from ciril instance
         data_main['code_tiers']['value'] = str(record.purchase_order_id.partner_id.code_tiers_ciril or '')
-        #TOREPLACE with real ids
-        data_main['num_engage_openstc']['value'] = record.name
         data_main['code_gest']['value'] = code_gest
         data_main['num_commande_openstc']['value'] = record.purchase_order_id.name
         data_main['exercice']['value'] = record.date_engage_validated[:4]
@@ -162,12 +163,14 @@ class template_ciril_txt_file_engagement(object):
         
         for line in record.engage_lines:
             data = self.init_line_vals()
+            data['num_engage_openstc']['value'] = line.name
             data['code_serv']['value'] = line.account_analytic_id.service_id.code[:4].upper()
             now = datetime.now()
             for budget_line in line.account_analytic_id.crossovered_budget_line:
                 if budget_line.date_from <= str(now) and budget_line.date_to >= str(now):        
-                        data['code_nature']['value'] = budget_line.openstc_general_account and budget_line.openstc_general_account.code or ''
-            data['code_antenne']['value'] = str(line.account_analytic_id.code_antenne or '')
+                    data['code_nature']['value'] = budget_line.openstc_general_account and budget_line.openstc_general_account.code or ''
+                    data['code_antenne']['value'] = budget_line.openstc_code_antenne or ''
+                    data['code_budget']['value'] = budget_line.crossovered_budget_id.code_budget_ciril or ''
             #data['nomenclature']['value'] = record.purchase_order_id.partner_id.id
             #data['motif_rejet']['value'] = record.purchase_order_id.partner_id.id
             #data['version']['value']
@@ -179,13 +182,13 @@ class template_ciril_txt_file_engagement(object):
 #                if len(line.order_line[0].merge_line_ids) == 1:
 #                    data['code_antenne']['value'] = str(line.order_line[0].merge_line_ids[0].site_id.id)
 #                    data['code_serv']['value'] = str(line.order_line[0].merge_line_ids[0].service_id.id)
-            data['code_tva']['value'] = line.order_line[0].taxes_id and line.order_line[0].taxes_id[0].id or '' 
+            data['code_tva']['value'] = line.order_line[0].taxes_id and line.order_line[0].taxes_id[0].code_tax_ciril or '' 
             data['depense_recette']['value'] = 'D'
             #TOREPLACE with real ids
-            data['code_budget']['value'] = str(line.account_analytic_id.id)
             data['string']['value'] = record.description
-            data['num_engage']['value'] = line.name
             #TODO: keep a trace of current code numerotation
+            #num_engage and code_origin are exclusive each other
+            data['num_engage']['value'] = line.name
             data['code_origin_numerotation']['value'] = 'AA'
             
             amount_ht = 0

@@ -361,6 +361,7 @@
 					position="replace">
 					<tree string="Budget Lines">
 					    <field name="openstc_general_account"/>
+					    <field name="openstc_code_antenne"/>
 						<field name="analytic_account_id" groups="analytic.group_analytic_accounting" />
 						<field name="planned_amount" sum="Montant Planifié" />
 						<field name="openstc_practical_amount" sum="Montant consommé" />
@@ -374,11 +375,20 @@
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='general_budget_id']"
 					position="after">
 					<field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_account_general)"/>
+					<field name="openstc_code_antenne" required="1"/>
 				</xpath>
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='analytic_account_id']"
 				    position="attributes">
 					<attribute name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>
 				</xpath>
+				<field name="code" position="replace"/>
+				<field name="name" position="replace">
+				    <group colspan="4" col="6">
+				        <field name="name"/>
+				        <field name="code"/>
+				        <field name="code_budget_ciril"/>
+				    </group>
+				</field>
 			</field>
 		</record>
 

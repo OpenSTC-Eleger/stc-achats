@@ -88,9 +88,9 @@ def import_data(cr, con):
         if not data[1] in partners:
             #we create new partner
             cr.execute('insert into res_partner(active, supplier, name, code_tiers_ciril, type_id) values(True, True, %s, %s, %s)', (data[1], data[0], int(type_id)))
-            cr.execute('insert into res_partner_address(active, name,street,street2,zip,city, partner_id) values(True, %s,%s,%s,%s,%s, (select id from res_partner where name = %s limit 1) )', (data[7], data[3], data[4],data[6],data[5], data[1]))
+            cr.execute('insert into res_partner_address(active, name,street,street2,zip,city, partner_id) values(True, %s,%s,%s,%s,%s, (select id from res_partner where name = %s order by id desc limit 1) )', (data[7], data[3], data[4],data[6],data[5], data[1]))
             if data[2] and data[2] <> "":
-                cr.execute('insert into openstc_partner_activity_rel values((select id from res_partner where name = %s limit 1), %s)', (data[1], activities_dict[data[2]]))
+                cr.execute('insert into openstc_partner_activity_rel values((select id from res_partner where name = %s order by id desc limit 1), %s)', (data[1], activities_dict[data[2]]))
     con.commit()
     fichier.close()
 

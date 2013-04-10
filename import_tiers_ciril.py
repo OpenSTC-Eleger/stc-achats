@@ -48,7 +48,7 @@ def import_data(cr, con):
         cr.execute('select name from openstc_partner_activity;')
         activities = [item[0] for item in cr.fetchall()]
         for line in fichier:
-            activity = line.split(',')[2]
+            activity = line.split(';')[2]
             if activity not in activities and activity not in activities_to_create:
                 activities_to_create.append(activity)
         #print("activities:" + str(activities_to_create))
@@ -84,7 +84,7 @@ def import_data(cr, con):
     #We ignore first line, which is header of csv, not data
     fichier.readline()
     for line in fichier:
-        data = line.split(',')
+        data = line.split(';')
         if not data[1] in partners:
             #we create new partner
             cr.execute('insert into res_partner(active, supplier, name, code_tiers_ciril, type_id) values(True, True, %s, %s, %s)', (data[1], data[0], int(type_id)))

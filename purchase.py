@@ -239,7 +239,8 @@ class purchase_order(osv.osv):
         #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
-                                                              ('report_type','=','jasper')])
+                                                              ('report_type','=','pdf',),
+                                                               ('report_name','=','purchase.order')])
         ret = False
         if matching_reports:
             report = ir_actions_report.browse(cr, uid, matching_reports[0])

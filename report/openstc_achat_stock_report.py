@@ -21,11 +21,22 @@
 #
 ##############################################################################
 
-import base
-import open_achat_stock
-import wizard
-import account
-import analytic
-import purchase
-import report
+
+
+
+import time
+from report import report_sxw
+from datetime import datetime
+
+class po_ask(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(po_ask, self).__init__(cr, uid, name, context)
+        self.localcontext.update({
+            'time': time,
+            'datetime':datetime,
+        })
+
+report_sxw.report_sxw('report.purchase.order.ask', 'purchase.order.ask',
+      'addons/openstc_achat_stock/report/request_quotation.rml', parser=po_ask)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

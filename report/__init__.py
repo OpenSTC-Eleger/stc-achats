@@ -21,11 +21,6 @@
 #
 ##############################################################################
 
-import base
-import open_achat_stock
-import wizard
-import account
-import analytic
-import purchase
-import report
+import openstc_achat_stock_report
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

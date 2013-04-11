@@ -97,7 +97,7 @@ class purchase_order_ask(osv.osv):
         #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
-                                                              ('report_type','=','jasper')])
+                                                              ('report_type','=','pdf')])
         ret = False
         if matching_reports:
             report = ir_actions_report.browse(cr, uid, matching_reports[0])
@@ -268,7 +268,8 @@ class purchase_order_ask_line(osv.osv):
         }
     
     _defaults = {
-        'state':'draft'
+        'state':'draft',
+        'date_order':lambda self,cr,uid,context: fields.date.context_today(self, cr, uid, context=context),
         }
     
     def onchange_product_id(self, cr, uid, ids, product_id=False):

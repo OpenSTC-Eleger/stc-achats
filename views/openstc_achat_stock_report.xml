@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report auto="False" id="purchase.report_purchase_order" model="purchase.order"
+                name="purchase.order" rml="openstc_achat_stock/report/openstc_purchase_order.rml"
+                usage="default" string="Purchase Order"/>
+        <report auto="False" id="report_purchase_order_ask" model="purchase.order.ask" 
+                name="purchase.order.ask" rml="openstc_achat_stock/report/request_quotation.rml"
+                string="Request for Quotation"/>
+    </data>
+</openerp>

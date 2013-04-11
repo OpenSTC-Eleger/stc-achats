@@ -28,6 +28,7 @@
         "views/open_achat_stock_menu_view.xml",
         "views/open_achat_stock_wizard_view.xml",
         "views/open_achat_stock_view.xml",
+        "views/openstc_achat_stock_report.xml",
         
         "workflow/openstc_achat_stock_workflow.xml",
         

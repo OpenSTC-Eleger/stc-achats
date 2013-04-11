@@ -29,6 +29,7 @@ import re
 import base64
 import unicodedata
 import netsvc
+import addons
 from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
 
@@ -401,6 +402,12 @@ class open_engagement(osv.osv):
             web_root_url = "http://" + web_root_url
         ret = "%s/web/webclient/home#id=%s&view_type=page&model=%s" % (web_root_url, id, model)
         return ret
+    
+    def test(self, cr, uid, context=None):
+        print addons.get_module_path('openstc_achat_stock')
+        #we can user tools.config['my_param'] where my_param is an option on the openerp-server.conf file
+        #TODO: add a custom option on this file to add a directory where storing generated engages.txt files
+        return
     
     def get_elu_attached(self, cr, uid, id, context=None):
         service_id = self.browse(cr, uid, id, context).service_id.id

@@ -22,16 +22,15 @@
 from osv import osv, fields
 from tools.translate import _
 
-class account_analytic_account(osv.osv):
-    _inherit = "account.analytic.account"
-    _name = "account.analytic.account"
-    
-    _columns = {
-        'service_id':fields.many2one('openstc.service','Service associé'),
-        'code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
-        }
-    
-account_analytic_account()
+#class account_analytic_account(osv.osv):
+#    _inherit = "account.analytic.account"
+#    _name = "account.analytic.account"
+#    
+#    _columns = {
+#        'code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
+#        }
+#    
+#account_analytic_account()
 
 class account_invoice_line(osv.osv):
     _inherit = "account.invoice.line"

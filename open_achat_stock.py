@@ -386,6 +386,8 @@ class open_engagement(osv.osv):
         'id':fields.integer('Id'),
         'current_url':fields.char('URL Courante',size=256),
         'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
+        'attach_datas_sumup':fields.binary('Purchase Sum\'up'),
+        'attach_datas_fname_sumup':fields.char('Purchase Sum\'up Filename', size=256),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self.pool.get("ir.sequence").next_by_code(cr, uid, 'open.engagement',context),
@@ -442,6 +444,42 @@ class open_engagement(osv.osv):
                                                                            'res_model': self._name,
                                                                            'res_id': record.id},
                                                                           context=context)
+                    ret = ir_attachment
+            except:
+                pass
+            
+        return ret
+    
+    def _create_report_sumup_attach(self, cr, uid, record, context=None):
+        #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
+        ir_actions_report = self.pool.get('ir.actions.report.xml')
+        matching_reports = ir_actions_report.search(cr, uid, [('model','=','purchase.order'),
+                                                              ('report_type','=','pdf',),
+                                                               ('report_name','=','purchase.order.sumup')])
+        ret = False
+        if matching_reports:
+            report = ir_actions_report.browse(cr, uid, matching_reports[0])
+            report_service = 'report.' + report.report_name
+            service = netsvc.LocalService(report_service)
+            try:
+                (result, format) = service.create(cr, uid, [record.purchase_order_id.id], {'model': self._name}, context=context)
+                eval_context = {'time': time, 'object': record.purchase_order_id}
+                if not report.attachment or not eval(report.attachment, eval_context):
+                    # no auto-saving of report as attachment, need to do it manually
+                    result = base64.b64encode(result)
+                    file_name = 'Sum_up_'
+                    file_name += record.name_get()[0][1]
+                    file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', file_name)
+                    file_name += ".pdf"
+                    ir_attachment = self.pool.get('ir.attachment').create(cr, uid, 
+                                                                          {'name': file_name,
+                                                                           'datas': result,
+                                                                           'datas_fname': file_name,
+                                                                           'res_model': 'purchase.order',
+                                                                           'res_id': record.purchase_order_id.id},
+                                                                          context=context)
+                    record.write({'attach_datas_sumup':result,'attach_datas_fname_sumup':file_name}),
+                    
                     ret = ir_attachment
             except:
                 pass
@@ -614,6 +652,23 @@ class open_engagement(osv.osv):
                                                             })
         return {'type':'ir.actions.act_window_close'}
     
+    def action_dst_check(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        #create sum'up report for elu
+        engage = self.browse(cr, uid, ids, context=context)
+        if ids:
+            if engage.purchase_order_id:
+                self._create_report_sumup_attach(cr, uid, engage, context)
+        #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Elu%')], context=context)
+        if isinstance(template_id, list):
+            template_id = template_id[0]
+        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
+        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+            del vals['check_dst']
+            self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
+    
     def all_reception_done(self, cr, uid, ids):
         if isinstance(ids, list):
             ids = ids[0]
@@ -641,17 +696,7 @@ class open_engagement(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'check_dst' in vals and vals['check_dst']:
-            #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
-            #TODO: Comment connaitre l'élu auquel envoyer la demande ?
-            template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Elu%')], context=context)
-            if isinstance(template_id, list):
-                template_id = template_id[0]
-            if isinstance(ids, list):
-                ids = ids[0]
-            msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
-            if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-                del vals['check_dst']
-                self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            self.action_dst_check(cr, uid, ids, context)
         super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
         return True
     

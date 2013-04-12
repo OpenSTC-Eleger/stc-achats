@@ -43,6 +43,9 @@
 					<field name="account_analytic_id" domain="[('crossovered_budget_line','&lt;&gt;', False)]"
 						groups="base.group_extended" />
 				</field>
+				<field name="order_line" position="attributes">
+				    <attribute name="attrs">{'readonly':['|',('state','in',('approved','done')),('validation','!=','budget_to_check')]}</attribute>
+				</field>
 				<tree string="Purchase Order Lines" position="replace">
 					<tree string="Purchase Order Lines" colors="red:(dispo==False and engage_line_id==False)">
 						<field name="date_planned" />
@@ -232,13 +235,17 @@
 							string="Valider l'Engagement par l'Elu" type="action"
 							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
 							groups="openstc_achat_stock.openstc_elu" />
-						<button name="open_purchase" type="object"
-							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
-							icon="gtk-edit" />
+						<group colspan="1" col="2">
+						    <field name="attach_datas_fname_sumup" invisible="1"/>
+						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/>
+						</group>
 						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
 							icon="gtk-cancel" type="workflow"
 							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
 							groups="openstc_achat_stock.openstc_elu" />
+						<button name="open_purchase" type="object"
+							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier" string="Voir la Commande"
+							icon="gtk-edit" />
 						<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration"
 							type="action"
 							attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}"
@@ -250,6 +257,7 @@
 					</group>
 					<group col="2" string="Réception de produits" colspan="1"
 						attrs="{'invisible':[('state','in',('draft','to_validate'))]}">
+						
 						<button name="open_purchase" type="object"
 							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
 							icon="gtk-edit" />

@@ -39,4 +39,15 @@ class po_ask(report_sxw.rml_parse):
 report_sxw.report_sxw('report.purchase.order.ask', 'purchase.order.ask',
       'addons/openstc_achat_stock/report/request_quotation.rml', parser=po_ask)
 
+class po_sumup(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(po_sumup, self).__init__(cr, uid, name, context)
+        self.localcontext.update({
+            'time': time,
+            'datetime':datetime,
+        })
+
+report_sxw.report_sxw('report.purchase.order.sumup', 'purchase.order',
+      'addons/openstc_achat_stock/report/openstc_purchase_order_sumup.rml', parser=po_sumup)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

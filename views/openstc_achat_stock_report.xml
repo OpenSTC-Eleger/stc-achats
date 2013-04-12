@@ -7,5 +7,8 @@
         <report auto="False" id="report_purchase_order_ask" model="purchase.order.ask" 
                 name="purchase.order.ask" rml="openstc_achat_stock/report/request_quotation.rml"
                 string="Request for Quotation"/>
+        <report auto="False" id="report_purchase_order_sumup" model="purchase.order" 
+                name="purchase.order.sumup" rml="openstc_achat_stock/report/openstc_purchase_order_sumup.rml"
+                string="Purchase Sum'up"/>
     </data>
 </openerp>

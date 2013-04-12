@@ -399,6 +399,7 @@ class purchase_order(osv.osv):
                 if res_id:
                     engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
                     self.log(cr, uid, ids, _('Engage %s was created at %s') % (engage['name'], datetime.now()))
+                    po.write({'validation':'engagement_to_check'})
             else:
                 res_id = po.engage_id.id
             return {

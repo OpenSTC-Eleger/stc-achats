@@ -49,7 +49,7 @@
 				<tree string="Purchase Order Lines" position="replace">
 					<tree string="Purchase Order Lines" colors="red:(dispo==False and engage_line_id==False)">
 						<field name="date_planned" />
-						<field name="product_id" />
+						<field name="product_id" domain="[('purchase_ok','=',True)]"/>
 						<field name="product_qty" />
 						<!-- <field name="price_unit"/> -->
 						<field name="amount_ttc" />
@@ -100,7 +100,7 @@
 					<field name="in_stock" invisible="1" />
 				</xpath>
 				<field name="product_id" position="replace">
-					<field name="product_id" domain="[('type_prod','=','fourniture')]"
+					<field name="product_id" domain="[('purchase_ok','=',True)]"
 						required="True" colspan="4"
 						on_change="onchange_product_id(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,context,parent.account_analytic_id)" />
 				</field>
@@ -141,7 +141,7 @@
 					<field name="order_lines" nolabel="1" colspan="4"
 						attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Produits de la Demande" editable="top">
-							<field name="product_id" domain="[('type_prod','=','fourniture')]"
+							<field name="product_id" domain="[('purchase_ok','=',True)]"
 								on_change="onchange_product_id(product_id)" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="description" required="1"
 								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
@@ -471,7 +471,7 @@
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
 				<tree string="Besoins en Fournitures Exprimés">
-					<field name="product_id" />
+					<field name="product_id" domain="[('purchase_ok','=',True)]"/>
 					<field name="service_id" />
 					<field name="site_id" />
 					<field name="product_qty" />

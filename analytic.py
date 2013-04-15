@@ -98,7 +98,7 @@ class crossovered_budget_lines(osv.osv):
             'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
         }
     
-    def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False,context=None):
+    def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False):
         if openstc_general_account:
             #we create an account.budget.post to respect base work of budget, even if we don't use it anymore
             account = self.pool.get("account.account").browse(cr, uid, openstc_general_account,context=context)

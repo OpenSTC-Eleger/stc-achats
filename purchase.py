@@ -290,7 +290,7 @@ class purchase_order(osv.osv):
         }
     
     def create(self, cr, uid, vals, context=None):
-        if 'service_id' in vals:
+        if 'service_id' in vals and 'name' in vals:
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
            vals['name'] = vals['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
         po_id = super(purchase_order, self).create(cr, uid, vals, context)

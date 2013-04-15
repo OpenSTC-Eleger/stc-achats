@@ -101,7 +101,7 @@ class crossovered_budget_lines(osv.osv):
     def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False):
         if openstc_general_account:
             #we create an account.budget.post to respect base work of budget, even if we don't use it anymore
-            account = self.pool.get("account.account").browse(cr, uid, openstc_general_account,context)
+            account = self.pool.get("account.account").browse(cr, uid, openstc_general_account)
             post = self.pool.get("account.budget.post").search(cr, uid, [('account_ids','=',openstc_general_account)])
             if not post:
                 post = self.pool.get("account.budget.post").create(cr, uid, {'code':account.code,

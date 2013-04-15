@@ -225,14 +225,14 @@ class purchase_order(osv.osv):
         service = None
         if 'service_id' in context:
             service = context['service_id']
+            service = self.pool.get("openstc.service").browse(cr, uid, service)
+
         for group in user.groups_id:
             if prog.search(group.name):
                 if isinstance(user.service_ids, list) and not service:
                     service = user.service_ids[0]
-                else:
-                    service = self.pool.get("openstc.service").browse(cr, uid, service)
-                seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
-                
+        if service:
+            seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
         return seq
     
     def _create_report_attach(self, cr, uid, record, context=None):

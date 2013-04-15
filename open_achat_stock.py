@@ -618,7 +618,7 @@ class open_engagement(osv.osv):
             return {
                 'type':'ir.actions.act_window',
                 'res_model':'purchase.order',
-                'res_id':ids,
+                'res_id':engage.purchase_order_id.id,
                 'context':context,
                 'target':'new',
                 'view_mode':'form',

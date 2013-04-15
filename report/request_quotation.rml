@@ -126,16 +126,16 @@
     <blockTable colWidths="126.0,98.0,61.0,198.0" repeatRows="1" style="Table_Product_Header_Title">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Product</para>
+          <para style="terp_tblheader_Details" t="1">Product</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Centre">Expected Date</para>
+          <para style="terp_tblheader_Details_Centre" t="1">Expected Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Centre">Qty</para>
+          <para style="terp_tblheader_Details_Centre" t="1">Qty</para>
 	</td>
 	<td>  
-          <para style="terp_tblheader_Details">More Information</para>        
+          <para style="terp_tblheader_Details" t="1">More Information</para>        
 	</td>
       </tr>
     </blockTable>

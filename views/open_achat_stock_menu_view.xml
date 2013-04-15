@@ -171,7 +171,7 @@
 		
 		<menuitem id="menu_open_achat_stock" name="Achats-Stocks"
 			sequence="10"
-			groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user" />
+			groups="openstc_prets.openstc_dst,openstc_elu,openstc_prets.openstc_manager,account.group_account_user" />
 
 		<menuitem id="menu_open_achat_stock_stocks" name="Stocks"
 			sequence="1" parent="menu_open_achat_stock" />
@@ -210,7 +210,7 @@
 			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
 		<menuitem id="menu_open_achat_stock_view_all_engagements"
 			name="Tous les Engagements" sequence="5" parent="menu_open_achat_stock_achats"
-			groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements" />
+			groups="openstc_prets.openstc_dst,openstc_elu" action="action_view_all_engagements" />
 		<menuitem id="menu_open_achat_stock_achats_view_invoice"
 			name="Factures" sequence="6" parent="menu_open_achat_stock_achats"
 			action="account.action_invoice_tree" />

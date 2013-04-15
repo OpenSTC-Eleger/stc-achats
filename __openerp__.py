@@ -8,7 +8,7 @@
 {
     "name": "openstc_achat_stock",
     "version": "0.1",
-    "depends": ["purchase", "product", "stock", "analytic", "account_budget", "openstc"],
+    "depends": ["purchase", "product", "stock", "analytic", "account_budget", "openstc_prets"],
     "author": "PYF & BP",
     "category": "Category",
     "description": """

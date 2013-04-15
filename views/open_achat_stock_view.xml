@@ -382,7 +382,7 @@
 				</xpath>
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='general_budget_id']"
 					position="after">
-					<field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_general_account)"/>
+					<field name="openstc_general_account" required="1" on_change="onchange_openstc_general_account(openstc_general_account)"/>
 					<field name="openstc_code_antenne" required="1"/>
 				</xpath>
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='analytic_account_id']"
@@ -410,7 +410,7 @@
                     	<attribute name="invisible">1</attribute>
                     </field>
                     <field name="general_budget_id" position="after">
-                        <field name="openstc_general_account" required="1" on_change="onchange_openstc_account_general(openstc_general_account)"/>
+                        <field name="openstc_general_account" required="1" on_change="onchange_openstc_general_account(openstc_general_account)"/>
                     </field>
                     <field name="analytic_account_id" position="attributes">
                         <attribute name="domain">['|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>

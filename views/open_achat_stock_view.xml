@@ -91,9 +91,8 @@
 						on_change="onchange_merge_line_ids(merge_line_ids, product_qty)">
 						<tree editable="top">
 							<field name="product_qty" />
-							<field name="service_id" required="1"
-								domain="[('accountant_service','in',('cost','production'))]" />
-							<field name="site_id" domain="[('service','=',service_id)]" />
+							<field name="service_id" required="1"/>
+							<field name="site_id" />
 						</tree>
 					</field>
 					<field name="in_stock_info" />

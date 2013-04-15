@@ -26,6 +26,7 @@ from osv import fields,osv
 import re
 from tools.translate import _
 from datetime import datetime
+import netsvc
 
 class res_users(osv.osv):
     _inherit = "res.users"

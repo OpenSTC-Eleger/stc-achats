@@ -136,22 +136,22 @@
     <blockTable colWidths="180.0,70.0,60.0,80.0,60.0,85.0" repeatRows="1" style="Table_Header_Pur_ord_Line">
       <tr>
         <td>
-          <para style="terp_tblheader_General">formatlang('Description')</para>
+          <para style="terp_tblheader_General">Description</para>
         </td>
         <td>
-          <para style="terp_tblheader_General">formatlang('Taxes')</para>
+          <para style="terp_tblheader_General">Taxes</para>
         </td>
         <td>
-          <para style="terp_tblheader_General">formatlang('Date Req.')</para>
+          <para style="terp_tblheader_General">Date Req.</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Qty')</para>
+          <para style="terp_tblheader_General_Right">Qty</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Unit Price')</para>
+          <para style="terp_tblheader_General_Right">Unit Price</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Net Price')</para>
+          <para style="terp_tblheader_General_Right">Net Price</para>
         </td>
       </tr>
     </blockTable>
@@ -165,7 +165,7 @@
           <blockTable colWidths="253.0" style="Tableau2">
             <tr>
               <td>
-                <para style="terp_default_Bold_9">formatlang('Shipping address :')</para>
+                <para style="terp_default_Bold_9">Shipping address :</para>
                 <para style="terp_default_9">[[ (o.dest_address_id and o.dest_address_id.partner_id.name) or (o.warehouse_id and o.warehouse_id.name) or '']]</para>
                 <para style="terp_default_9">[[ (o.dest_address_id and display_address(o.dest_address_id)) or (o.warehouse_id and display_address(o.warehouse_id.partner_address_id)) or '']]</para>
               </td>
@@ -181,7 +181,7 @@
           </para>
         </td>
         <td>
-	  <para style="terp_default_Bold_9">formatlang('Supplier address :')</para>
+	  <para style="terp_default_Bold_9">Supplier address :</para>
           <para style="terp_default_9">[[ (o.partner_id and o.partner_id.title and o.partner_id.title.name) or '' ]] [[ (o.partner_id and o.partner_id.name) or '' ]]</para>
           <para style="terp_default_9">[[ o.partner_address_id and display_address(o.partner_address_id) ]] </para>
           <para style="terp_default_9">
@@ -204,16 +204,16 @@
     <blockTable colWidths="136.0,132.0,133.0,133.0" style="Header_Order_Reference_Tbl">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">formatlang('Our Order Reference')</para>
+          <para style="terp_tblheader_General_Centre">Our Order Reference</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">formatlang('Your Order Reference')</para>
+          <para style="terp_tblheader_General_Centre">Your Order Reference</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">formatlang('Order Date')</para>
+          <para style="terp_tblheader_General_Centre">Order Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">formatlang('Validated By')</para>
+          <para style="terp_tblheader_General_Centre">Validated By</para>
         </td>
       </tr>
     </blockTable>
@@ -239,22 +239,22 @@
     <blockTable colWidths="130.0,120.0,60.0,80.0,60.0,85.0" repeatRows="1" style="Table_Header_Pur_ord_Line">
       <tr>
         <td>
-          <para style="terp_tblheader_General">formatlang('Description')</para>
+          <para style="terp_tblheader_General">Description</para>
         </td>
         <td>
-          <para style="terp_tblheader_General">formatlang('Taxes')</para>
+          <para style="terp_tblheader_General">Taxes</para>
         </td>
         <td>
-          <para style="terp_tblheader_General">formatlang('Date Req.')</para>
+          <para style="terp_tblheader_General">Date Req.</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Qty')</para>
+          <para style="terp_tblheader_General_Right">Qty</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Unit Price')</para>
+          <para style="terp_tblheader_General_Right">Unit Price</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">formatlang('Subtotal')</para>
+          <para style="terp_tblheader_General_Right">Subtotal</para>
         </td>
       </tr>
     </blockTable>

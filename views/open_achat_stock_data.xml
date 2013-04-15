@@ -8,7 +8,7 @@
 			<field name="impiled_ids" eval="[(4,ref('analytic.group_analytic_accounting'))]" />
 		</record>
 
-		<record id="openstc.openstc_manager" model="res.groups">
+		<record id="openstc_prets.openstc_manager" model="res.groups">
 			<field name="implied_ids"
 				eval="[(4, ref('openstc_qualifier')),(4, ref('stock.group_stock_manager')),(4,ref('analytic.group_analytic_accounting'))]" />
 		</record>

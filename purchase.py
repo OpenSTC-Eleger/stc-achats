@@ -232,7 +232,7 @@ class purchase_order(osv.osv):
                 if isinstance(user.service_ids, list) and not service:
                     service = user.service_ids[0]
         if service:
-            seq = seq.replace('-xxx-','-' + self.remove_accents(service.name[:3]).upper() + '-')
+            seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
         return seq
     
     def _create_report_attach(self, cr, uid, record, context=None):

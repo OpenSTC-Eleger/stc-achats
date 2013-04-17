@@ -109,6 +109,7 @@ class template_ciril_txt_file_engagement(object):
                     'num_market':{'length':10,'required':False,'value':'','pos':20},
                     'num_lot':{'length':10,'required':False,'value':'','pos':21},
                     'num_commande_openstc':{'length':64,'required':False,'value':'','pos':28},
+                    'code_origin_numerotation':{'length':2,'required':False,'value':'OE','pos':29},
                     }
     
     def init_line_vals(self):
@@ -121,7 +122,6 @@ class template_ciril_txt_file_engagement(object):
                     'code_tva':{'length':2,'required':False,'value':0,'pos':13},
                     'amount_ht':{'length':16,'required':True,'value':0,'pos':16},
                     'amount_tva':{'length':16,'required':True,'value':0,'pos':17},
-                    'code_origin_numerotation':{'length':2,'required':False,'value':'','pos':29},
                     'num_engage':{'length':10,'required':False,'value':'','pos':19},
                     'string':{'length':120,'required':True,'value':'','pos':18},
                     'nomenclature':{'length':10,'required':False,'value':'','pos':22},
@@ -188,8 +188,7 @@ class template_ciril_txt_file_engagement(object):
             data['string']['value'] = record.description
             #TODO: keep a trace of current code numerotation
             #num_engage and code_origin are exclusive each other
-            data['num_engage']['value'] = line.name
-            data['code_origin_numerotation']['value'] = 'AA'
+            #data['num_engage']['value'] = line.name
             
             amount_ht = 0
             for order_line in line.order_line:

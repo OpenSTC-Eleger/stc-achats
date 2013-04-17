@@ -666,8 +666,9 @@ class open_engagement(osv.osv):
             template_id = template_id[0]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            del vals['check_dst']
             self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            return False
+        return True
     
     def all_reception_done(self, cr, uid, ids):
         if isinstance(ids, list):
@@ -696,7 +697,8 @@ class open_engagement(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'check_dst' in vals and vals['check_dst']:
-            self.action_dst_check(cr, uid, ids, context)
+            if not self.action_dst_check(cr, uid, ids, context):
+                del vals['check_dst']
         super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
         return True
     

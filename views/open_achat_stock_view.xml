@@ -57,7 +57,7 @@
 						<field name="amount_ttc" />
 						<!-- <field name="budget_dispo_info" />-->
 						<!-- <field name="account_analytic_id" string="Ligne Budgétaire" />-->
-						<field name="budget_line_id" groups="analytic.group_analytic_accounting"/>
+						<field name="budget_line_id" required="1" groups="analytic.group_analytic_accounting"/>
 						<field name="dispo" />
 						<field name="engage_line_id" />
 						

@@ -492,6 +492,27 @@ class open_engagement(osv.osv):
         po_id = self.read(cr, uid, ids, ['purchase_order_id'])
         return self.pool.get("purchase.order").check_achat(cr, uid, po_id['purchase_order_id'][0], context)
     
+    def action_dst_check(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        #create sum'up report for elu
+        engage = self.browse(cr, uid, ids, context=context)
+        if ids:
+            if engage.purchase_order_id:
+                self._create_report_sumup_attach(cr, uid, engage, context)
+        #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Elu%')], context=context)
+        if isinstance(template_id, list):
+            template_id = template_id[0]
+        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
+        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+            #self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            raise osv.except_osv(_('Error'),_('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            #return False
+        engage.write({'check_dst':True})
+        #return True
+        return {'type':'ir.actions.act_window.close'}
+    
     def check_elu(self, cr, uid, ids, context=None):
         po_ids = []
         if isinstance(ids, list):
@@ -652,24 +673,6 @@ class open_engagement(osv.osv):
                                                             })
         return {'type':'ir.actions.act_window_close'}
     
-    def action_dst_check(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        #create sum'up report for elu
-        engage = self.browse(cr, uid, ids, context=context)
-        if ids:
-            if engage.purchase_order_id:
-                self._create_report_sumup_attach(cr, uid, engage, context)
-        #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Elu%')], context=context)
-        if isinstance(template_id, list):
-            template_id = template_id[0]
-        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
-        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.log(cr, uid, ids, _('Error, fail to notify Elu by mail, your check is avoid for this time'))
-            return False
-        return True
-    
     def all_reception_done(self, cr, uid, ids):
         if isinstance(ids, list):
             ids = ids[0]
@@ -696,9 +699,9 @@ class open_engagement(osv.osv):
         return res_id
     
     def write(self, cr, uid, ids, vals, context=None):
-        if 'check_dst' in vals and vals['check_dst']:
-            if not self.action_dst_check(cr, uid, ids, context):
-                del vals['check_dst']
+#        if 'check_dst' in vals and vals['check_dst']:
+#            if not self.action_dst_check(cr, uid, ids, context):
+#                del vals['check_dst']
         super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
         return True
     

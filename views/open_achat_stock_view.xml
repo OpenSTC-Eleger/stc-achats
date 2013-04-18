@@ -233,20 +233,26 @@
 					<group col="2" colspan="1" string="Signatures du DST et d'un Elu"
 						groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
 						attrs="{'invisible':[('state','not in',('draft','to_validate'))]}">
-						<field name="check_dst" colspan="2" />
+						<field name="check_dst" colspan="2" readonly="1"/>
+						<button name="action_dst_check" type="object" string="Validate engage by DST" groups="openstc_prets.openstc_dst"
+						    icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"/>
+						<button name="signal_except_check" string="Refuse engage bu DST"
+							icon="gtk-cancel" type="workflow"
+							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
+							groups="openstc_prets.openstc_dst" />
 						<field name="procuration_dst" colspan="2" invisible="1" />
 						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
 							string="Valider l'Engagement par l'Elu" type="action"
+							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
+							groups="openstc_achat_stock.openstc_elu" />
+						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
+							icon="gtk-cancel" type="workflow"
 							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
 							groups="openstc_achat_stock.openstc_elu" />
 						<group colspan="1" col="2">
 						    <field name="attach_datas_fname_sumup" invisible="1"/>
 						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/>
 						</group>
-						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
-							icon="gtk-cancel" type="workflow"
-							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
-							groups="openstc_achat_stock.openstc_elu" />
 						<button name="open_purchase" type="object"
 							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier" string="Voir la Commande"
 							icon="gtk-edit" />

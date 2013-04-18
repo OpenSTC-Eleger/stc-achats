@@ -68,8 +68,8 @@ class crossovered_budget_lines(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         ret = []
         for budget in self.browse(cr, uid, ids, context=context):
-            val = '%s : %s € (%.2f %% consummed)' %(budget.analytic_account_id.name_get()[0][1],budget.planned_amount - budget.openstc_practical_amount, budget.openstc_erosion)
-            ret.append((budget.id,val.decode('utf-8')))
+            val = u'%s : %s € (%.2f %% consummed)' %(budget.analytic_account_id.name_get()[0][1],budget.planned_amount - budget.openstc_practical_amount, budget.openstc_erosion)
+            ret.append((budget.id,val))
         return ret
     
     #custom field for public account : returns amount with taxes included

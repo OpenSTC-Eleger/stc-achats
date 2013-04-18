@@ -107,7 +107,8 @@ class purchase_order_line(osv.osv):
         'merge_line_ids':fields.one2many('openstc.merge.line.ask','po_line_id','Ventilation des Besoins'),
         'in_stock':fields.float('Qté qui sera Stockée', digits=(3,2)),
         'in_stock_info':fields.related('in_stock',type='float', digits=(3,2), string='Qté qui sera Stockée', readonly=True),
-        'engage_line_id':fields.many2one('open.engagement.line', 'Numéro d\'Engagement')
+        'engage_line_id':fields.many2one('open.engagement.line', 'Numéro d\'Engagement'),
+        'budget_line_id':fields.many2one('crossovered.budget.lines','Budget line'),
         }
     
     
@@ -130,6 +131,14 @@ class purchase_order_line(osv.osv):
     
     _constraints = [(_check_qte_merge_qte_po,_('Error, product qty is lower than summed merge lines product qty'),['product_id','merge_line_ids'])]
     
+    def onchange_budget_line_id(self, cr, uid, ids, budget_line_id=False):
+        if budget_line_id:
+            line = self.pool.get('crossovered.budget.lines').browse(cr, uid, budget_line_id)
+            avail = abs(line.planned_amount) - abs(line.openstc_practical_amount)
+            return {'value':{'account_analytic_id':line.analytic_account_id.id, 'budget_dispo_info':avail,'budget_dispo':avail,'tx_erosion':line.openstc_erosion,'tx_erosion_info':line.openstc_erosion}}
+        return {'value':{'account_analytic_id':False, 'budget_dispo_info':0.0,'budget_dispo':0.0,'tx_erosion':0.0,'tx_erosion_info':0.0}}
+    
+    #deprecated: use onchange_budget_line_id instead of this one
     def onchange_account_analytic_id(self, cr, uid, ids, account_analytic_id=False):
         #On récupère la ligne budgétaire en rapport a ce compte analytique 
         if account_analytic_id:

@@ -22,6 +22,16 @@
 "acess_purchase_order_ask_compta","purchase_order_ask compta","model_purchase_order_ask","account.group_account_user","1","1","1","1"
 "acess_purchase_order_ask_manager","purchase_order_ask manager","model_purchase_order_ask","openstc_prets.openstc_manager","1","1","1","1"
 
+"acess_purchase_order_ask_line_dst","purchase_order_ask_line dst","model_purchase_order_ask_line","openstc_prets.openstc_dst","1","1","1","1"
+"acess_purchase_order_ask_line_elu","purchase_order_ask_line elu","model_purchase_order_ask_line","openstc_elu","1","1","1","1"
+"acess_purchase_order_ask_line_compta","purchase_order_ask_line compta","model_purchase_order_ask_line","account.group_account_user","1","1","1","1"
+"acess_purchase_order_ask_line_manager","purchase_order_ask_line manager","model_purchase_order_ask_line","openstc_prets.openstc_manager","1","1","1","1"
+
+"acess_purchase_order_ask_partners_dst","purchase_order_ask_partners dst","model_purchase_order_ask_partners","openstc_prets.openstc_dst","1","1","1","1"
+"acess_purchase_order_ask_partners_elu","purchase_order_ask_partners elu","model_purchase_order_ask_partners","openstc_elu","1","1","1","1"
+"acess_purchase_order_ask_partners_compta","purchase_order_ask_partners compta","model_purchase_order_ask_partners","account.group_account_user","1","1","1","1"
+"acess_purchase_order_ask_partners_manager","purchase_order_ask_partners manager","model_purchase_order_ask_partners","openstc_prets.openstc_manager","1","1","1","1"
+
 "acess_purchase_order_dst","purchase_order dst","model_purchase_order","openstc_prets.openstc_dst","1","1","1","1"
 "acess_purchase_order_elu","purchase_order elu","model_purchase_order","openstc_elu","1","1","1","1"
 "acess_purchase_order_compta","purchase_order compta","model_purchase_order","account.group_account_user","1","1","1","1"

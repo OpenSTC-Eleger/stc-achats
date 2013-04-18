@@ -63,6 +63,14 @@ class crossovered_budget(osv.osv):
 crossovered_budget()
 
 class crossovered_budget_lines(osv.osv):
+    _rec_name = "complete_name"
+    
+    def name_get(self, cr, uid, ids, context=None):
+        ret = []
+        for budget in self.browse(cr, uid, ids, context=context):
+            val = '%s : %s € (%.2f %% consummed)' %(budget.analytic_account_id.name_get()[0][1],budget.planned_amount - budget.openstc_practical_amount, budget.openstc_erosion)
+            ret.append((budget.id,val.decode('utf-8')))
+        return ret
     
     #custom field for public account : returns amount with taxes included
     def _openstc_pract(self, cr, uid, ids, name, args, context=None):
@@ -93,10 +101,13 @@ class crossovered_budget_lines(osv.osv):
     _inherit = "crossovered.budget.lines"
     _columns = {
             'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
-            'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits=(3,2)),
+            'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits_compute=dp.get_precision('Account')),
             'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
             'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
+            'complete_name':fields.char('Budget name',size=256),
         }
+    
+    
     
     def onchange_openstc_general_account(self, cr, uid, ids, openstc_general_account=False):
         if openstc_general_account:

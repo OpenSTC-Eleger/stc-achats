@@ -15,6 +15,8 @@
 				</tree>
 			</field>
 		</record>
+		
+
 
 		<record id="purchase_order_inherit_form" model="ir.ui.view">
 			<field name="name">purchase.order.open.form</field>
@@ -53,10 +55,12 @@
 						<field name="product_qty" />
 						<!-- <field name="price_unit"/> -->
 						<field name="amount_ttc" />
-						<field name="budget_dispo_info" />
-						<field name="account_analytic_id" string="Ligne Budgétaire" />
+						<!-- <field name="budget_dispo_info" />-->
+						<!-- <field name="account_analytic_id" string="Ligne Budgétaire" />-->
+						<field name="budget_line_id" groups="analytic.group_analytic_accounting"/>
 						<field name="dispo" />
 						<field name="engage_line_id" />
+						
 					</tree>
 				</tree>
 				<field name="name" position="after">
@@ -80,9 +84,10 @@
 					expr="//notebook/page[@string='Order Line']/field[@name='account_analytic_id']"
 					position="replace">
 					<field name="account_analytic_id" string="Ligne Budgétaire"
-						required="1" colspan="4" groups="analytic.group_analytic_accounting"
+						required="1" groups="analytic.group_analytic_accounting"
 						domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('crossovered_budget_line','&lt;&gt;',False)]"
-						on_change="onchange_account_analytic_id(account_analytic_id)" />
+						 invisible="1"/>
+					<field name="budget_line_id" groups="analytic.group_analytic_accounting" colspan="4" on_change="onchange_budget_line_id(budget_line_id)"/>
 					<field name="budget_dispo_info" />
 					<field name="budget_dispo" invisible="1" />
 					<field name="tx_erosion_info" />
@@ -357,7 +362,7 @@
 				</field>
 			</field>
 		</record>
-
+		
 		<record id="open_achat_stock_budget_form_view" model="ir.ui.view">
 			<field name="name">open.achat.stock.crossovered.budget.form</field>
 			<field name="model">crossovered.budget</field>

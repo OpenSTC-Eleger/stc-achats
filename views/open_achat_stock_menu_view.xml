@@ -146,6 +146,8 @@
 			<field name="model">openstc.merge.line.ask</field>
 		</record>
 
+
+		
 		<record id="open_engage_check_elu_wizard" model="ir.actions.act_window">
 			<field name="name">Signature de l'Elu</field>
 			<field name="res_model">open.engagement.check.elu.wizard</field>
@@ -165,6 +167,8 @@
 			<field name="target">new</field>
 		</record>
 
+		
+		
 		<record id="account.action_account_analytic_account_form" model="ir.actions.act_window">
 		    <field name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</field>
 		</record>

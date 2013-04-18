@@ -25,8 +25,7 @@
 		<record id="openstc_email_template_engage_inv_valid" model="email.template">
 			<field name="name">Facture Validée</field>
 			<field name="model_id" ref="model_open_engagement" />
-			<field name="email_from">${object.user_id.user_email or
-				'bruno.plancher@siclic.fr'}</field>
+			<field name="email_from">${object.user_id.user_email or	'bruno.plancher@siclic.fr'}</field>
 			<field name="email_to">bruno.plancher@siclic.fr</field>
 			<field name="subject">Engagement ${object.name or 'inconnu'} : Une
 				Facture est Validée pour paiement</field>

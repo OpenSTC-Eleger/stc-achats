@@ -39,7 +39,7 @@
 				</xpath>
 				<field name="invoiced" position="after">
 					<field name="user_id" readonly="1" />
-					<field name="service_id" />
+					<field name="service_id" context="{'only_my_services':'1'}"/>
 				</field>
 				<field name="origin" position="after">
 					<field name="account_analytic_id" domain="[('crossovered_budget_line','&lt;&gt;', False)]"
@@ -124,7 +124,7 @@
 						<field name="date_order" />
 					</group>
 					<field name="user_id" />
-					<field name="service_id" />
+					<field name="service_id" context="{'only_my_services':'1'}"/>
 					<newline />
 					<field name="suppliers_id" nolabel="1" colspan="4"
 						attrs="{'readonly':[('state','=','done')]}">
@@ -182,7 +182,7 @@
 			<field name="inherit_id" ref="account.view_account_analytic_account_form" />
 			<field name="arch" type="xml">
 				<page string="Account Data" position="inside">
-					<field name="service_id" />
+					<field name="service_id" context="{'only_my_services':'1'}"/>
 				</page>
 			</field>
 		</record>
@@ -212,7 +212,7 @@
 							<field name="name" />
 							<field name="description" />
 							<field name="user_id" />
-							<field name="service_id" />
+							<field name="service_id" context="{'only_my_services':'1'}"/>
 							<field name="purchase_order_id" />
 							<field name="account_invoice_id" invisible="1" />
 							<field name="date_engage_done" />
@@ -348,7 +348,7 @@
 					<filter name="except" string="Litigieux"
 						domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement" />
 					<field name="name" string="Bon d'Engagement" filter_domain="[('name','ilike',self)]" />
-					<field name="service_id" string="Service concerné" domain="[('open_engagement_ids','&lt;&gt;',False)]"
+					<field name="service_id"  string="Service concerné" domain="[('open_engagement_ids','&lt;&gt;',False)]"
 						filter_domain="[('service_id','=',self)]" widget="selection" />
 					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]"
 						filter_domain="[('supplier_id','=',self)]" widget="selection" />
@@ -397,7 +397,7 @@
 				</xpath>
 				<xpath expr="//form/field[@name='crossovered_budget_line']/form/field[@name='analytic_account_id']"
 				    position="attributes">
-					<attribute name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>
+					<attribute name="domain">[('name','not like','Projects'),'|',('type','!=','view'),('parent_id.name','not like','Projects')]</attribute>
 				</xpath>
 				<field name="code" position="replace"/>
 				<field name="name" position="replace">
@@ -423,10 +423,11 @@
                         <field name="openstc_general_account" required="1" on_change="onchange_openstc_general_account(openstc_general_account)"/>
                     </field>
                     <field name="analytic_account_id" position="attributes">
-                        <attribute name="domain">['|',('parent_id','=',False),('parent_id.name','not like','Projects')]</attribute>
+                        <attribute name="domain">[('name','not like','Projects'),'|',('type','!=','view'),('parent_id.name','not like','Projects')]</attribute>
                     </field>
             </field>
         </record>
+		
 		
 
 		<record id="openstc_ask_prod_form" model="ir.ui.view">

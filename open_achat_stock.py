@@ -1076,6 +1076,17 @@ class openstc_service(osv.osv):
     _inherit = "openstc.service"
     _name = "openstc.service"
     
+    def name_search(self, cr, uid, name='', args=[], operator='ilike', context=None, limit=80):
+        ids = self.search(cr, uid, args, limit=limit, context=context)
+        return self.name_get(cr, uid, ids,context=context)
+    
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+        if context and context is not None:
+            if 'only_my_services' in context:
+                my_args = [('id','in',[x.id for x in self.pool.get("res.users").browse(cr,uid,uid,context=context).service_ids])]
+                return super(openstc_service, self).search(cr, uid, args + my_args, offset=offset, limit=limit, order=order, context=context, count=count)
+        return super(openstc_service, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+    
     _columns = {
         'accountant_service':fields.selection([('cost','cost center'),('production','production center')],'Service comptable'),
         'code_serv_ciril':fields.char('Ciril Service Code',size=8, help="this field refer to service pkey from Ciril instance"),

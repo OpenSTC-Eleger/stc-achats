@@ -25,6 +25,7 @@
         "views/open_achat_stock_data.xml",
         "views/sequence.xml",
         
+        "views/openstc_achat_stock_board_view.xml",
         "views/openstc_achat_stock_budget_views.xml",
         "views/open_achat_stock_menu_view.xml",
         "views/open_achat_stock_wizard_view.xml",

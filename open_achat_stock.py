@@ -310,6 +310,13 @@ class open_engagement(osv.osv):
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
     
+    def search(self, cr, uid, args=[],offset=0,limit=None, order=None,context=None, count=False):
+        if context and context is not None:
+            if 'only_engage_todo' in context:
+                my_args = [('engage_to_treat','=',True)]
+                return super(open_engagement, self).search(cr, uid, args + my_args, offset=offset, limit=limit, order=order,context=context,count=count)
+        return super(open_engagement, self).search(cr, uid, args, offset=offset, limit=limit, order=order,context=context,count=count)
+    
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'engage.number',context)
         user = self.pool.get("res.users").browse(cr, uid, uid)
@@ -333,7 +340,7 @@ class open_engagement(osv.osv):
         for engage in self.browse(cr, uid, ids, context):
             engage_to_po.update({engage.purchase_order_id.id:engage.id})
         po_ids = engage_to_po.keys()
-        cr.execute('''select a.id, a.res_id 
+        cr.execute('''select a.id, a.res_id, a.state
                     from ir_attachment as a 
                     where a.res_id in %s and a.res_model = %s
                     or res_id in %s and a.res_model = %s 
@@ -344,16 +351,26 @@ class open_engagement(osv.osv):
         search_ids.extend(ids)
         search_ids.extend(po_ids)
         for id in ids:
-            ret.setdefault(id, [])
+            ret.setdefault(id, {'attach_ids':[],'engage_to_treat':False})
         for r in cr.fetchall():
             if r[1] in ids:
+                if not ret[r[1]]['engage_to_treat']:
+                    ret[r[1]]['engage_to_treat'] = r[2] in ('engage_to_treat',('except_send_mail'))
                 #Soit il s'agit d'une piece jointe associée a l'engagement
-                ret[r[1]].append(r[0])
+                ret[r[1]]['attach_ids'].append(r[0])
             else:
                 #Soit il s'agit d'une piece jointe associée au bon de commande associé a l'engagement
-                ret[engage_to_po[r[1]]].append(r[0])
+                ret[engage_to_po[r[1]]]['attach_ids'].append(r[0])
+                
         return ret
     
+    def _search_engage_to_treat(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        if args[0] == ('engage_to_treat','=',True):
+            cr.execute("select res_id from ir_attachment where state in ('to_check','except_send_mail') and res_model = %s group by res_id;",(self._name,))
+            return [('id','in',[x for x in cr.fetchall()])]
+        return []
     
     _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
                                ,('waiting_reception','Attente Réception Produits et Facture Fournisseur incluse'),('engage_to_terminate','Tous les Produits sont réceptionnés'),
@@ -376,7 +393,7 @@ class open_engagement(osv.osv):
         'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),
         'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
-        'attach_ids':fields.function(_get_engage_attaches, type='one2many', relation='ir.attachment',string='Documents Joints'),
+        'attach_ids':fields.function(_get_engage_attaches, multi="attaches", type='one2many', relation='ir.attachment',string='Documents Joints'),
         'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
         'supplier_id':fields.related('purchase_order_id','partner_id', string='Fournisseur', type='many2one', relation='res.partner'),
         'justif_check':fields.text('Justification de la décision de l\'Elu'),
@@ -388,6 +405,7 @@ class open_engagement(osv.osv):
         'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
         'attach_datas_sumup':fields.binary('Purchase Sum\'up'),
         'attach_datas_fname_sumup':fields.char('Purchase Sum\'up Filename', size=256),
+        'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
         }
     _defaults = {
             'name':lambda self,cr,uid,context:self.pool.get("ir.sequence").next_by_code(cr, uid, 'open.engagement',context),

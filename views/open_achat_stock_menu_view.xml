@@ -174,7 +174,7 @@
 		</record>
 		
 		<menuitem id="menu_open_achat_stock" name="Achats-Stocks"
-			sequence="10" action="openstc_my_budget"
+			sequence="10" action="openstc_achat_stock_action_board_form"
 			groups="openstc_prets.openstc_dst,openstc_elu,openstc_prets.openstc_manager,account.group_account_user" />
 
 		<menuitem id="menu_open_achat_stock_stocks" name="Stocks"

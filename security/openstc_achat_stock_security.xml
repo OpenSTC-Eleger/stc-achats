@@ -2,16 +2,16 @@
 <openerp>
 	<data>
 
-		<record model="ir.rule" id="open_engagement_rule_all_access_specific">
-			<field name="name">Engagements Rule Access</field>
-			<field name="model_id" ref="model_open_engagement" />
-			<field name="domain_force">[('user_id','!=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc_prets.openstc_manager')])]" name="groups" />
-			<field eval="1" name="perm_read" />
-			<field eval="1" name="perm_create" />
-			<field eval="0" name="perm_write" />
-			<field eval="0" name="perm_unlink" />
-		</record>
+<!-- 		<record model="ir.rule" id="open_engagement_rule_all_access_specific"> -->
+<!-- 			<field name="name">Engagements Rule Access</field> -->
+<!-- 			<field name="model_id" ref="model_open_engagement" /> -->
+<!-- 			<field name="domain_force">[('user_id','!=',user.id)]</field> -->
+<!-- 			<field eval="[(6,0,[ref('openstc_prets.openstc_manager')])]" name="groups" /> -->
+<!-- 			<field eval="1" name="perm_read" /> -->
+<!-- 			<field eval="1" name="perm_create" /> -->
+<!-- 			<field eval="0" name="perm_write" /> -->
+<!-- 			<field eval="0" name="perm_unlink" /> -->
+<!-- 		</record> -->
 
 		<record model="ir.rule" id="open_engagement_rule_all_access_specific_perso">
 			<field name="name">Engagements Rule Access To own</field>

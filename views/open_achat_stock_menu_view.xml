@@ -39,6 +39,17 @@
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('state','=','draft'),('is_emprunt','=',False)]</field>
 		</record>
+		
+		
+	<record id="action_openstc_view_all_purchase" model="ir.actions.act_window">
+			<field name="name">Commandes</field>
+			<field name="res_model">purchase.order</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('is_emprunt','=',False)]</field>
+		</record>
+		
 
 		<record id="action_view_valid_purchase" model="ir.actions.act_window">
 			<field name="name">Commandes Validées</field>
@@ -178,46 +189,44 @@
 			groups="openstc_prets.openstc_dst,openstc_elu,openstc_prets.openstc_manager,account.group_account_user" />
 
 		<menuitem id="menu_open_achat_stock_stocks" name="Stocks"
-			sequence="1" parent="menu_open_achat_stock" />
-		<menuitem id="menu_open_achat_stock_achats" name="Achats"
-			sequence="2" parent="menu_open_achat_stock" />
-		<menuitem id="menu_open_achat_stock_budgets" name="Budgets"
 			sequence="3" parent="menu_open_achat_stock" />
+		<menuitem id="menu_open_achat_stock_achats" name="Achats"
+			sequence="1" parent="menu_open_achat_stock" />
+		<menuitem id="menu_open_achat_stock_budgets" name="Budgets"
+			sequence="2" parent="menu_open_achat_stock" />
 		<menuitem id="menu_open_achat_stock_logs" name="Vos Messages Internes"
 			sequence="4" parent="menu_open_achat_stock" />
 
 		<menuitem id="menu_open_achat_stock_stock_view_picking_move"
-			name="Récéption par Produits" sequence="1" parent="menu_open_achat_stock_stocks"
+			name="Récéption par Produits" sequence="5" parent="menu_open_achat_stock_stocks"
 			action="action_open_achat_stock_reception_picking_move" />
 		<menuitem id="menu_open_achat_stock_stock_view_inventory_form"
-			name="Inventaire Physique" sequence="2" parent="menu_open_achat_stock_stocks"
+			name="Inventaire Physique" sequence="6" parent="menu_open_achat_stock_stocks"
 			action="stock.action_inventory_form" />
 		<menuitem id="menu_open_achat_stock_stock_view_product" name="Fournitures"
-			sequence="3" parent="menu_open_achat_stock_stocks" action="openstc_achat_stock_action_view_products" />
+			sequence="1" parent="menu_open_achat_stock_stocks" action="openstc_achat_stock_action_view_products" />
 		<menuitem id="menu_open_achat_stock_stock_view_ask_prod"
-			sequence="4" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view" />
+			sequence="3" parent="menu_open_achat_stock_stocks" action="openstc_ask_prod_action_view" />
 		<menuitem id="menu_open_achat_stock_stock_view_merge_line_ask"
-			sequence="5" parent="menu_open_achat_stock_stocks" action="openstc_merge_line_ask_view" />
-
+			sequence="4" parent="menu_open_achat_stock_stocks" action="openstc_merge_line_ask_view" />
 		<menuitem id="menu_open_achat_stock_stock_view_supplier"
-			name="Fournisseurs" sequence="3" parent="menu_open_achat_stock_stocks"
+			name="Fournisseurs" sequence="2" parent="menu_open_achat_stock_stocks"
 			action="base.action_partner_supplier_form" />
 
 		<menuitem id="menu_open_achat_stock_achat_po_ask" sequence="1"
 			parent="menu_open_achat_stock_achats" action="action_view_po_ask" />
-		<menuitem id="menu_open_achat_stock_stock_view_draft_purchase"
-			name="Commandes soumises à Validation" sequence="2"
-			parent="menu_open_achat_stock_achats" action="action_view_draft_purchase" />
-		<menuitem id="menu_open_achat_stock_achats_view_purchase"
-			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" />
+		<menuitem id="menu_open_achat_stock_stock_view_draft_purchase" sequence="2" name="Commandes"
+			parent="menu_open_achat_stock_achats" action="action_openstc_view_all_purchase" />
+<!-- 		<menuitem id="menu_open_achat_stock_achats_view_purchase" -->
+<!-- 			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" /> -->
 		<menuitem id="menu_open_achat_stock_view_engagements" name="Mes Engagements"
 			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
 		<menuitem id="menu_open_achat_stock_view_all_engagements"
 			name="Tous les Engagements" sequence="5" parent="menu_open_achat_stock_achats"
 			groups="openstc_prets.openstc_dst,openstc_elu" action="action_view_all_engagements" />
-		<menuitem id="menu_open_achat_stock_achats_view_invoice"
-			name="Factures" sequence="6" parent="menu_open_achat_stock_achats"
-			action="account.action_invoice_tree" />
+<!-- 		<menuitem id="menu_open_achat_stock_achats_view_invoice" -->
+<!-- 			name="Factures" sequence="6" parent="menu_open_achat_stock_achats" -->
+<!-- 			action="account.action_invoice_tree" /> -->
 
 		<menuitem id="menu_open_achat_stock_stock_view_budgets" name="Budgets"
 			sequence="1" parent="menu_open_achat_stock_budgets" action="account_budget.act_crossovered_budget_view" />

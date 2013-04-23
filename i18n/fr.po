@@ -1090,7 +1090,7 @@ msgstr "Validé par"
 #. module: openstc_achat_stock
 #: view:board.board:0
 msgid "Engages to Check"
-msgstr "Engagements à valider"
+msgstr "Engagements en attente de validation"
 
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0

@@ -35,7 +35,11 @@ class res_users(osv.osv):
     _columns = {
         'max_po_amount':fields.float('Montant par Bon de Commande', digit=(4,2), help="Montant Max autorisé par Bon de Commande"),
         'max_total_amount':fields.float('Montant Annuel max', digit=(5,2)),
+        'max_po_amount_no_market':fields.float('Seuil max par commande hors marché', digit=(4,2), help="Montant Max autorisé par commande hors marché"),
         'code_user_ciril':fields.char('Ciril user code', size=8, help="this field refer to user code from Ciril instance"),
+        }
+    _defaults = {
+        'max_po_amount_no_market':lambda *a: 0.0, 
         }
     
 res_users()

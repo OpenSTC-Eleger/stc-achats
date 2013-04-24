@@ -27,8 +27,8 @@
 				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']"
 					position="after">
 					<group col="6" colspan="4">
-						<field name="validation" />
-						<field name="engage_id" />
+						<field name="validation" invisible="1"/>
+						<field name="engage_id" invisible="1"/>
 					</group>
 				</xpath>
 				<xpath
@@ -37,6 +37,9 @@
 					<field name="po_ask_id" />
 					<field name="po_ask_date" />
 				</xpath>
+				<field name="invoiced" position="attributes">
+					<attribute name="invisible">1</attribute>
+				</field>
 				<field name="invoiced" position="after">
 					<field name="user_id" readonly="1" />
 					<field name="service_id" context="{'only_my_services':'1'}"/>
@@ -67,10 +70,29 @@
 					<field name="description" required="1" />
 					<newline />
 				</field>
+				<button name="button_dummy" position="replace"/>
 				<button name="purchase_confirm" position="replace">
-					<button name="open_engage" string="Créer/Gérer Engagement"
-						type="object" icon="gtk-edit" />
+				    <button name="button_dummy" states="draft" string="Vérifier les budgets" type="object" icon="gtk-execute"/>
+					<field name="need_confirm" invisible="1"/>
+					<button name="open_engage" string="Soumettre commande à validation"
+						type="object" icon="gtk-go-forward" attrs="{'invisible': [('need_confirm','=',False)]}" />
+					<button name="open_engage" string="Valider et générer la commande (pdf)"
+						type="object" icon="gtk-go-forward" attrs="{'invisible': [('need_confirm','=',True)]}" />
 				</button>
+
+				<field name="warehouse_id" position="attributes">
+				    <attribute name="invisible">1</attribute>
+				</field>
+				<field name="partner_ref" position="attributes">
+				    <attribute name="invisible">1</attribute>
+				</field>
+				<field name="shipped" position="attributes">
+				    <attribute name="invisible">1</attribute>
+				</field>
+				<field name="state" position="attributes">
+				    <attribute name="invisible">1</attribute>
+				</field>
+				
 			</field>
 		</record>
 

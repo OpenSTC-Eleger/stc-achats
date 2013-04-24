@@ -281,6 +281,24 @@ class purchase_order(osv.osv):
                                   ('done','Bon de Commande Validable')]
     _inherit = 'purchase.order'
     _name = 'purchase.order'
+    
+    def _get_need_confirm(self, cr, uid, ids, name, args, context=None):
+        ret = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.user_id and po.user_id.max_po_amount_no_market:
+                ret[po.id] = po.user_id.max_po_amount_no_market <= po.amount_total
+            else:
+                ret[po.id] = True
+        return ret
+    
+    def _get_ids_from_users(self, cr, uid, ids, context=None):
+        po_ids = self.search(cr, uid, [('user_id','in',ids)], context=None)
+        return po_ids
+    
+    def _get_ids_from_pol(self,cr,uid,ids,context=None):
+        po_ids = self.search(cr, uid, [('order_line','in',ids)])
+        return po_ids
+    
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
             'engage_id':fields.many2one('open.engagement','Bon d\'Engagement associé',readonly=True),
@@ -289,7 +307,8 @@ class purchase_order(osv.osv):
             'description':fields.char('Objet de l\'achat',size=128),
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
-            'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat.")
+            'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
+            'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
             }
     _defaults = {
         'validation':'budget_to_check',
@@ -297,6 +316,7 @@ class purchase_order(osv.osv):
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
         'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context)
         }
+
     
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in vals and 'name' in vals:
@@ -330,29 +350,30 @@ class purchase_order(osv.osv):
         return False
             
     def check_achat(self, cr, uid, ids, context=None):
-        if not isinstance(ids, list):
-            ids = [ids]
+        if isinstance(ids, list):
+            ids = ids[0]
         #   Initialisation des seuils du user
-        seuils = self.pool.get("res.users").read(cr, uid, uid, ['max_po_amount','max_total_amount','company_id'], context)
-        company = self.pool.get("res.company").browse(cr, uid, seuils['company_id'][0], context)
-        #seuil par bon de commande
-        max_po_autorise = seuils['max_po_amount']
-        #seuil sur l'année
-        max_total_autorise = seuils['max_total_amount']
-        #Quota atteint sur l'année pour l'instant par l'utilisateur
-        user_po_ids = self.search(cr, uid, [('user_id','=',uid)], context)
-        total_po_amount = 0
-        for user_po in self.read(cr, uid, user_po_ids, ['amount_total']):
-            total_po_amount += user_po['amount_total']
-        #On vérifie pour la commande en cours à la fois le seuil par commande et le seuil annuel
-        for po in self.browse(cr, uid, ids, context):
-            #Commande "hors_marché", soit lorsqu'une commande est crée avec une demande de devis
-            #if not po.po_ask_id:
-            return po.amount_total < company.base_seuil_po
-            #Commande dans le cadre d'un marché
-        #Si on arrive ici, c'est qu'il y a un pb (la commande n'est plus associée à l'engagement)
-        #TODO: mettre un message d'erreur, voir si on ne perds pas les instances de wkf
-        return False
+#        seuils = self.pool.get("res.users").read(cr, uid, uid, ['max_po_amount','max_total_amount','company_id'], context)
+#        company = self.pool.get("res.company").browse(cr, uid, seuils['company_id'][0], context)
+#        #seuil par bon de commande
+#        max_po_autorise = seuils['max_po_amount']
+#        #seuil sur l'année
+#        max_total_autorise = seuils['max_total_amount']
+#        #Quota atteint sur l'année pour l'instant par l'utilisateur
+#        user_po_ids = self.search(cr, uid, [('user_id','=',uid)], context)
+#        total_po_amount = 0
+#        for user_po in self.read(cr, uid, user_po_ids, ['amount_total']):
+#            total_po_amount += user_po['amount_total']
+#        #On vérifie pour la commande en cours à la fois le seuil par commande et le seuil annuel
+#        for po in self.browse(cr, uid, ids, context):
+#            #Commande "hors_marché", soit lorsqu'une commande est crée avec une demande de devis
+#            #if not po.po_ask_id:
+#            return po.amount_total < company.base_seuil_po
+#            #Commande dans le cadre d'un marché
+#        #Si on arrive ici, c'est qu'il y a un pb (la commande n'est plus associée à l'engagement)
+#        #TODO: mettre un message d'erreur, voir si on ne perds pas les instances de wkf
+
+        return not self.browse(cr, uid, ids, context=context).need_confirm
     
     def check_all_dispo(self, cr, uid, ids, context):
         if not isinstance(ids, list):

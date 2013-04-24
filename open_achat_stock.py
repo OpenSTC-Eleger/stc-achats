@@ -265,6 +265,8 @@ class purchase_order_ask(osv.osv):
             ret.update(entrepot_infos)
             context.update({'from_ask':'1','service_id':ask.service_id.id})
             po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
+            if po_id:
+                ask.write({'state':'done'})
             return {
                 'view_mode':'form',
                 'target':'current',

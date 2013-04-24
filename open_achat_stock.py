@@ -36,8 +36,7 @@ from ciril_template_files import template_ciril_txt_file_engagement
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
-    AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('waiting_supplier','Attente Choix du Fournisseur'),
-                             ('waiting_purchase_order','Bon pour création de Commandes'),('done','Devis Clos')]
+    AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('done','Devis Clos')]
     _name = "purchase.order.ask"
     
     def remove_accents(self, str):
@@ -80,19 +79,6 @@ class purchase_order_ask(osv.osv):
     }
     
     
-    def _check_supplier_selection(self, cr, uid, ids, context=None):
-        one_selection = True
-        for ask in self.browse(cr, uid, ids):
-            if ask.state <> 'draft':
-                one_selection = False
-                for line in ask.suppliers_id:
-                    if line.selected:
-                        if not one_selection:
-                            one_selection = True
-                        else:
-                            return False
-        return one_selection
-    
     def _create_report_attach(self, cr, uid, record, context=None):
         #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
@@ -124,127 +110,176 @@ class purchase_order_ask(osv.osv):
                 pass
             
         return ret
+
     
+    def constraints_to_draft_po(self, cr, uid, ids, context=None):
+        suppliers_selected = 0
+        line_errors = []
+        for ask in self.browse(cr, uid, ids, context=context):
+            if not ask.suppliers_id:
+                raise osv.except_osv('Error','You must supply at least one supplier before sending mail')
+            for partner_line in ask.suppliers_id:
+                if partner_line.selected:
+                    suppliers_selected += 1
+            if suppliers_selected <> 1:
+                raise osv.except_osv('Error','You have to choose a supplier, and only one')
+            if not ask.order_lines:
+                raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+            for line in ask.order_lines:
+                if line.qte <= 0.0 or line.price_unit <= 0.0:
+                    line_errors.append(line.id)
+            
+        if not line_errors:
+            return True
+        raise osv.except_osv('Error','You must supply a positive quantity and price_unit')
+        return False
+    
+    def constraints_send_ask(self, cr, uid, ids, context=None):
+        line_errors = []
+        for ask in self.browse(cr, uid, ids, context=context):
+            if ask.suppliers_id:
+                if ask.order_lines:
+                    for line in ask.order_lines:
+                        if line.qte <= 0.0:
+                            line_errors.append(line.id)
+                else:
+                    raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+            else:
+                raise osv.except_osv('Error','You must supply at least one supplier before sending mail')
+        if not line_errors:
+            return True
+        raise osv.except_osv('Error','You must supply a positive quantity')
+        return False
+    
+    def constraints_print_report(self, cr, uid, ids, context=None):
+        line_errors = []
+        for ask in self.browse(cr, uid, ids, context=context):
+            if not ask.order_lines:
+                raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+            for line in ask.order_lines:
+                if line.qte <= 0.0:
+                    line_errors.append(line.id)
+        if not line_errors:
+            return True
+        raise osv.except_osv('Error','You must supply a positive quantity before printing pdf report')
+        return False
+
+    
+    #launch report if conditions are checked
+    def print_report(self, cr, uid, ids, context=None):
+        if self.constraints_print_report(cr, uid, ids, context=context):
+            datas = {
+                     'ids':ids,
+                     'model':'purchase.order.ask',
+                     'form':{}}
+            return {'type':'ir.actions.report.xml',
+                    'report_name':'purchase.order.ask',
+                    'datas':datas,
+                    }
+        return {'type':'ir.actions.act_window.close'}
+    
+    #create report, attach it and send mail with it to each supplier if conditions are checked
+    def send_ask(self, cr, uid, ids, context=None):
+        if self.constraints_send_ask(cr, uid, ids, context=context):
+            #Envoi d'un mail aux fournisseurs potentiels
+            #Puis on passe à l'étape d'après
+            ask_lines = []
+            ask_partners = []
+            for ask in self.browse(cr, uid, ids):
+                ir_attach_id = self._create_report_attach(cr, uid, ask, context)
+                mail_values = {}
+                mail_ids = []
+                if ir_attach_id:
+                    mail_values.update({'attachment_ids':[(4,ir_attach_id)]})
+                #{'email_to':supplier_line.partner_address_id.email}
+                supplier_lines_states = {'nothing':[],'error_mail':[],'mail':[]}
+                for supplier_line in ask.suppliers_id:
+                    ask_partners.append(supplier_line.id)
+                    if not supplier_line.partner_id.opt_out and supplier_line.partner_address_id:
+                        mail_values.update({'email_to':supplier_line.partner_address_id.email})
+                        #pour chaque partner, on envoi un mail à son adresse mail
+                        email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
+                        mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
+                        mail_ids.append(mail_id)
+                        self.pool.get("mail.message").write(cr, uid, [mail_id], mail_values,context=context)
+                        self.pool.get("mail.message").send(cr, uid, [mail_id], context)
+                        #get if mail is correctly sent or not
+                        if self.pool.get("mail.message").browse(cr, uid, mail_id, context).state == 'exception':
+                            supplier_lines_states['error_mail'].append(supplier_line.id)
+                        else:
+                            supplier_lines_states['mail'].append(supplier_line.id)
+                    else:
+                        supplier_lines_states['nothing'].append(supplier_line.id)
+                ask_lines.extend([x.id for x in ask.order_lines])
+            
+            #write notif_states for each supplier line
+            #supplier_lines_states['mail'].append(supplier_line.id)
+            ask_partners_obj = self.pool.get("purchase.order.ask.partners")
+            for key, value in supplier_lines_states.items():
+                if value:
+                    ask_partners_obj.write(cr, uid, value, {'notif_state':key})
+
+
+        return {'ir.actions.act_window.close'}
+    
+    #create purchase_order if conditions are checked    
+    def to_draft_po(self, cr, uid, ids, context=None):
+        if self.constraints_to_draft_po(cr, uid, ids, context=context):
+            supplier_id = 0
+            list_prod = []
+            if isinstance(ids,list):
+                ids = ids[0]
+            ask = self.browse(cr, uid, ids)
+            #On récupère le fournisseur sélectionné
+            for line in ask.suppliers_id:
+                if line.selected:
+                    supplier_id = line.partner_id.id
+            #On récupère les produits demandés avec leur qté et PU
+            for line in ask.order_lines:
+                if line.price_unit <= 0.0:
+                    raise osv.except_osv(_('Error'),_('Price units of somes products are missing'))
+                list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
+            partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
+            prod_actions = []
+            pol_obj = self.pool.get("purchase.order.line")
+            for prod_ctx in list_prod:
+                prod_values = pol_obj.onchange_product_id(cr, uid, [], partner_infos['pricelist_id'], prod_ctx['prod_id'], prod_ctx['qte'],
+                                                           False, supplier_id, price_unit=prod_ctx['price_unit'],
+                                                           date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
+                if 'taxes_id' in prod_values:
+                    prod_values.update({'taxes_id':[(4,x) for x in prod_values['taxes_id']]})
+                prod_values.update({'price_unit':prod_ctx['price_unit'], 
+                                    'product_id':prod_ctx['prod_id'], 
+                                    'merge_line_ids':prod_ctx['merge_line_ids']})
+                if prod_ctx['description']:
+                    prod_values.update({'name':prod_ctx['description']})
+                prod_actions.append((0,0,prod_values))
+            entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
+            if not entrepot_id:
+                raise osv.except_osv(_('Error'),_('You have to configure a warehouse'))
+            if isinstance(entrepot_id, list):
+                entrepot_id = entrepot_id[0]
+            entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
+            ret = {'service_id':ask.service_id.id, 'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions, 'description':ask.name}
+            ret.update(partner_infos)
+            ret.update(entrepot_infos)
+            context.update({'from_ask':'1','service_id':ask.service_id.id})
+            po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
+            return {
+                'view_mode':'form',
+                'target':'current',
+                'type':'ir.actions.act_window',
+                'res_model':'purchase.order',
+                'res_id':po_id
+                }
+        return {'type':'ir.actions.act_window.close'}   
+       
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for ask in self.read(cr, uid, ids,['id', 'name','sequence']):
             res.append((ask['id'], '%s:%s' % (ask['sequence'], ask['name'])))
         return res
     
-    def send_ask(self, cr, uid, ids, context=None):
-        #Envoi d'un mail aux fournisseurs potentiels
-        #Puis on passe à l'étape d'après
-        ask_lines = []
-        ask_partners = []
-        for ask in self.browse(cr, uid, ids):
-            ir_attach_id = self._create_report_attach(cr, uid, ask, context)
-            mail_values = {}
-            mail_ids = []
-            if ir_attach_id:
-                mail_values.update({'attachment_ids':[(4,ir_attach_id)]})
-            #{'email_to':supplier_line.partner_address_id.email}
-            supplier_lines_states = {'nothing':[],'error_mail':[],'mail':[]}
-            for supplier_line in ask.suppliers_id:
-                ask_partners.append(supplier_line.id)
-                if not supplier_line.partner_id.opt_out and supplier_line.partner_address_id:
-                    mail_values.update({'email_to':supplier_line.partner_address_id.email})
-                    #pour chaque partner, on envoi un mail à son adresse mail
-                    email_template_id = self.pool.get("email.template").search(cr, uid, [('model','=',self._name)])
-                    mail_id = self.pool.get("email.template").send_mail(cr, uid, email_template_id[0], ids[0], force_send=False, context=context)
-                    mail_ids.append(mail_id)
-                    self.pool.get("mail.message").write(cr, uid, [mail_id], mail_values,context=context)
-                    self.pool.get("mail.message").send(cr, uid, [mail_id], context)
-                    #get if mail is correctly sent or not
-                    if self.pool.get("mail.message").browse(cr, uid, mail_id, context).state == 'exception':
-                        supplier_lines_states['error_mail'].append(supplier_line.id)
-                    else:
-                        supplier_lines_states['mail'].append(supplier_line.id)
-                else:
-                    supplier_lines_states['nothing'].append(supplier_line.id)
-            ask_lines.extend([x.id for x in ask.order_lines])
-        
-        #write notif_states for each supplier line
-        #supplier_lines_states['mail'].append(supplier_line.id)
-        ask_partners_obj = self.pool.get("purchase.order.ask.partners")
-        for key, value in supplier_lines_states.items():
-            if value:
-                ask_partners_obj.write(cr, uid, value, {'notif_state':key})
-        self.pool.get("purchase.order.ask.partners").write(cr, uid, ask_partners, {'state':'waiting_selection'})
-        self.pool.get("purchase.order.ask.line").write(cr, uid, ask_lines, {'state':'waiting_pu'})
-        self.write(cr, uid ,ids, {'state':'waiting_supplier'})
-        return{
-            'view_mode':'form',
-            'target':'current',
-            'res_model':'purchase.order.ask',
-            'res_id':ids[0],
-            'type':'ir.actions.act_window'
-            }
-    
-    def validate_supplier(self, cr, uid, ids, context=None):
-        if not self._check_supplier_selection(cr, uid, ids, context):
-            raise osv.except_osv(_('Error'),_('You have to choose a supplier, and only one'))
-        self.write(cr, uid, ids, {'state':'waiting_purchase_order'})
-        return
-    
-    def to_draft_po(self, cr, uid, ids, context=None):
-        supplier_id = 0
-        list_prod = []
-        if isinstance(ids,list):
-            ids = ids[0]
-        ask = self.browse(cr, uid, ids)
-        #On récupère le fournisseur sélectionné
-        for line in ask.suppliers_id:
-            if line.selected:
-                supplier_id = line.partner_id.id
-        #On récupère les produits demandés avec leur qté et PU
-        for line in ask.order_lines:
-            if line.price_unit <= 0.0:
-                raise osv.except_osv(_('Error'),_('Price units of somes products are missing'))
-            list_prod.append({'prod_id':line.product_id.id,'price_unit':line.price_unit,'qte':line.qte, 'description':line.description, 'merge_line_ids':[(4,x.id) for x in line.merge_line_ids]})    
-        partner_infos = self.pool.get("purchase.order").onchange_partner_id(cr, uid, [], supplier_id)['value']
-        prod_actions = []
-        pol_obj = self.pool.get("purchase.order.line")
-        for prod_ctx in list_prod:
-            prod_values = pol_obj.onchange_product_id(cr, uid, [], partner_infos['pricelist_id'], prod_ctx['prod_id'], prod_ctx['qte'],
-                                                       False, supplier_id, price_unit=prod_ctx['price_unit'],
-                                                       date_order=fields.date.context_today(self,cr,uid,context), context=context)['value']
-            if 'taxes_id' in prod_values:
-                prod_values.update({'taxes_id':[(4,x) for x in prod_values['taxes_id']]})
-            prod_values.update({'price_unit':prod_ctx['price_unit'], 
-                                'product_id':prod_ctx['prod_id'], 
-                                'merge_line_ids':prod_ctx['merge_line_ids']})
-            if prod_ctx['description']:
-                prod_values.update({'name':prod_ctx['description']})
-            prod_actions.append((0,0,prod_values))
-        entrepot_id = self.pool.get("stock.warehouse").search(cr, uid, [])
-        if not entrepot_id:
-            raise osv.except_osv(_('Error'),_('You have to configure a warehouse'))
-        if isinstance(entrepot_id, list):
-            entrepot_id = entrepot_id[0]
-        entrepot_infos = self.pool.get("purchase.order").onchange_warehouse_id(cr, uid, [], entrepot_id)['value']
-        ret = {'service_id':ask.service_id.id, 'partner_id':supplier_id, 'po_ask_id':ask.id,'warehouse_id':entrepot_id,'order_line':prod_actions, 'description':ask.name}
-        ret.update(partner_infos)
-        ret.update(entrepot_infos)
-        context.update({'from_ask':'1','service_id':ask.service_id.id})
-        po_id = self.pool.get("purchase.order").create(cr, uid, ret, context)
-        return {
-            'view_mode':'form',
-            'target':'current',
-            'type':'ir.actions.act_window',
-            'res_model':'purchase.order',
-            'res_id':po_id
-            }
-    
-    def do_terminate(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state':'done'})
-        return
-    
-    def cancel(self, cr, uid, ids, context=None):
-        for ask in self.browse(cr, uid, ids):
-            self.pool.get("purchase.order.ask.partners").write(cr, uid, [x.id for x in ask.suppliers_id], {'state':'draft'})
-        self.write(cr, uid, ids, {'state':'draft'})
-        return
-   
     def create(self, cr, uid, vals, context=None):
        if 'service_id' in vals:
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)

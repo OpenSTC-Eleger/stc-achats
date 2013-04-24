@@ -135,10 +135,10 @@
 							<field name="partner_address_id" domain="[('partner_id','=',partner_id)]"
 								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="selected"
-								attrs="{'readonly':[('state','&lt;&gt;', 'waiting_selection')]}" />
+								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="state" />
 							<field name="notif_state"
-								attrs="{'readonly':[('state','&lt;&gt;', 'waiting_selection')]}" />
+								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 						</tree>
 					</field>
 					<newline />
@@ -151,25 +151,24 @@
 								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="qte" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="price_unit"
-								attrs="{'readonly':[('state','&lt;&gt;', 'waiting_pu')],'required':[('state','=','waiting_pu')]}" />
+								attrs="{'readonly':[('state','&lt;&gt;', 'draft')],'required':[('state','=','draft')]}" />
 							<field name="date_order" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="infos" />
 							<field name="state" />
 						</tree>
 					</field>
 					<newline />
-					<field name="state" />
+					<field name="state" invisible="1"/>
 					<field name="purchase_order_id" attrs="{'invisible':[('state','&lt;&gt;', 'done')]}" />
-					<button name="cancel" string="Revenir au début" type="object"
-						states="waiting_supplier" />
-					<button name="validate_supplier" string="Valider Fourniseur"
-						type="object" states="waiting_supplier" />
-					<button name="send_ask" string="Envoyer demande (mails)"
-						type="object" states="draft" />
-					<button name="to_draft_po" string="Créer un Bon de Commande"
-						type="object" states="waiting_purchase_order" />
-					<button name="do_terminate" string="Clore Devis" type="object"
-						states="waiting_purchase_order" />
+					
+					<group colspan="4" col="3">
+						<button name="print_report" string="Générer le devis (pdf)"
+							type="object" icon="gtk-print"/>
+						<button name="send_ask" string="Envoyer le devis aux fournisseurs (e-mail)"
+							type="object" states="draft" icon="gtk-execute" />
+						<button name="to_draft_po" string="Générer le Bon de Commande"
+							type="object" states="draft" icon="gtk-go-forward"/>
+					</group>
 				</form>
 			</field>
 		</record>

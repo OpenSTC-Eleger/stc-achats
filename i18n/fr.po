@@ -192,7 +192,7 @@ msgstr "Tous les Produits sont réceptionnés"
 #. module: openstc_achat_stock
 #: view:board.board:0
 msgid "Draft Purchases"
-msgstr "Commandes pas encore envoyées au fournisseur"
+msgstr "Commandes en attente de validation"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_crossovered_budget

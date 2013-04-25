@@ -117,21 +117,21 @@ class purchase_order_ask(osv.osv):
         line_errors = []
         for ask in self.browse(cr, uid, ids, context=context):
             if not ask.suppliers_id:
-                raise osv.except_osv('Error','You must supply at least one supplier before sending mail')
+                raise osv.except_osv(_('Error'),_('You must supply at least one supplier before sending mail'))
             for partner_line in ask.suppliers_id:
                 if partner_line.selected:
                     suppliers_selected += 1
             if suppliers_selected <> 1:
-                raise osv.except_osv('Error','You have to choose a supplier, and only one')
+                raise osv.except_osv(_('Error'),_('You have to choose a supplier, and only one'))
             if not ask.order_lines:
-                raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+                raise osv.except_osv(_('Error'),_('You must supply at least one order line before sending mail'))
             for line in ask.order_lines:
                 if line.qte <= 0.0 or line.price_unit <= 0.0:
                     line_errors.append(line.id)
             
         if not line_errors:
             return True
-        raise osv.except_osv('Error','You must supply a positive quantity and price_unit')
+        raise osv.except_osv(_('Error'),_('You must supply a positive quantity and price_unit'))
         return False
     
     def constraints_send_ask(self, cr, uid, ids, context=None):
@@ -143,25 +143,25 @@ class purchase_order_ask(osv.osv):
                         if line.qte <= 0.0:
                             line_errors.append(line.id)
                 else:
-                    raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+                    raise osv.except_osv(_('Error'),('You must supply at least one order line before sending mail'))
             else:
-                raise osv.except_osv('Error','You must supply at least one supplier before sending mail')
+                raise osv.except_osv(_('Error'),_('You must supply at least one supplier before sending mail'))
         if not line_errors:
             return True
-        raise osv.except_osv('Error','You must supply a positive quantity')
+        raise osv.except_osv(_('Error'),_('You must supply a positive quantity'))
         return False
     
     def constraints_print_report(self, cr, uid, ids, context=None):
         line_errors = []
         for ask in self.browse(cr, uid, ids, context=context):
             if not ask.order_lines:
-                raise osv.except_osv('Error','You must supply at least one order line before sending mail')
+                raise osv.except_osv(_('Error'),_('You must supply at least one order line before sending mail'))
             for line in ask.order_lines:
                 if line.qte <= 0.0:
                     line_errors.append(line.id)
         if not line_errors:
             return True
-        raise osv.except_osv('Error','You must supply a positive quantity before printing pdf report')
+        raise osv.except_osv(_('Error'),_('You must supply a positive quantity before printing pdf report'))
         return False
 
     

@@ -72,12 +72,33 @@
 				</field>
 				<button name="button_dummy" position="replace"/>
 				<button name="purchase_confirm" position="replace">
-				    <button name="button_dummy" states="draft" string="Vérifier les budgets" type="object" icon="gtk-execute"/>
+				    <button name="button_dummy" states="draft" string="Vérifier les budgets" type="object" icon="gtk-execute" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
 					<field name="need_confirm" invisible="1"/>
-					<button name="open_engage" string="Soumettre commande à validation"
-						type="object" icon="gtk-go-forward" attrs="{'invisible': [('need_confirm','=',False)]}" />
-					<button name="open_engage" string="Valider et générer la commande (pdf)"
-						type="object" icon="gtk-go-forward" attrs="{'invisible': [('need_confirm','=',True)]}" />
+					<button name="openstc_confirm" string="Soumettre commande à validation"
+						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')]}" />
+					<button name="openstc_confirm" string="Valider et générer la commande (pdf)" type="object" icon="gtk-go-forward" 
+						attrs="{'invisible': ['|',('need_confirm','=',True),('validation','&lt;&gt;','budget_to_check')]}" />
+					
+					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
+						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')]}">
+						<field name="check_dst" colspan="2" invisible="1" readonly="1"/>
+						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc_prets.openstc_dst"
+						    icon="gtk-apply" attrs="{'invisible':[('check_dst','=',True)]}"/>
+						<button name="signal_except_check" string="Refuse purchase by DST"
+							icon="gtk-cancel" type="workflow"
+							groups="openstc_prets.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
+						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
+							string="Valider l'Engagement par l'Elu" type="action"
+							groups="openstc_achat_stock.openstc_elu" />
+						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
+							icon="gtk-cancel" type="workflow"
+							groups="openstc_achat_stock.openstc_elu" />
+<!-- 						<group colspan="1" col="2"> -->
+<!-- 						    <field name="attach_datas_fname_sumup" invisible="1"/> -->
+<!-- 						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/> -->
+<!-- 						</group> -->
+					</group>
+					
 				</button>
 
 				<field name="warehouse_id" position="attributes">

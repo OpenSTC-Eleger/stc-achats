@@ -277,7 +277,7 @@ class purchase_order(osv.osv):
             
         return ret
     
-    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Engagement A Vérifier'),
+    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Commande A Vérifier'),
                                   ('done','Bon de Commande Validable')]
     _inherit = 'purchase.order'
     _name = 'purchase.order'
@@ -309,8 +309,14 @@ class purchase_order(osv.osv):
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
             'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
             'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
+            'check_dst':fields.boolean('Signature DST'),
+            'current_url':fields.char('URL Courante',size=256),
+            'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
+            'justif_check':fields.text('Justification de la décision de l\'Elu'),
+
             }
     _defaults = {
+        'check_dst':lambda *a: False,
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
@@ -323,6 +329,7 @@ class purchase_order(osv.osv):
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
            vals['name'] = vals['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
+        self.write(cr, uid, [po_id],{'current_url':self.compute_current_url(cr, uid, po_id, context)}, context=context)
         return po_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -414,34 +421,91 @@ class purchase_order(osv.osv):
         self.pool.get("purchase.order.line").write(cr, uid, line_not_ok, {'dispo':False})
         return line_not_ok
     
-    def open_engage(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        po = self.browse(cr, uid, ids, context)
-        line_errors = self.verif_budget(cr, uid, ids, context)
-        if not line_errors:
-            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
-            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
-            if not po.engage_id:
+    def get_elu_attached(self, cr, uid, id, context=None):
+        service_id = self.browse(cr, uid, id, context).service_id.id
+        groups_id = self.pool.get("res.groups").search(cr, uid, [('name','like','%Elu%')], context=context)
+        elu_id = self.pool.get("res.users").search(cr, uid, ['&',('service_ids','=',service_id),('groups_id','in',groups_id),('name','not like','%Admin')], context=context)
+        return elu_id and elu_id[0] or False
+    
+    #Construction dynamique de l'url à envoyer dans les mails
+    #http://127.0.0.1:8069/web/webclient/home#id=${object.id}&view_type=page&model=open.engagement
+    def compute_current_url(self, cr, uid, id, context=None):
+        web_root_url = self.pool.get('ir.config_parameter').get_param(cr, uid, 'web.base.url')
+        model = self._name
+        #does http protocol present in web_root_url ?
+        if web_root_url.find("http") < 0:
+            web_root_url = "http://" + web_root_url
+        ret = "%s/web/webclient/home#id=%s&view_type=page&model=%s" % (web_root_url, id, model)
+        return ret
+    
+    def validate_po_invoice(self, cr, uid, ids,context=None):
+        wf_service = netsvc.LocalService('workflow')
+        if not isinstance(ids, list):
+            ids = [ids]
+        for po in self.browse(cr, uid, ids, context):
+            wf_service.trg_validate(po.user_id.id, 'purchase.order', po.id, 'purchase_confirm', cr)
+            wf_service.trg_write(po.user_id.id, 'purchase.order', po.id, cr)
+        #Il faut relire l'objet car une nouvelle donnée est apparue entre temps dans l'engagement, account_invoice_id
+        for po in self.browse(cr, uid, ids, context):
+            for inv in po.invoice_ids:
+                wf_service.trg_write(po.user_id.id, 'account.invoice', inv.id, cr)
+                wf_service.trg_validate(po.user_id.id, 'account.invoice', inv.id, 'invoice_open', cr)
+        if not po.invoice_ids:
+            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this purchase is needed, can not update budgets without'))
+        return True
+    
+    def create_engage(self, cr, uid, id, context=None):
+        po = self.browse(cr, uid, id, context=context)
+        res_id = 0
+        if not po.engage_id:
                 service_id = po.service_id
                 context.update({'user_id':uid,'service_id':service_id.id})
                 #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
                 res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
                                                                            'service_id':service_id.id,
-                                                                           'purchase_order_id':ids}, context)
-                if res_id:
-                    engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-                    self.log(cr, uid, ids, _('Engage %s was created at %s') % (engage['name'], datetime.now()))
-                    po.write({'validation':'engagement_to_check'})
+                                                                           'purchase_order_id':po.id}, context)
+                wf_service = netsvc.LocalService('workflow')
+                wf_service.trg_validate(po.user_id.id, 'open.engagement', res_id, 'confirm', cr)
+        else:
+            res_id = po.engage_id.id
+        return res_id
+    
+    def openstc_confirm(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        po = self.browse(cr, uid, ids, context)
+        line_errors = self.verif_budget(cr, uid, ids, context)
+        if not line_errors:
+            #check if purchase need to be confirmed by DST and Elu
+            if po.need_confirm:
+                self.write(cr, uid, ids, {'validation':'engagement_to_check'}, context=context)
+                #TODO: send mail to DST ?
             else:
-                res_id = po.engage_id.id
-            return {
-                'type':'ir.actions.act_window',
-                'target':'current',
-                'res_model':'open.engagement',
-                'view_mode':'form',
-                'res_id':res_id
-                }
+                engage_id = self.create_engage(cr, uid, ids, context=context)
+                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
+                self.validate_po_invoice(cr, uid, ids, context=context)
+#            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
+#            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
+#            if not po.engage_id:
+#                service_id = po.service_id
+#                context.update({'user_id':uid,'service_id':service_id.id})
+#                #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
+#                res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
+#                                                                           'service_id':service_id.id,
+#                                                                           'purchase_order_id':ids}, context)
+#                if res_id:
+#                    engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
+#                    self.log(cr, uid, ids, _('Engage %s was created at %s') % (engage['name'], datetime.now()))
+#                    po.write({'validation':'engagement_to_check'})
+#            else:
+#                res_id = po.engage_id.id
+#            return {
+#                'type':'ir.actions.act_window',
+#                'target':'current',
+#                'res_model':'open.engagement',
+#                'view_mode':'form',
+#                'res_id':res_id
+#                }
         else:
             msg_error = ""
             cpt = 0
@@ -449,15 +513,45 @@ class purchase_order(osv.osv):
                 cpt += 1
                 msg_error = "%s %s" %("," if cpt >1 else "", error.name)
             raise osv.except_osv(_('Error'),_('Some purchase order lines does not match amount budget line available : %s') %(msg_error,))
-            #self.write(cr, uid, ids, {'validation':'budget_to_check'}, context)
-            #self.pool.get("purchase.order.line").write(cr, uid, [x.id for x in po.order_line], {'dispo':False})
-        return
-        
-    def action_invoice_create(self, cr, uid, ids, context=None):
-        inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)
-        for purchase in self.browse(cr, uid, ids, context):
-            self.pool.get("open.engagement").write(cr, uid, purchase.engage_id.id, {'account_invoice_id':inv_id})
-        return inv_id
+
+        return {'type':'ir.actions.act_window.close'}
+    
+    def action_dst_check(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        #create sum'up report for elu
+        po = self.browse(cr, uid, ids, context=context)
+        #self._create_report_sumup_attach(cr, uid, engage, context)
+        #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','purchase.order'),('name','like','%Elu%')], context=context)
+        if isinstance(template_id, list):
+            template_id = template_id[0]
+        msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
+        if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
+            raise osv.except_osv(_('Error'),_('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            #return False
+        po.write({'check_dst':True})
+        #return True
+        return {'type':'ir.actions.act_window.close'}
+    
+    def check_elu(self, cr, uid, ids, context=None):
+        if isinstance(ids, list):
+            ids = ids[0]
+        po = self.browse(cr, uid, ids)
+        if not po.check_dst:
+            raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
+        engage_id = self.create_engage(cr, uid, po.id, context)
+        po.write({'validation':'done','engage_id':engage_id})
+        self.validate_po_invoice(cr, uid, ids, context=context)
+        return {
+                'type':'ir.actions.act_window.close',
+        }
+    
+#    def action_invoice_create(self, cr, uid, ids, context=None):
+#        inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)
+#        for purchase in self.browse(cr, uid, ids, context):
+#            self.pool.get("open.engagement").write(cr, uid, purchase.engage_id.id, {'account_invoice_id':inv_id})
+#        return inv_id
     
     def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
         ret = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)

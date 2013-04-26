@@ -39,7 +39,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','=',('draft'))]</field>
+            <field name="domain">[('validation','=','budget_to_check')]</field>
         </record>
 	    
 	    <record id="openstc_my_engages_in_progress" model="ir.actions.act_window">
@@ -50,12 +50,12 @@
             <field name="context">{'only_engage_todo':'1'}</field>
         </record>
         
-   	    <record id="openstc_engages_to_check" model="ir.actions.act_window">
-            <field name="name">My Engages To Check</field>
-            <field name="res_model">open.engagement</field>
+   	    <record id="openstc_purchases_to_check" model="ir.actions.act_window">
+            <field name="name">My Purchases To Check</field>
+            <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','=','to_validate')]</field>
+            <field name="domain">[('validation','=','engagement_to_check')]</field>
             <field name="groups_id" eval="[(6,0,[ref('openstc_prets.openstc_dst'),ref('openstc_achat_stock.openstc_elu')])]"/>
         </record>
 	    	    
@@ -68,12 +68,12 @@
 	                <board style="1-1">
 	                    <column>
 	                        <action name="%(openstc_my_asks_in_progress)d" string="Asks pending" creatable="true"/>
-	                        <action name="%(openstc_my_purchases_in_progress)d" string="Draft Purchases" creatable="true"/>
+	                        <action name="%(openstc_my_purchases_in_progress)d" string="Purchases budget to check" creatable="true"/>
 	                        <action name="%(openstc_my_engages_in_progress)d" string="Engage to treat" creatable="true"/>	                        
 	                    </column>
 	                    <column>
 	                        <action name="%(openstc_my_budget)d" string="My Budget" creatable="true"/>
-	                        <action name="%(openstc_engages_to_check)d" string="Engages to Check"/>
+	                        <action name="%(openstc_purchases_to_check)d" string="Purchases to Check"/>
 	                    </column>
 	                </board>
 	            </form>

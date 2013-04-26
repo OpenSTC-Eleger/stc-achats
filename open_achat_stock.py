@@ -477,7 +477,7 @@ class open_engagement(osv.osv):
         #sources inspired by _edi_generate_report_attachment of EDIMIXIN module
         ir_actions_report = self.pool.get('ir.actions.report.xml')
         matching_reports = ir_actions_report.search(cr, uid, [('model','=',self._name),
-                                                              ('report_type','=','jasper')])
+                                                              ('report_type','=','pdf')])
         ret = False
         if matching_reports:
             report = ir_actions_report.browse(cr, uid, matching_reports[0])
@@ -643,11 +643,11 @@ class open_engagement(osv.osv):
                 engage_line.append(engage_line_obj.create(cr, uid, {'order_line':[(4,x) for x in value['line_id']]}, context=context))
             #puis on associe les engage.lines crées A l'engagement en cours
             self.write(cr, uid, [engage.id], {'engage_lines':[(4,x) for x in engage_line], 'date_engage_validated':fields.date.context_today(self, cr, uid, context)}, context=context)
-            self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context=context)
-            self.validate_po_invoice(cr, uid, ids, context)
+            #self.pool.get("purchase.order").write(cr ,uid, po_ids, {'validation':'done'}, context=context)
+            #self.validate_po_invoice(cr, uid, ids, context)
             #force cursor commit to give up-to-date data to jasper report
-            cr.commit()
-            ret = self._create_report_attach(cr, uid, engage, context)
+            #cr.commit()
+            #ret = self._create_report_attach(cr, uid, engage, context)
         return True
     
     def validate_po_invoice(self, cr, uid, ids,context=None):

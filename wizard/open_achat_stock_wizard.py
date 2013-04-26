@@ -207,12 +207,12 @@ class open_engagement_check_elu_wizard(osv.osv_memory):
         }
     
     def check_elu(self, cr, uid ,ids, context=None):
-        if 'engage_id' in context:
+        if 'po_id' in context:
             if isinstance(ids, list):
                 ids = ids[0]
             wizard = self.browse(cr, uid, ids, context)
-            self.pool.get("open.engagement").write(cr, uid, context['engage_id'], {'justif_check':wizard.justif_check})
-            return self.pool.get("open.engagement").check_elu(cr, uid, [context['engage_id']], context)
+            self.pool.get("purchase.order").write(cr, uid, context['po_id'], {'justif_check':wizard.justif_check})
+            return self.pool.get("purchase.order").check_elu(cr, uid, [context['po_id']], context)
 
         return False    
     

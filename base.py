@@ -203,12 +203,11 @@ class ir_attachment(osv.osv):
                 }
     
     #Action du Boutton Permettant de Clore l'engagement
-    #Bloque s'il reste des factures à valider (état 'to_check' ou 'except_send_mail'
+    #Bloque s'il reste des factures à valider (état 'to_check' ou 'except_send_mail')
     #TOCHECK: Faut-il envoyer un mail de confirmation au service compta etc... ?
     def engage_complete(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
-        #TOCHECK: Vérifier s'il ne faudrait pas mettre ces tests dans une condition de wkf (A place de real_invoice_attached()) 
         attach = self.browse(cr, uid, ids, context)
         attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','in',('to_check','except_send_mail'))], context=context)
         if attach_ids:

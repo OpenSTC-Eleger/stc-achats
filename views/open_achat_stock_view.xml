@@ -72,7 +72,7 @@
 				</field>
 				<button name="button_dummy" position="replace"/>
 				<button name="purchase_confirm" position="replace">
-				    <button name="button_dummy" states="draft" string="Vérifier les budgets" context="{'display_popup':'There is missing budget attributions in order lines'}"
+				    <button name="button_dummy" states="draft" string="Vérifier les budgets" context="{'display_popup':'1'}"
 				         type="object" icon="gtk-execute" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
 					<field name="need_confirm" invisible="1"/>
 					<field name="all_budget_dispo" invisible="1"/>
@@ -92,9 +92,9 @@
 							icon="gtk-cancel" type="workflow"
 							groups="openstc_prets.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
 						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
-							string="Valider l'Engagement par l'Elu" type="action"
+							string="Valider la commande par l'Elu" type="action"
 							groups="openstc_achat_stock.openstc_elu" />
-						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
+						<button name="signal_except_check" string="Refuser la commande par l'Elu"
 							icon="gtk-cancel" type="workflow"
 							groups="openstc_achat_stock.openstc_elu" />
 						
@@ -240,7 +240,7 @@
 			<field name="model">open.engagement</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Bon d'Engagements">
+				<tree>
 					<field name="name" />
 					<field name="description" />
 					<field name="state" />
@@ -253,7 +253,7 @@
 			<field name="model">open.engagement</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Bon d'Engagement">
+				<form>
 						<group col="6" colspan="4" string="Infos Générales"
 							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier">
 							<field name="name" />
@@ -299,11 +299,11 @@
 								help="Refuser la facture pour paiement, vous allez saisir un bref justificatif"
 								states="to_check,except_send_mail" />
 							<button name="engage_complete" type="object" icon="gtk-ok"
-								help="Indiquer que la commande est entiérement soldée, cela clos l'engagement"
+								help="Indiquer que la commande est entiérement soldée, cela clos ce suivi de commande"
 								attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"
-								confirm="Attention, vous allez clore l'engagement. Ce qui signifie que tous les produits ont été reçus et que l'ensemble de la commande a été payée par la compta. Si ce n'est pas le cas, veuillez cliquez sur Annuler." />
+								confirm="Attention, vous allez clore ce suivi de commande. Ce qui signifie que tous les produits ont été reçus et que l'ensemble de la commande a été payée par la compta. Si ce n'est pas le cas, veuillez cliquez sur Annuler." />
 							<button name="dummy" icon="gtk-help"
-								help="Ceci indique que c'est cette facture qui A permis de clore l'engagement"
+								help="Ceci indique que c'est cette facture qui A permis de clore ce suivi commande"
 								attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}" />
 						</tree>
 					</field>
@@ -339,19 +339,19 @@
 			<field name="model">open.engagement</field>
 			<field name="type">search</field>
 			<field name="arch" type="xml">
-				<search string="Engagements">
+				<search string="Suivis commande">
 					<filter name="to_validate" string="A Signer"
-						domain="[('state','in',('draft','to_validate'))]" help="Engagements Brouillons ou en attente signature DST + Elu" />
+						domain="[('state','in',('draft','to_validate'))]" help="Suivis commande en Brouillons ou en attente signature DST + Elu" />
 					<filter name="in_progress" string="En Cours"
 						domain="[('state','in',('waiting_reception','waiting_invoice','waiting_invoice_validated'))]"
-						help="Engagements en attente de couments Comptables" />
+						help="Suivis commande en attente de couments Comptables" />
 					<filter name="to_pay" string="Reste A Payer"
-						domain="[('state','=','engage_to_terminate')]" help="Engagements dont la facture est a payer" />
+						domain="[('state','=','engage_to_terminate')]" help="Suivis comande dont la facture est a payer" />
 					<filter name="done" string="Clos" domain="[('state','=','done')]"
-						help="Engagement Clos (facture payée et et réception produits / prestation complet et validé)" />
+						help="Suivis commande Clos (facture payée et et réception produits / prestation complet et validé)" />
 					<filter name="except" string="Litigieux"
-						domain="[('state','=','except_invoice')]" help="Engagements en Refus de Paiement" />
-					<field name="name" string="Bon d'Engagement" filter_domain="[('name','ilike',self)]" />
+						domain="[('state','=','except_invoice')]" help="Suivis commande en Refus de Paiement" />
+					<field name="name" string="numéro de suivi commande" filter_domain="[('name','ilike',self)]" />
 					<field name="service_id"  string="Service concerné" domain="[('open_engagement_ids','&lt;&gt;',False)]"
 						filter_domain="[('service_id','=',self)]" widget="selection" />
 					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]"
@@ -607,7 +607,7 @@
 			<field name="arch" type="xml">
 				<form string="Donner une note explicative pour votre Autorisation">
 					<label
-						string="Veuillez Saisir la raison de votre autorisation du Bon d'Engagement"
+						string="Veuillez préciser la raison de votre choix"
 						colspan="4" />
 					<field name="justif_check" colspan="4" nolabel="1" />
 					<button special="cancel" string="Anuler" icon="gtk-cancel" />

@@ -61,7 +61,7 @@
 		</record>
 
 		<record id="action_view_engagements" model="ir.actions.act_window">
-			<field name="name">Mes Engagements</field>
+			<field name="name">Suivis de mes commandes</field>
 			<field name="res_model">open.engagement</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -71,7 +71,7 @@
 		</record>
 
 		<record id="action_view_all_engagements" model="ir.actions.act_window">
-			<field name="name">Suivi de Commandes</field>
+			<field name="name">Suivi de toutes les commandes</field>
 			<field name="res_model">open.engagement</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -227,10 +227,9 @@
 			parent="menu_open_achat_stock_achats" action="action_openstc_view_all_purchase" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_purchase" -->
 <!-- 			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" /> -->
-		<menuitem id="menu_open_achat_stock_view_engagements" name="Mes Engagements" groups="openstc_prets.openstc_manager"
+		<menuitem id="menu_open_achat_stock_view_engagements" groups="openstc_prets.openstc_manager"
 			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
-		<menuitem id="menu_open_achat_stock_view_all_engagements"
-			name="Tous les Engagements" sequence="5" parent="menu_open_achat_stock_achats"
+		<menuitem id="menu_open_achat_stock_view_all_engagements" sequence="5" parent="menu_open_achat_stock_achats"
 			groups="openstc_prets.openstc_dst,openstc_elu" action="action_view_all_engagements" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_invoice" -->
 <!-- 			name="Factures" sequence="6" parent="menu_open_achat_stock_achats" -->

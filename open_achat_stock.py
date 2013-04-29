@@ -416,16 +416,16 @@ class open_engagement(osv.osv):
     _name="open.engagement"
     #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
-        'name':fields.char('Numéro Bon  d\'Engagement', size=16, required=True),
+        'name':fields.char('Numéro de Suivi de commande', size=16, required=True),
         'description':fields.related('purchase_order_id', 'description', string='Objet de l\'achat', type="char"),
         'service_id':fields.many2one('openstc.service','Service Demandeur', required=True),
-        'user_id':fields.many2one('res.users', 'Personnel Engagé', required=True),
+        'user_id':fields.many2one('res.users', 'Acheteur', required=True),
         'purchase_order_id':fields.many2one('purchase.order','Commande associée'),
         'account_invoice_id':fields.many2one('account.invoice','Facture (OpenERP) associée'),
         'check_dst':fields.boolean('Signature DST'),
         #'date_invoice_received':fields.date('Date Réception Facture'),
-        'date_engage_validated':fields.date('Date de Validation du Bon d\'Engagement', readonly=True),
-        'date_engage_done':fields.datetime('Date de Cloture de l\'engagement',readonly=True),
+        'date_engage_validated':fields.date('Date Validation de la commande', readonly=True),
+        'date_engage_done':fields.datetime('Date de Cloture de la commande',readonly=True),
         'state':fields.selection(_AVAILABLE_STATE_ENGAGE, 'Etat', readonly=True),
         'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
         'invoice_ok':fields.boolean('Facture Founisseur Jointe', readonly=True),

@@ -316,12 +316,12 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             for line in po.order_line:
                 if not line.budget_line_id and display:
-                    raise osv.except_osv(_('Error'),context.get('display_popup',''))
+                    raise osv.except_osv(_('Error'),_('There is missing budget attributions in order lines'))
         return {'type':'ir.actions.act_window.close'}
     
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
-            'engage_id':fields.many2one('open.engagement','Bon d\'Engagement associé',readonly=True),
+            'engage_id':fields.many2one('open.engagement','Suivi commande associé',readonly=True),
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Objet de l\'achat',size=128),

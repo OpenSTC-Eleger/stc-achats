@@ -112,8 +112,8 @@ class ir_attachment(osv.osv):
         'state':fields.selection([('to_check','A Traiter'),('validated','Facture Validée'),
                                   ('refused','Facture Refusée'),('not_invoice','RAS'),('except_send_mail','Echec envoi du mail')], 'Etat', readonly=True),
          'action_date':fields.datetime('Date de la derniere action', readonly=True),
-         'engage_done':fields.boolean('Engagement Clos',readonly=True),
-         'attach_made_done':fields.boolean('Cette Facture Clos l\'engagement', readonly=True),
+         'engage_done':fields.boolean('Suivi commande Clos',readonly=True),
+         'attach_made_done':fields.boolean('Cette Facture Clos ce suivi commande', readonly=True),
          'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]}),
         }
     
@@ -202,7 +202,7 @@ class ir_attachment(osv.osv):
                 'type':'ir.actions.act_window'
                 }
     
-    #Action du Boutton Permettant de Clore l'engagement
+    #Action du Boutton Permettant de Clore le suivi commande
     #Bloque s'il reste des factures à valider (état 'to_check' ou 'except_send_mail')
     #TOCHECK: Faut-il envoyer un mail de confirmation au service compta etc... ?
     def engage_complete(self, cr, uid, ids, context=None):

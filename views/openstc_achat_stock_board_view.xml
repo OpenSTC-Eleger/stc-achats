@@ -72,7 +72,7 @@
 	                        <action name="%(openstc_my_engages_in_progress)d" string="Engage to treat" creatable="true"/>	                        
 	                    </column>
 	                    <column>
-	                        <action name="%(openstc_my_budget)d" string="My Budget" creatable="true"/>
+	                        <action name="%(openstc_my_budget)d" string="My Budget"/>
 	                        <action name="%(openstc_purchases_to_check)d" string="Purchases to Check"/>
 	                    </column>
 	                </board>

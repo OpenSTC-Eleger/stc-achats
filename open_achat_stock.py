@@ -753,12 +753,12 @@ class open_engagement(osv.osv):
         self.write(cr, uid, [res_id], {'current_url':url}, context=context)
         return res_id
     
-    def write(self, cr, uid, ids, vals, context=None):
+#    def write(self, cr, uid, ids, vals, context=None):
 #        if 'check_dst' in vals and vals['check_dst']:
 #            if not self.action_dst_check(cr, uid, ids, context):
 #                del vals['check_dst']
-        super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
-        return True
+#        super(open_engagement,self).write(cr, uid, ids, vals, context=context)    
+#        return True
     
     def unlink(self, cr, uid, ids, context=None):
         #if engage is deleted, we force other objects to generate another one

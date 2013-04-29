@@ -299,6 +299,25 @@ class purchase_order(osv.osv):
         po_ids = self.search(cr, uid, [('order_line','in',ids)])
         return po_ids
     
+    def _get_all_budget_dispo(self, cr, uid, ids, name, args, context={}):
+        ret = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            ret[po.id] = True
+            for line in po.order_line:
+                if not line.dispo:
+                    ret[po.id] = False
+        return ret
+    
+    def button_dummy(self, cr, uid, ids, context={}):
+        display = False
+        if context:
+            display = 'display_popup' in context
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if not line.budget_line_id and display:
+                    raise osv.except_osv(_('Error'),context.get('display_popup',''))
+        return {'type':'ir.actions.act_window.close'}
+    
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
             'engage_id':fields.many2one('open.engagement','Bon d\'Engagement associé',readonly=True),
@@ -313,7 +332,7 @@ class purchase_order(osv.osv):
             'current_url':fields.char('URL Courante',size=256),
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
-
+            'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
             }
     _defaults = {
         'check_dst':lambda *a: False,

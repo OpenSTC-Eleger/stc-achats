@@ -72,15 +72,17 @@
 				</field>
 				<button name="button_dummy" position="replace"/>
 				<button name="purchase_confirm" position="replace">
-				    <button name="button_dummy" states="draft" string="Vérifier les budgets" type="object" icon="gtk-execute" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
+				    <button name="button_dummy" states="draft" string="Vérifier les budgets" context="{'display_popup':'There is missing budget attributions in order lines'}"
+				         type="object" icon="gtk-execute" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
 					<field name="need_confirm" invisible="1"/>
+					<field name="all_budget_dispo" invisible="1"/>
 					<button name="openstc_confirm" string="Soumettre commande à validation"
-						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')]}" />
+						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')],'readonly':[('all_budget_dispo','=',False)]}" />
 					<button name="openstc_confirm" string="Valider et générer la commande (pdf)" type="object" icon="gtk-go-forward" 
 						attrs="{'invisible': ['|',('need_confirm','=',True),('validation','&lt;&gt;','budget_to_check')]}" />
 					
 					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
-						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')]}">
+						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')],'readonly':[('all_budget_dispo','=',False)]}">
 						<field name="check_dst" colspan="2" invisible="1" readonly="1"/>
 						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc_prets.openstc_dst"
 						    icon="gtk-apply" attrs="{'invisible':[('check_dst','=',True)]}"/>
@@ -130,7 +132,8 @@
 						required="1" groups="analytic.group_analytic_accounting"
 						domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('crossovered_budget_line','&lt;&gt;',False)]"
 						 invisible="1"/>
-					<field name="budget_line_id" groups="analytic.group_analytic_accounting" colspan="4" on_change="onchange_budget_line_id(budget_line_id)"/>
+					<field name="budget_line_id" groups="analytic.group_analytic_accounting" required="1" 
+					    colspan="4" on_change="onchange_budget_line_id(budget_line_id)"/>
 					<field name="budget_dispo_info" />
 					<field name="budget_dispo" invisible="1" />
 					<field name="tx_erosion_info" />

@@ -30,6 +30,7 @@ import unicodedata
 import time
 import base64
 from tools.translate import _
+from ciril_template_files import template_ciril_txt_file_engagement
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -333,6 +334,8 @@ class purchase_order(osv.osv):
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
             'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
+            'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
+
             }
     _defaults = {
         'check_dst':lambda *a: False,
@@ -501,7 +504,7 @@ class purchase_order(osv.osv):
                 #TODO: send mail to DST ?
             else:
                 engage_id = self.create_engage(cr, uid, ids, context=context)
-                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
+                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id, 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)}, context=context)
                 self.validate_po_invoice(cr, uid, ids, context=context)
 #            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
 #            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
@@ -560,7 +563,7 @@ class purchase_order(osv.osv):
         if not po.check_dst:
             raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
         engage_id = self.create_engage(cr, uid, po.id, context)
-        po.write({'validation':'done','engage_id':engage_id})
+        po.write({'validation':'done','engage_id':engage_id, 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)})
         self.validate_po_invoice(cr, uid, ids, context=context)
         return {
                 'type':'ir.actions.act_window.close',
@@ -571,6 +574,22 @@ class purchase_order(osv.osv):
 #        for purchase in self.browse(cr, uid, ids, context):
 #            self.pool.get("open.engagement").write(cr, uid, purchase.engage_id.id, {'account_invoice_id':inv_id})
 #        return inv_id
+    
+    def write_ciril_engage(self, cr, uid, ids, context=None):
+        ret = ''
+        template = template_ciril_txt_file_engagement()
+        
+        for po in self.browse(cr, uid, ids ,context=context):
+            ret += template.create_file(po.engage_id)
+            #write content in an ir.attachment
+            ret = base64.b64encode(ret)
+            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
+                                                            'datas_fname':'engages.txt',
+                                                            'datas':ret,
+                                                            'res_model':self._name,
+                                                            'res_id':po.id
+                                                            })
+        return {'type':'ir.actions.act_window_close'}
     
     def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
         ret = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)

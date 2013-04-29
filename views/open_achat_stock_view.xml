@@ -80,6 +80,8 @@
 						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')],'readonly':[('all_budget_dispo','=',False)]}" />
 					<button name="openstc_confirm" string="Valider et générer la commande (pdf)" type="object" icon="gtk-go-forward" 
 						attrs="{'invisible': ['|',('need_confirm','=',True),('validation','&lt;&gt;','budget_to_check')]}" />
+					<button name="write_ciril_engage" attrs="{'invisible':[('validation','&lt;&gt;','done')]}" icon="gtk-execute"
+						    string="Create Engage(s) export file" type="object"/>
 					
 					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
 						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')],'readonly':[('all_budget_dispo','=',False)]}">
@@ -95,6 +97,7 @@
 						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
 							icon="gtk-cancel" type="workflow"
 							groups="openstc_achat_stock.openstc_elu" />
+						
 <!-- 						<group colspan="1" col="2"> -->
 <!-- 						    <field name="attach_datas_fname_sumup" invisible="1"/> -->
 <!-- 						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/> -->
@@ -251,91 +254,32 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Bon d'Engagement">
-					<group col="6" colspan="4">
-						<group col="2" colspan="2" string="Infos Générales"
+						<group col="6" colspan="4" string="Infos Générales"
 							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier">
 							<field name="name" />
 							<field name="description" />
+							<field name="purchase_order_id" />
 							<field name="user_id" />
 							<field name="service_id" context="{'only_my_services':'1'}"/>
-							<field name="purchase_order_id" />
 							<field name="account_invoice_id" invisible="1" />
 							<field name="date_engage_done" />
+							<field name="invoice_ok" invisible="1" />
 						</group>
-						<group col="2" colspan="4" string="Numéros d'Engagements"
-							attrs="{'invisible':[('state','in',('draft','to_validate','check_except'))]}">
-							<field name="engage_lines" nolabel="1" colspan="2">
-								<tree>
-									<field name="name" />
-									<field name="amount" />
-									<field name="account_analytic_id" />
-								</tree>
-							</field>
-							<field name="date_engage_validated" colspan="2" />
-						</group>
-					</group>
-					<field name="invoice_ok" invisible="1" />
-					<group col="2" colspan="1" string="Signatures du DST et d'un Elu"
-						groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
-						attrs="{'invisible':[('state','not in',('draft','to_validate'))]}">
-						<field name="check_dst" colspan="2" readonly="1"/>
-						<button name="action_dst_check" type="object" string="Validate engage by DST" groups="openstc_prets.openstc_dst"
-						    icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"/>
-						<button name="signal_except_check" string="Refuse engage bu DST"
-							icon="gtk-cancel" type="workflow"
-							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
-							groups="openstc_prets.openstc_dst" />
-						<field name="procuration_dst" colspan="2" invisible="1" />
-						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
-							string="Valider l'Engagement par l'Elu" type="action"
-							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
-							groups="openstc_achat_stock.openstc_elu" />
-						<button name="signal_except_check" string="Refuser l'Engagement par l'Elu"
-							icon="gtk-cancel" type="workflow"
-							attrs="{'invisible':[('state','&lt;&gt;','to_validate')]}"
-							groups="openstc_achat_stock.openstc_elu" />
-						<group colspan="1" col="2">
-						    <field name="attach_datas_fname_sumup" invisible="1"/>
-						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/>
-						</group>
-						<button name="open_purchase" type="object"
-							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier" string="Voir la Commande"
-							icon="gtk-edit" />
-						<button name="%(open_engage_check_elu_wizard)d" string="Valider Par Procuration"
-							type="action"
-							attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}"
-							groups="openstc_prets.openstc_dst" colspan="2" />
-						<button name="signal_except_check" string="Refuser Par Procuration"
-							type="workflow"
-							attrs="{'invisible':['|',('state','&lt;&gt;','to_validate'),('procuration_dst','=',False)]}"
-							groups="openstc_prets.openstc_dst" colspan="2" />
-					</group>
-					<group col="2" string="Réception de produits" colspan="1"
-						attrs="{'invisible':[('state','in',('draft','to_validate'))]}">
+					
+<!-- 					<group col="2" string="Réception de produits" colspan="1" -->
+<!-- 						attrs="{'invisible':[('state','in',('draft','to_validate'))]}"> -->
 						
-						<button name="open_purchase" type="object"
-							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
-							icon="gtk-edit" />
-						<field name="reception_ok" />
-						<button name="open_stock_moves" type="object"
-							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier"
-							string="Voir Réception de Produits associée" states="waiting_reception"
-							icon="gtk-print-preview" />
-						<button name="write_ciril_engage" 
-						    type="object" 
-						    groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier"
-							string="Create Engage(s) export file" 
-							icon="gtk-execute"
-						    states="waiting_reception,engage_to_terminate,done"/>
-					</group>
-					<group colspan="2" col="2">
-						<field name="elu_id" />
-						<field name="justif_check" colspan="2"
-							groups="openstc_achat_stock.openstc_elu" />
-						<field name="justif_check_infos" readonly="1" colspan="2"
-							groups="openstc_prets.openstc_manager,openstc_prets.openstc_dst" />
-					</group>
-					<newline />
+<!-- 						<button name="open_purchase" type="object" -->
+<!-- 							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande" -->
+<!-- 							icon="gtk-edit" /> -->
+<!-- 						<field name="reception_ok" /> -->
+<!-- 						<button name="open_stock_moves" type="object" -->
+<!-- 							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier" -->
+<!-- 							string="Voir Réception de Produits associée" states="waiting_reception" -->
+<!-- 							icon="gtk-print-preview" /> -->
+<!-- 					</group> -->
+
+<!-- 					<newline /> -->
 					<field name="attach_ids" nolabel="1" colspan="4"
 						groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier">
 						<tree string="Documents joints"
@@ -363,18 +307,33 @@
 								attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}" />
 						</tree>
 					</field>
-					<field name="justificatif_refus"
-						attrs="{'required':[('state','=','except_invoice')],'invisible':[('state','&lt;&gt;','except_invoice')]}" />
-					<group col="6" colspan="1">
-						<!-- <button name="real_invoice_attached" type="object" string="Facture 
-							Fournisseur Jointe" states = "waiting_invoice"/> -->
-					</group>
-					<field name="state" widget="statusbar"
+					
+					<field name="state" widget="statusbar" invisible="1"
 						statusbar_visible="draft,to_validate,waiting_reception,engage_to_terminate,done" />
+					<field name="reception_ok" />
+					<button name="open_purchase" type="object"
+							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
+							icon="gtk-edit" />
+					
+					<button name="open_stock_moves" type="object"
+							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier"
+							string="Voir Réception de Produits associée" states="waiting_reception"
+							icon="gtk-print-preview" />
 				</form>
 			</field>
 		</record>
 
+		<record model="ir.ui.view" id="view_openstc_open_engage_line_tree">
+			<field name="name">openstc.engagement.line.tree</field>
+			<field name="model">open.engagement.line</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">				
+				<field name="name" />
+				<field name="amount" />
+				<field name="account_analytic_id" />
+			</field>
+		</record>
+				
 		<record model="ir.ui.view" id="view_openstc_open_engage_search_view">
 			<field name="name">openstc.engagement.search</field>
 			<field name="model">open.engagement</field>

@@ -1067,8 +1067,9 @@ class stock_picking(osv.osv):
                     engage_ids.append(engage_id)
         wf_service = netsvc.LocalService('workflow')
         #On vérifie que toutes les réceptions de produits sont faites
-        for engage_id in engage_ids:
-            wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
+        #for engage_id in engage_ids:
+            #wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
+        self.pool.get("open.engagement").write(cr, uid, engage_ids, {'reception_ok':True}, context=context)    
         return super(stock_picking, self).action_done(cr, uid, ids, context)
     
 stock_picking()

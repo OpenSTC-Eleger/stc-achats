@@ -530,6 +530,7 @@
 					<group col="4" colspan="4">
 						<field name="max_po_amount" />
 						<field name="max_total_amount" />
+						<field name="max_po_amount_no_market"/>
 					</group>
 				</xpath>
 			</field>

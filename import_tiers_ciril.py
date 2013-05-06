@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+#author: PLANCHER Bruno
 
 import sys, getopt
 import psycopg2

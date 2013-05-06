@@ -659,8 +659,13 @@
 				<field name="technical" position="after">
 					<field name="accountant_service" />
 				</field>
-				<field name="name" position="after">
-				    <field name="code_serv_ciril" invisible="1"/>
+				<field name="code" position="attributes">
+				    <attribute name="invisible">1</attribute>
+				</field>
+				<field name="code" position="after">
+				    <field name="code_serv_ciril" required="1" on_change="onchange_code_serv_ciril(code_serv_ciril)"/>
+				    <field name="code_function_ciril" required="1"/>
+				    <field name="code_gest_ciril" required="1"/>
 				</field>
 			</field>
 		</record>

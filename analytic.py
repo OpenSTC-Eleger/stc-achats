@@ -70,13 +70,15 @@ class crossovered_budget_lines(osv.osv):
         ret = []
         for budget in self.browse(cr, uid, ids, context=context):
             budget.name
-            val = _(u'%s : %s € (%.2f %% consummed)') %(budget.analytic_account_id.name_get()[0][1],budget.planned_amount - budget.openstc_practical_amount, budget.openstc_erosion)
+            val = _(u'%s/%s : %s € (%.2f %% consummed)') %(budget.analytic_account_id.service_id.name, budget.analytic_account_id.name_get()[0][1],budget.planned_amount - budget.openstc_practical_amount, budget.openstc_erosion)
             ret.append((budget.id,val))
         return ret
     
     def name_search(self, cr, uid, name='', args=[], operator='ilike', context={}, limit=80):
-        ids = self.search(cr, uid, [('name',operator,name)] + args, limit=limit, context=context)
-        
+        #ids = self.search(cr, uid, [('analytic_account_id.complete_name',operator,name)] + args, limit=limit, context=context)
+        ids = self.search(cr, uid, [('analytic_account_id.name',operator,name)] + args, limit=limit, context=context)
+        if not ids:
+            ids = self.search(cr, uid, [('analytic_account_id.service_id.code',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, uid, ids, context=context)
     
     #custom field for public account : returns amount with taxes included

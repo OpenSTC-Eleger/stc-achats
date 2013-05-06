@@ -21,6 +21,25 @@ msgstr ""
 msgid "There is missing budget attributions in order lines"
 msgstr "Vous n'avez pas spécifié de budget pour certains articles de votre commande"
 
+#. module: openstc_achat_stock
+#: field:openstc.service,code_function_ciril:0
+msgid "Ciril Function Code"
+msgstr "Code Fonction CIRIL"
+
+#. module: openstc_achat_stock
+#: help:openstc.service,code_function_ciril:0
+msgid "this field refer to function pkey from Ciril instance"
+msgstr "Ce champs fait référence au Code de la Fonctionnelle M14 dans votre logiciel CIRIL"
+
+#. module: openstc_achat_stock
+#: field:openstc.service,code_gest_ciril:0
+msgid "Ciril Gestionnaire Code"
+msgstr "Code gestionnaire CIRIL"
+
+#. module: openstc_achat_stock
+#: help:openstc.service,code_gest_ciril:0
+msgid "this field refer to gestionnaire pkey from Ciril instance"
+msgstr "Ce champs fait référence au Code Gestionnaire dans votre logiciel CIRIL"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,account_analytic_id:0

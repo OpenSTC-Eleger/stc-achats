@@ -153,9 +153,8 @@ class template_ciril_txt_file_engagement(object):
         #data_main['num_market']['value'] = record.purchase_order_id.partner_id.id
         #data_main['num_commande']['value'] = record.purchase_order_id.partner_id.id
         
-        #TOREPLACE: change it when we will have real tiers id from ciril instance
         data_main['code_tiers']['value'] = str(record.purchase_order_id.partner_id.code_tiers_ciril or '')
-        data_main['code_gest']['value'] = code_gest
+        data_main['code_gest']['value'] = line.account_analytic_id.service_id.code_gest_ciril 
         data_main['num_commande_openstc']['value'] = record.purchase_order_id.name
         data_main['exercice']['value'] = record.date_engage_validated[:4]
         data_main['date_engage']['value'] = record.date_engage_validated[:10]
@@ -164,7 +163,7 @@ class template_ciril_txt_file_engagement(object):
         for line in record.engage_lines:
             data = self.init_line_vals()
             data['num_engage_openstc']['value'] = line.name
-            data['code_serv']['value'] = line.account_analytic_id.service_id.code[:4].upper()
+            data['code_serv']['value'] = line.account_analytic_id.service_id.code_serv_ciril
             now = datetime.now()
             for budget_line in line.account_analytic_id.crossovered_budget_line:
                 if budget_line.date_from <= str(now) and budget_line.date_to >= str(now):        
@@ -200,8 +199,6 @@ class template_ciril_txt_file_engagement(object):
             datas.append(data2)
         
         ret = self.format_datas(datas)
-        #TODO: finally, write content into a file in appending mode
-        #TODO bis : or, write it in an ir.attachment
         return ret
 
     

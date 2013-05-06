@@ -98,7 +98,6 @@ class template_ciril_txt_file_engagement(object):
 
     def init_main_vals(self):
         return {'code_tiers':{'length':10,'required':True,'value':'','pos':1},
-                    'code_gest':{'length':10,'required':True,'value':'','pos':2},
                     'code_ss_rub':{'length':7,'required':True,'value':'','pos':3},
                     'num_ope':{'length':10,'required':True,'value':'','pos':5},
                     'exercice':{'length':4,'required':True,'value':'','pos':10},
@@ -114,6 +113,7 @@ class template_ciril_txt_file_engagement(object):
     
     def init_line_vals(self):
         return {
+                    'code_gest':{'length':10,'required':True,'value':'','pos':2},
                     'code_nature':{'length':10,'required':True,'value':'','pos':4},
                     'code_serv':{'length':4,'required':True,'value':'','pos':6},
                     'code_antenne':{'length':10,'required':True,'value':'','pos':7},
@@ -153,8 +153,7 @@ class template_ciril_txt_file_engagement(object):
         #data_main['num_market']['value'] = record.purchase_order_id.partner_id.id
         #data_main['num_commande']['value'] = record.purchase_order_id.partner_id.id
         
-        data_main['code_tiers']['value'] = str(record.purchase_order_id.partner_id.code_tiers_ciril or '')
-        data_main['code_gest']['value'] = line.account_analytic_id.service_id.code_gest_ciril 
+        data_main['code_tiers']['value'] = str(record.purchase_order_id.partner_id.code_tiers_ciril or '') 
         data_main['num_commande_openstc']['value'] = record.purchase_order_id.name
         data_main['exercice']['value'] = record.date_engage_validated[:4]
         data_main['date_engage']['value'] = record.date_engage_validated[:10]
@@ -162,6 +161,7 @@ class template_ciril_txt_file_engagement(object):
         
         for line in record.engage_lines:
             data = self.init_line_vals()
+            data['code_gest']['value'] = line.account_analytic_id.service_id.code_gest_ciril
             data['num_engage_openstc']['value'] = line.name
             data['code_serv']['value'] = line.account_analytic_id.service_id.code_serv_ciril
             now = datetime.now()

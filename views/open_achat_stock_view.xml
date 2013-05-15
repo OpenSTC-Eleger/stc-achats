@@ -17,6 +17,43 @@
 		</record>
 		
 
+		<record id="openstc_achat_purchase_order_search" model="ir.ui.view">
+			<field name="name">purchase.order.open.search</field>
+			<field name="model">purchase.order</field>
+			<field name="type">search</field>
+			<field name="priority">10</field>
+			<field name="arch" type="xml">
+				<search>
+					<filter name="openstc_draft" string="A saisir" domain="[('validation','=','budget_to_check')]"
+					    help="Commandes où les budgets sont à saisir ou sont insuffisants" icon="terp-document-new"/>
+					<filter name="openstc_to_check" string="A signer par responsable(s)" domain="[('validation','=','engagement_to_check')]" icon="terp-project"
+					    help="Commandes soumises à validation par l'acheteur, seuls les responsables peuvent signer (DST, Elu, etc.)"/>
+					<filter name="openstc_confirm" string="Validées" domain="[('validation','=','done'),('shipped','=',False)]" icon="terp-dolar"
+					    help="Commandes dont les budgets sont suffisants et qui sont validées par l'acheteur (et les responsables si besoin). Un suivi de commande a été créé pour l'acheteur."/>
+					<filter name="openstc_done" string="Closes" domain="[('validation','=','done'),('shipped','=',True)]" icon="terp-check"
+					    help="Commandes entièrement livrées (ou prestations entièrement réalisées), seul l'acheteur peut indiquer cela."/>
+					<newline/>
+					<field name="name" filter_domain="[('name','like',self)]"/>
+					<field name="partner_id" domain="[('supplier','=',True)]" filter_domain="[('partner_id','=',self)]"/>
+					<field name="user_id" widget="selection" filter_domain="[('user_id','=',self)]"/>
+				</search>
+			</field>
+		</record>
+		
+		<record id="openstc_achat_purchase_order_tree" model="ir.ui.view">
+			<field name="name">purchase.order.open.tree</field>
+			<field name="model">purchase.order</field>
+			<field name="type">tree</field>
+			<field name="priority">10</field>
+			<field name="arch" type="xml">
+				<field name="name"/>
+				<field name="description"/>
+				<field name="partner_id"/>
+				<field name="user_id"/>
+				<field name="amount_total"/>
+				<field name="validation"/>
+			</field>
+		</record>
 
 		<record id="purchase_order_inherit_form" model="ir.ui.view">
 			<field name="name">purchase.order.open.form</field>
@@ -105,7 +142,8 @@
 					</group>
 					
 				</button>
-
+				<button name="action_cancel" position="replace"/>
+				
 				<field name="warehouse_id" position="attributes">
 				    <attribute name="invisible">1</attribute>
 				</field>

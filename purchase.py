@@ -278,8 +278,8 @@ class purchase_order(osv.osv):
             
         return ret
     
-    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A Vérfier'),('engagement_to_check','Commande A Vérifier'),
-                                  ('done','Bon de Commande Validable')]
+    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A vérfier'),('engagement_to_check','Commande A signer'),
+                                  ('done','Commande validée')]
     _inherit = 'purchase.order'
     _name = 'purchase.order'
     

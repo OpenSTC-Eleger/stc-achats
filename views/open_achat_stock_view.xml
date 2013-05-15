@@ -448,6 +448,7 @@
 				<field name="name" position="replace">
 				    <group colspan="4" col="6">
 				        <field name="name"/>
+				        <field name="service_id"/>
 				        <field name="code"/>
 				        <field name="code_budget_ciril"/>
 				    </group>

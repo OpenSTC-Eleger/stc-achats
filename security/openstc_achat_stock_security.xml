@@ -27,7 +27,19 @@
 		<record model="ir.rule" id="openstc_achat_stock_budget_lines_specific">
 			<field name="name">Budget lines Rule Access To own</field>
 			<field name="model_id" ref="model_crossovered_budget_lines" />
-			<field name="domain_force">[('analytic_account_id.service_id.id','in',[x.id for x in user.service_ids])]</field>
+			<!--<field name="domain_force">[('analytic_account_id.service_id.id','in',[x.id for x in user.service_ids])]</field>-->
+			<field name="domain_force">[('crossovered_budget_id.service_id.id','in',[x.id for x in user.service_ids])]</field>
+			<field eval="[(6,0,[ref('openstc_prets.openstc_manager')])]" name="groups" />
+			<field eval="1" name="perm_read" />
+			<field eval="1" name="perm_create" />
+			<field eval="1" name="perm_write" />
+			<field eval="1" name="perm_unlink" />
+		</record>
+		
+		<record model="ir.rule" id="openstc_achat_stock_budget_specific">
+			<field name="name">Budget Rule Access To own</field>
+			<field name="model_id" ref="model_crossovered_budget" />
+			<field name="domain_force">[('service_id.id','in',[x.id for x in user.service_ids])]</field>
 			<field eval="[(6,0,[ref('openstc_prets.openstc_manager')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />

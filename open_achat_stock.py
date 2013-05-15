@@ -1132,10 +1132,6 @@ class openstc_service(osv.osv):
     _inherit = "openstc.service"
     _name = "openstc.service"
     
-    def name_search(self, cr, uid, name='', args=[], operator='ilike', context=None, limit=80):
-        ids = self.search(cr, uid, args, limit=limit, context=context)
-        return self.name_get(cr, uid, ids,context=context)
-    
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
         if context and context is not None:
             if 'only_my_services' in context:

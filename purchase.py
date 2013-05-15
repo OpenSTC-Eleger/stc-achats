@@ -170,10 +170,7 @@ class purchase_order_line(osv.osv):
             partner_id, date_order, fiscal_position_id, date_planned,
             name, price_unit, notes, context)
         ret['value'].update({'merge_line_ids':merge_action})
-        
-        #2- adding default analytic account if exists
-        if account_analytic_id:
-            ret['value'].update({'account_analytic_id':account_analytic_id})
+
         return ret
     
     def onchange_merge_line_ids(self, cr, uid, ids, merge_line_ids=False, product_qty=False, context=None):
@@ -237,10 +234,10 @@ class purchase_order(osv.osv):
             service = context['service_id']
             service = self.pool.get("openstc.service").browse(cr, uid, service)
 
-        for group in user.groups_id:
-            if prog.search(group.name):
-                if isinstance(user.service_ids, list) and not service:
-                    service = user.service_ids[0]
+#        for group in user.groups_id:
+#            if prog.search(group.name):
+#                if isinstance(user.service_ids, list) and not service:
+#                    service = user.service_ids[0]
         if service:
             seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
         return seq
@@ -327,7 +324,8 @@ class purchase_order(osv.osv):
             'description':fields.char('Objet de l\'achat',size=128),
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
-            'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
+            #'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
+            'account_analytic_id':fields.many2one('crossovered.budget.lines', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
             'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
             'check_dst':fields.boolean('Signature DST'),
             'current_url':fields.char('URL Courante',size=256),
@@ -500,11 +498,11 @@ class purchase_order(osv.osv):
         if not line_errors:
             #check if purchase need to be confirmed by DST and Elu
             if po.need_confirm:
-                self.write(cr, uid, ids, {'validation':'engagement_to_check'}, context=context)
+                self.write(cr, uid, ids, {'validation':'engagement_to_check', 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)}, context=context)
                 #TODO: send mail to DST ?
             else:
                 engage_id = self.create_engage(cr, uid, ids, context=context)
-                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id, 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)}, context=context)
+                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
                 self.validate_po_invoice(cr, uid, ids, context=context)
 #            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
 #            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
@@ -563,7 +561,7 @@ class purchase_order(osv.osv):
         if not po.check_dst:
             raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
         engage_id = self.create_engage(cr, uid, po.id, context)
-        po.write({'validation':'done','engage_id':engage_id, 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)})
+        po.write({'validation':'done','engage_id':engage_id})
         self.validate_po_invoice(cr, uid, ids, context=context)
         return {
                 'type':'ir.actions.act_window.close',

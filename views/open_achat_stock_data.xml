@@ -70,7 +70,7 @@
 			<field name="name">Commande A Valider par Elu</field>
 			<field name="model_id" ref="model_purchase_order" />
 			<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="email_to">${object.elu_id.user_email or ''}</field>
 			<field name="subject">La Commande ${object.name or 'inconnu'} Nécessite votre signature</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>

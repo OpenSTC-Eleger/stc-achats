@@ -28,9 +28,9 @@
 					    help="Commandes où les budgets sont à saisir ou sont insuffisants" icon="terp-document-new"/>
 					<filter name="openstc_to_check" string="A signer par responsable(s)" domain="[('validation','=','engagement_to_check')]" icon="terp-project"
 					    help="Commandes soumises à validation par l'acheteur, seuls les responsables peuvent signer (DST, Elu, etc.)"/>
-					<filter name="openstc_confirm" string="Validées" domain="[('validation','=','done'),('shipped','=',False)]" icon="terp-dolar"
+					<filter name="openstc_confirm" string="Validées" domain="['&amp;',('validation','=','done'),('shipped','=',False)]" icon="terp-dolar"
 					    help="Commandes dont les budgets sont suffisants et qui sont validées par l'acheteur (et les responsables si besoin). Un suivi de commande a été créé pour l'acheteur."/>
-					<filter name="openstc_done" string="Closes" domain="[('validation','=','done'),('shipped','=',True)]" icon="terp-check"
+					<filter name="openstc_done" string="Closes" domain="['&amp;',('validation','=','done'),('shipped','=',True)]" icon="terp-check"
 					    help="Commandes entièrement livrées (ou prestations entièrement réalisées), seul l'acheteur peut indiquer cela."/>
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>
@@ -46,12 +46,14 @@
 			<field name="type">tree</field>
 			<field name="priority">10</field>
 			<field name="arch" type="xml">
-				<field name="name"/>
-				<field name="description"/>
-				<field name="partner_id"/>
-				<field name="user_id"/>
-				<field name="amount_total"/>
-				<field name="validation"/>
+				<tree>
+				    <field name="name"/>
+					<field name="description"/>
+					<field name="partner_id"/>
+					<field name="user_id"/>
+					<field name="amount_total"/>
+					<field name="validation"/>
+				</tree>
 			</field>
 		</record>
 
@@ -82,10 +84,11 @@
 					<field name="service_id" context="{'only_my_services':'1'}"/>
 				</field>
 				<field name="origin" position="after">
-					<field name="account_analytic_id" domain="[('crossovered_budget_line','&lt;&gt;', False)]"
+					<field name="account_analytic_id"
 						groups="base.group_extended" />
 				</field>
 				<field name="order_line" position="attributes">
+				    <attribute name="context">{'default_company_id':company_id,'default_budget_line_id':account_analytic_id}</attribute>
 				    <attribute name="attrs">{'readonly':['|',('state','in',('approved','done')),('validation','!=','budget_to_check')]}</attribute>
 				</field>
 				<tree string="Purchase Order Lines" position="replace">

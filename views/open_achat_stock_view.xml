@@ -222,7 +222,7 @@
 						<tree string="Fournisseurs potentiels" editable="top"
 							colors="red:notif_state=='error_mail';orange:notif_state=='nothing';green:notif_state=='mail'">
 							<field name="partner_id" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}"
-								domain="[('supplier','=',True)]" />
+								domain="[('supplier','=',True)]" context="{'default_supplier':True}"/>
 							<field name="partner_address_id" domain="[('partner_id','=',partner_id)]"
 								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="selected"
@@ -236,7 +236,7 @@
 					<field name="order_lines" nolabel="1" colspan="4"
 						attrs="{'readonly':[('state','=','done')]}">
 						<tree string="Produits de la Demande" editable="top">
-							<field name="product_id" domain="[('purchase_ok','=',True)]"
+							<field name="product_id" domain="[('purchase_ok','=',True)]" context="{'default_purchase_ok':True}"
 								on_change="onchange_product_id(product_id)" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="description" required="1"
 								attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
@@ -372,7 +372,7 @@
 			<field name="arch" type="xml">				
 				<field name="name" />
 				<field name="amount" />
-				<field name="account_analytic_id" />
+				<field name="budget_line_id" />
 			</field>
 		</record>
 				

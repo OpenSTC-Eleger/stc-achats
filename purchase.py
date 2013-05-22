@@ -35,18 +35,7 @@ from ciril_template_files import template_ciril_txt_file_engagement
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
     _name = "purchase.order.line"
-    
-    def _sel_account_user(self, cr, uid, context=None):
-        #Récup des services du user
-        user = self.pool.get("res.users").browse(cr, uid, uid)
-        service_ids = [x.id for x in user.service_ids]
-        if not service_ids:
-            raise osv.except_osv(_('Error'),_('you are not in any service'))
-        #Recherche des comptes analytiques en rapport avec les services du user
-        account_analytic_ids = self.pool.get("account.analytic.account").search(cr, uid, [('service_id','in',service_ids)])
-        #Récup du nom complet (avec hiérarchie) des comptes, name_get renvoi une liste de tuple de la meme forme que le retour attendu de notre fonction
-        account_analytic = self.pool.get("account.analytic.account").name_get(cr, uid,account_analytic_ids, context)
-        return account_analytic
+
     
     def _get_budget_dispo(self, cr, uid, ids, name ,args, context=None):
         ret = {}.fromkeys(ids, 0.0)
@@ -78,14 +67,14 @@ class purchase_order_line(osv.osv):
         grouped_lines = {}
         for line in self.browse(cr, uid, ids, context):
             grouped_lines.setdefault(line.order_id.id,{})
-            grouped_lines[line.order_id.id].setdefault(line.account_analytic_id.id, [])
-            grouped_lines[line.order_id.id][line.account_analytic_id.id].append(line)
+            grouped_lines[line.order_id.id].setdefault(line.budget_line_id.id, [])
+            grouped_lines[line.order_id.id][line.budget_line_id.id].append(line)
         
         line_ok = []
         line_not_ok = []
         ret = {}
         for order_id, values in grouped_lines.items():
-            for account_id, lines in values.items():
+            for budget_id, lines in values.items():
                 restant = lines[0].budget_dispo
                 for line in lines:
                     restant -= line.amount_ttc
@@ -507,7 +496,11 @@ class purchase_order(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         po = self.browse(cr, uid, ids, context)
-        line_errors = self.verif_budget(cr, uid, ids, context)
+        #line_errors = self.verif_budget(cr, uid, ids, context)
+        line_errors = []
+        for line in po.order_line:
+            if not line.dispo:
+                line_errors.append(line.id)
         if not line_errors:
             #check if purchase need to be confirmed by DST and Elu
             if po.need_confirm:
@@ -573,7 +566,7 @@ class purchase_order(osv.osv):
         po = self.browse(cr, uid, ids)
         if not po.check_dst:
             raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
-        engage_id = self.create_engage(cr, uid, po.id, context)
+        engage_id = self.create_engage(cr, po.user_id.id, po.id, context)
         po.write({'validation':'done','engage_id':engage_id})
         self.validate_po_invoice(cr, uid, ids, context=context)
         return {

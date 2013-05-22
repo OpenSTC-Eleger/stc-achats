@@ -628,13 +628,13 @@ class open_engagement(osv.osv):
             po = engage.purchase_order_id
             for line in po.order_line:
                 #On vérifie si le compte Analytique est associé A un service technique
-                if not line.account_analytic_id.service_id:
+                if not line.budget_line_id.crossovered_budget_id.service_id:
                     #On regroupe les montants par budget analytique
                     #TODO: Utiliser name_get si name ne rencoit pas le nom complet (cad avec le nom des comptes parents)
-                    raise osv.except_osv(_('Error'),_('Analytic account %s has not any service associated') % line.account_analytic_id.name)
-                account_amount.setdefault(line.account_analytic_id.id,{'line_id':[],'service_id':0})
-                account_amount[line.account_analytic_id.id]['line_id'].append(line.id)
-                account_amount[line.account_analytic_id.id]['service_id'] = line.account_analytic_id.service_id.id
+                    raise osv.except_osv(_('Error'),_('Budget %s has not any service associated') % line.budget_line_id.name)
+                account_amount.setdefault(line.budget_line_id.id,{'line_id':[],'service_id':0})
+                account_amount[line.budget_line_id.id]['line_id'].append(line.id)
+                account_amount[line.budget_line_id.id]['service_id'] = line.budget_line_id.crossovered_budget_id.service_id.id
             engage_line = []
             #On crée les numéros d'engagements associés
             for key, value in account_amount.items():
@@ -662,7 +662,7 @@ class open_engagement(osv.osv):
             wf_service.trg_write(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, cr)
             wf_service.trg_validate(engage.user_id.id, 'account.invoice', engage.account_invoice_id.id, 'invoice_open', cr)
         if not engage.account_invoice_id.id:
-            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this engage is needed, can not update budgets without') % line.account_analytic_id.name)
+            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this engage is needed, can not update budgets without'))
 #            #raise osv.except_osv(_('Erreur'),_('Aucune facture OpenERP n\'est associée a l\'engagement, cela est nécessaire pour mettre a jour les lignes de budgets.'))    
         return True
     
@@ -819,7 +819,8 @@ class open_engagement_line(osv.osv):
         'name':fields.char('Numéro d\'Engagement',size=32, required=True),
         'order_line':fields.one2many('purchase.order.line','engage_line_id',string='Lignes d\'achats associées'),
         'amount':fields.function(_calc_amount,type='float',string='Montant de l\'Engagement', store={'open.engagement':[_get_engage_ids,['purchase_order_id'],9],'open.engagement.line':[lambda self,cr,uid,ids,context={}:ids,['order_line'],8]}),
-        'account_analytic_id':fields.related('order_line','account_analytic_id',string='Ligne Budgétaire Engagée', type='many2one', relation="account.analytic.account",store=True),
+        #'account_analytic_id':fields.related('order_line','account_analytic_id',string='Ligne Budgétaire Engagée', type='many2one', relation="account.analytic.account",store=True),
+        'budget_line_id':fields.related('order_line','budget_line_id',string='Ligne Budgétaire Engagée', type='many2one', relation="crossovered.budget.lines",store=True),
         'engage_id':fields.many2one('open.engagement','Engagement Associé'),
         }
     

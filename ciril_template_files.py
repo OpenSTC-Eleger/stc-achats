@@ -161,15 +161,15 @@ class template_ciril_txt_file_engagement(object):
         
         for line in record.engage_lines:
             data = self.init_line_vals()
-            data['code_gest']['value'] = line.account_analytic_id.service_id.code_gest_ciril
+            data['code_gest']['value'] = line.budget_line_id.crossovered_budget_id.service_id.code_gest_ciril
             data['num_engage_openstc']['value'] = line.name
-            data['code_serv']['value'] = line.account_analytic_id.service_id.code_serv_ciril
+            data['code_serv']['value'] = line.budget_line_id.crossovered_budget_id.service_id.code_serv_ciril
             now = datetime.now()
-            for budget_line in line.account_analytic_id.crossovered_budget_line:
-                if budget_line.date_from <= str(now) and budget_line.date_to >= str(now):        
-                    data['code_nature']['value'] = budget_line.openstc_general_account and budget_line.openstc_general_account.code or ''
-                    data['code_antenne']['value'] = budget_line.openstc_code_antenne or ''
-                    data['code_budget']['value'] = budget_line.crossovered_budget_id.code_budget_ciril or ''
+            budget_line = line.budget_line_id
+            if budget_line.date_from <= str(now) and budget_line.date_to >= str(now):        
+                data['code_nature']['value'] = budget_line.openstc_general_account and budget_line.openstc_general_account.code or ''
+                data['code_antenne']['value'] = budget_line.openstc_code_antenne or ''
+                data['code_budget']['value'] = budget_line.crossovered_budget_id.code_budget_ciril or ''
             #data['nomenclature']['value'] = record.purchase_order_id.partner_id.id
             #data['motif_rejet']['value'] = record.purchase_order_id.partner_id.id
             #data['version']['value']

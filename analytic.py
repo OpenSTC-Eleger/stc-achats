@@ -87,7 +87,7 @@ class crossovered_budget_lines(osv.osv):
         #first, we get engage_lines that matches dates and current budget line analytic account
         ret = {}
         for line in self.browse(cr, uid, ids, context):
-            engage_line_ids = self.pool.get("open.engagement.line").search(cr, uid, [('account_analytic_id','=',line.analytic_account_id.id),
+            engage_line_ids = self.pool.get("open.engagement.line").search(cr, uid, [('budget_line_id','=',line.id),
                                                                                      ('engage_id.date_engage_validated','<=', line.date_to),
                                                                                      ('engage_id.date_engage_validated','>=',line.date_from),
                                                                                      ('engage_id.state','not in',('draft','to_validate','check_except'))])

@@ -194,7 +194,7 @@
 		
 		<menuitem id="menu_open_achat_stock" name="Achats-Stocks"
 			sequence="10" action="openstc_achat_stock_action_board_form"
-			groups="openstc_prets.openstc_dst,openstc_elu,openstc_prets.openstc_manager,account.group_account_user" />
+			groups="openstc.openstc_dst,openstc_elu,openstc.openstc_manager,account.group_account_user" />
 
 		<menuitem id="menu_open_achat_stock_stocks" name="Stocks"
 			sequence="3" parent="menu_open_achat_stock" />
@@ -227,10 +227,10 @@
 			parent="menu_open_achat_stock_achats" action="action_openstc_view_all_purchase" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_purchase" -->
 <!-- 			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" /> -->
-		<menuitem id="menu_open_achat_stock_view_engagements" groups="openstc_prets.openstc_manager"
+		<menuitem id="menu_open_achat_stock_view_engagements" groups="openstc.openstc_manager"
 			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
 		<menuitem id="menu_open_achat_stock_view_all_engagements" sequence="5" parent="menu_open_achat_stock_achats"
-			groups="openstc_prets.openstc_dst,openstc_elu" action="action_view_all_engagements" />
+			groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_invoice" -->
 <!-- 			name="Factures" sequence="6" parent="menu_open_achat_stock_achats" -->
 <!-- 			action="account.action_invoice_tree" /> -->

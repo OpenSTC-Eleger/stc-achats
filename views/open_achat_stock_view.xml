@@ -61,6 +61,7 @@
 			<field name="name">purchase.order.open.form</field>
 			<field name="model">purchase.order</field>
 			<field name="type">form</field>
+			<field name="priority">9</field>
 			<field name="inherit_id" ref="purchase.purchase_order_form" />
 			<field name="arch" type="xml">
 				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']"
@@ -123,14 +124,14 @@
 					<button name="write_ciril_engage" attrs="{'invisible':[('validation','&lt;&gt;','done')]}" icon="gtk-execute"
 						    string="Create Engage(s) export file" type="object"/>
 					
-					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc_prets.openstc_dst"
+					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst"
 						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')],'readonly':[('all_budget_dispo','=',False)]}">
 						<field name="check_dst" colspan="2" invisible="1" readonly="1"/>
-						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc_prets.openstc_dst"
+						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc.openstc_dst"
 						    icon="gtk-apply" attrs="{'invisible':[('check_dst','=',True)]}"/>
 						<button name="signal_except_check" string="Refuse purchase by DST"
 							icon="gtk-cancel" type="workflow"
-							groups="openstc_prets.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
+							groups="openstc.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
 						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
 							string="Valider la commande par l'Elu" type="action"
 							groups="openstc_achat_stock.openstc_elu" />
@@ -296,7 +297,7 @@
 			<field name="arch" type="xml">
 				<form>
 						<group col="6" colspan="4" string="Infos Générales"
-							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier">
+							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier">
 							<field name="name" />
 							<field name="description" />
 							<field name="purchase_order_id" />
@@ -315,14 +316,14 @@
 <!-- 							icon="gtk-edit" /> -->
 <!-- 						<field name="reception_ok" /> -->
 <!-- 						<button name="open_stock_moves" type="object" -->
-<!-- 							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier" -->
+<!-- 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier" -->
 <!-- 							string="Voir Réception de Produits associée" states="waiting_reception" -->
 <!-- 							icon="gtk-print-preview" /> -->
 <!-- 					</group> -->
 
 <!-- 					<newline /> -->
 					<field name="attach_ids" nolabel="1" colspan="4"
-						groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier">
+						groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier">
 						<tree string="Documents joints"
 							colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
 							<field name="datas_fname" />
@@ -357,7 +358,7 @@
 							icon="gtk-edit" />
 					
 					<button name="open_stock_moves" type="object"
-							groups="openstc_prets.openstc_dst,openstc_prets.openstc_manager,openstc_prets.openstc_qualifier"
+							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
 							string="Voir Réception de Produits associée" states="waiting_reception"
 							icon="gtk-print-preview" />
 				</form>
@@ -515,7 +516,7 @@
 						<button name="validate" string="Valider Pour Demande en Stock"
 							states="waiting_validation" />
 						<button name="in_except" string="Annuler Demande"
-							groups="openstc_prets.openstc_manager,openstc_prets.openstc_dst,openstc_prets.openstc_elu"
+							groups="openstc.openstc_manager,openstc.openstc_dst,openstc.openstc_elu"
 							states='waiting_validation,in_progress' />
 					</group>
 				</form>
@@ -697,7 +698,7 @@
 			<field name="name">openstc.service.achats.inherit</field>
 			<field name="model">openstc.service</field>
 			<field name="type">form</field>
-			<field name="inherit_id" ref="openstc_prets.view_openstc_service_form" />
+			<field name="inherit_id" ref="openstc.view_openstc_service_form" />
 			<field name="arch" type="xml">
 				<field name="technical" position="after">
 					<field name="accountant_service" />
@@ -738,7 +739,7 @@
 		    <field name="name">res.partner.search.achats.inherit</field>
 		    <field name="model">res.partner</field>
 		    <field name="type">search</field>
-		    <field name="inherit_id" ref="openstc_prets.view_openstc_partner_filter"/>
+		    <field name="inherit_id" ref="openstc.view_openstc_partner_filter"/>
 		    <field name="arch" type="xml">
 	            <field name="technical_site_id" position="after">
 	            	<newline/>

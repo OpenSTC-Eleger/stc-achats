@@ -348,6 +348,19 @@ class purchase_order(osv.osv):
         if 'service_id' in vals and 'name' in vals:
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
            vals['name'] = vals['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
+        else:
+            default_search = []
+            if 'service_id' in vals:
+                service = service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
+            else:
+                defaults = self.default_get(cr, uid, ['user_id','service_id'], context=context)
+                service = self.pool.get("openstc.service").browse(cr, uid, defaults['service_id'], context=context)
+            if 'name' in vals:
+                vals['name'] = vals['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
+            else:
+                defaults = self.default_get(cr, uid, ['name'], context=context)
+                vals['name'] = defaults['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
+            
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
         self.write(cr, uid, [po_id],{'current_url':self.compute_current_url(cr, uid, po_id, context)}, context=context)
         return po_id

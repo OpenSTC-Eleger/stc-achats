@@ -32,7 +32,7 @@ import netsvc
 import addons
 from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
-
+import logging
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(osv.osv):
@@ -106,8 +106,9 @@ class purchase_order_ask(osv.osv):
                                                                            'res_id': record.id},
                                                                           context=context)
                     ret = ir_attachment
-            except:
-                pass
+            except Exception:
+                logging.getLogger('openerp').warning('purchase.order.ask report not generated, you passed those parameters : %s' % {'cr':cr, 'uid':uid, 'record':record, 'context':context} )
+                
             
         return ret
 
@@ -223,7 +224,7 @@ class purchase_order_ask(osv.osv):
         return {'ir.actions.act_window.close'}
     
     #create purchase_order if conditions are checked    
-    def to_draft_po(self, cr, uid, ids, context=None):
+    def to_draft_po(self, cr, uid, ids, context={}):
         if self.constraints_to_draft_po(cr, uid, ids, context=context):
             supplier_id = 0
             list_prod = []
@@ -287,7 +288,7 @@ class purchase_order_ask(osv.osv):
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
            vals['sequence'] = vals['sequence'].replace('xxx',self.remove_accents(service.name[:3]).upper())
        return super(purchase_order_ask,self).create(cr, uid, vals, context=context)
-   
+
 purchase_order_ask()
 
 class purchase_order_ask_line(osv.osv):

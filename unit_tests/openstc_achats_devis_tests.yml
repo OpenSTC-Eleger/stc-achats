@@ -1,0 +1,204 @@
+-
+  Tests of purchase.order.ask
+-
+  first, i create test data
+-
+  creation of product test data
+-
+
+  !record {model: product.product, id: openstc_achats_tests_prod1, view: false, context: {'default_purchase_ok':True}}:
+    name: Consommable 1 test
+-
+
+  !record {model: product.product, id: openstc_achats_tests_prod2, view: false, context: {'default_purchase_ok':True}}:
+    name: Consommable 2 test
+-
+  i test if product has correct default_data
+-
+
+  !assert {model: product.product, id: openstc_achats_tests_prod1, severity: error, string: Product 1 has bad default values}:
+    - purchase_ok is True
+    - categ_id != False
+    - categ_id.property_account_income_categ != False
+    - categ_id.property_account_expense_categ != False
+-
+
+  !assert {model: product.product, id: openstc_achats_tests_prod2, severity: error, string: Product 2 has bad default values}:
+    - purchase_ok is True
+    - categ_id != False
+    - categ_id.property_account_income_categ != False
+    - categ_id.property_account_expense_categ != False
+
+-
+  creation of supplier test data
+-
+  creating Supplier 1 
+-
+  !record {model: openstc.partner.type, id: openstc_achats_tests_partner_type1}:
+    name: Supplier
+    code: SUPPLIER
+-
+  !record {model: res.partner, id: openstc_achats_tests_partner1, context: {'default_supplier':True}}:
+    name: Supplier 1 test
+    type_id: openstc_achats_tests_partner_type1
+-
+  !record {model: res.partner.address, id: openstc_achats_tests_partner1_address1}:
+    name: Address 1 supplier 1
+    email: bruno.plancher@siclic.fr
+    partner_id: openstc_achats_tests_partner1
+    
+-
+  creating Supplier 2 without email
+-
+  !record {model: res.partner, id: openstc_achats_tests_partner2, context: {'default_supplier':True}}:
+    name: Supplier 2 test
+    type_id: openstc_achats_tests_partner_type1
+-    
+  !record {model: res.partner.address, id: openstc_achats_tests_partner2_address1}:
+    name: Address 1 supplier 2
+    partner_id: openstc_achats_tests_partner1
+    
+-
+  i test if suppliers have correct default data
+-
+  !assert {model: res.partner, id: openstc_achats_tests_partner1, severity: error, string: Supplier 1 has not correct default values}:
+    - property_account_receivable != False
+    - property_account_payable != False
+-
+  !assert {model: res.partner, id: openstc_achats_tests_partner2, severity: error, string: Supplier 2 has not correct default values}:
+    - property_account_receivable != False
+    - property_account_payable != False
+
+-
+  now i begin test of purchase.ordre.ask
+-
+
+  !record {model: purchase.order.ask, id: openstc_achats_tests_devis1}:
+    name: Devis 1 test
+-
+  and i check default value and sequence with service
+-
+  !assert {model: purchase.order.ask, id: openstc_achats_tests_devis1, severity: error, string: Purchase order ask has bad default values}:
+    - user_id != False
+    - service_id != False
+    - date_order != False
+    - sequence.find('xxx') == -1
+
+-
+  i add supplier lines onto purchase order ask
+-
+  !record {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner1}:
+    partner_id: openstc_achats_tests_partner1
+    partner_address_id: openstc_achats_tests_partner1_address1
+    po_ask_id: openstc_achats_tests_devis1
+- 
+  !record {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner2}:
+    partner_id: openstc_achats_tests_partner2
+    partner_address_id: openstc_achats_tests_partner2_address1
+    po_ask_id: openstc_achats_tests_devis1
+-
+  and i add products lines onto same purchase order ask
+-
+  !record {model: purchase.order.ask.line, id: openstc_achats_tests_line1}:
+    po_ask_id: openstc_achats_tests_devis1
+    product_id: openstc_achats_tests_prod1
+    qte: 10.0
+-
+  !record {model: purchase.order.ask.line, id: openstc_achats_tests_line2}:
+    po_ask_id: openstc_achats_tests_devis1
+    product_id: openstc_achats_tests_prod2
+    qte: 20.0
+-
+  i check onchange_product_id feature auto completing description field
+-
+  !python {model: purchase.order.ask.line}: |
+    lines = self.browse(cr, uid, [ref('openstc_achats_tests_line1'),ref('openstc_achats_tests_line2')])
+    for line in lines:
+      description = self.onchange_product_id(cr, uid, [], product_id = line.product_id.id)['value']
+      self.write(cr, uid, [line.id], description)
+      assert 'description' in description and description['description'] == line.product_id.name_template, "Onchange on product_id does not work"
+
+
+      
+-
+  then i test to generate a report in crash test
+-
+  !function {model: purchase.order.ask, id: openstc_achats_tests_devis1, name: _create_report_attach}:
+    - eval: "obj(ref('openstc_achats_tests_devis1'))"
+      model: purchase.order.ask
+-
+  and i check if report is correctly attached to record
+-
+  !assert {model: ir.attachment, search: "[('res_model','=','purchase.order.ask'),('res_id','=',ref('openstc_achats_tests_devis1'))]", count: 1, severity: error, string: Report not correctly attached perharps a pb during generating report}
+-
+  now i test to send mail to supplier
+-
+  !function {model: purchase.order.ask, id: openstc_achats_tests_devis1, name: send_ask}:
+    - eval: "[ref('openstc_achats_tests_devis1')]"
+      model: purchase.order.ask
+-
+  !assert {model: mail.message, search: "[('model','=','purchase.order.ask'),('res_id','=',ref('openstc_achats_tests_devis1'))]", count: 2, severity: error, string: "Mail not sent, perharps a pb when generating it or when parsing email template"}
+-
+  and i check if state notif mail is correctly set for each supplier
+-
+  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner1, severity: error, string: "state notif mail is not correctly set for partner1, he musts have received the mail"}:
+    - notif_state == 'mail'    
+-
+  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner2, severity: error, string: "state notif mail is not correctly set for partner1, he musts not have received the mail"}:
+    - notif_state == 'error_mail'    
+
+-
+  now i test purchase order generation
+-
+  i first write price units and check a supplier to indicates that i want to purchase to him
+-
+  !function {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner1, name: write}:
+    - eval: ref('openstc_achats_tests_devis_partner1')
+      model: purchase.order.ask.partners
+    - eval: "{'selected':True}"
+-
+  !function {model: purchase.order.ask.line, id: openstc_achats_tests_line1, name: write}:
+    - eval: ref('openstc_achats_tests_line1')
+      model: purchase.order.ask.partners
+    - eval: "{'price_unit':12.0}"
+-
+  !function {model: purchase.order.ask.line, id: openstc_achats_tests_line2, name: write}:
+    - eval: ref('openstc_achats_tests_line2')
+      model: purchase.order.ask.partners
+    - eval: "{'price_unit':8.0}"
+-
+  !function {model: purchase.order.ask, id: openstc_achats_tests_devis1, name: to_draft_po}:
+    - eval: "[ref('openstc_achats_tests_devis1')]"
+      model: purchase.order.ask
+- 
+  i check that purchase order is created and i check its default values purchase order
+-
+  !assert {model: purchase.order, search: "[('po_ask_id','=',ref('openstc_achats_tests_devis1'))]", count: 1, severity: error, string: "Purchase order not created or has bad values, check to_draft_po method"}:
+    - name.find('xxx') == -1
+    - service_id.id == po_ask_id.service_id.id
+    - user_id.id == po_ask_id.user_id.id
+    - partner_id.id == ref('openstc_achats_tests_partner1')
+    - partner_address_id.id == ref('openstc_achats_tests_partner1_address1')
+-
+  and i test its order_lines
+-
+  !python {model: purchase.order}: |
+    po_id = self.search(cr, uid, [('po_ask_id','=',ref('openstc_achats_tests_devis1'))])
+    po = self.browse(cr, uid, po_id[0])
+    ask = po.po_ask_id
+    ask_values = {}
+    for line in ask.order_lines:
+      ask_values[line.product_id.id] = {'qty':line.qte, 'price':line.price_unit}
+    for line in po.order_line:
+      assert line.product_id.id in ask_values, "A product is missing in purchase order line, check to_draft_po method"
+      ask_value = ask_values.pop(line.product_id.id)
+      assert line.product_qty == ask_value['qty'], "A product qty is not correctly set, check to_draft_po method"
+      assert line.price_unit == ask_value['price'], "A product pirce_unit is not correctly ste, check to_draft_po method"
+      
+-  
+  todo, implements crash test simulating bad user Entries
+-
+  finally, i rollback database udpates after all of my tests files are executed
+-
+  !python {model: open.engagement}: |
+    cr.rollback()

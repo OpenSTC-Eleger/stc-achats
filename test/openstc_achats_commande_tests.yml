@@ -1,0 +1,168 @@
+-
+  Tests on purchase order step
+-
+  i create test data for this test step
+-
+  creation of users (buyer, dst, elu), their service and associate them to existing groups
+- 
+  !record {model: openstc.service, id: openstc_achats_tests_service1}:
+    name: Service 1 test
+    code: SERVICE 1 TEST
+
+-
+  !record {model: res.users, id: openstc_achats_tests_buyer, view: false}:
+    name: Buyer test
+    login: buyer
+    new_password: buyer
+    max_po_amount_no_market: 150.0
+    service_ids:
+      - openstc_achats_tests_service1
+    groups_id:
+      - openstc.openstc_manager
+      - account.group_account_user
+      - account.group_account_invoice
+      - analytic.group_analytic_accounting
+  
+-  
+  !record {model: res.users, id: openstc_achats_tests_dst, view: false}:
+    name: DST test
+    login: dst
+    new_password: dst
+    service_ids:
+      - openstc_achats_tests_service1
+    groups_id:
+      - openstc.openstc_dst
+      - account.group_account_user
+      - account.group_account_invoice
+      - analytic.group_analytic_accounting
+-
+  !record {model: res.users, id: openstc_achats_tests_elu, view: false}:
+    name: Elu test
+    login: elu
+    new_password: elu
+    service_ids: 
+      - openstc_achats_tests_service1
+    groups_id:
+      - openstc_achat_stock.openstc_elu
+      - account.group_account_user
+      - account.group_account_invoice
+      - analytic.group_analytic_accounting
+-
+  now i create budgets data for test 
+-
+  first i create account and analytic test data
+-
+  !record {model: account.account, id: openstc_achats_tests_account1}:
+    name: account 1 test
+    code: 900000
+    user_type: account.data_account_type_expense
+-
+  !record {model: account.analytic.account, id: openstc_achats_tests_analytic_account1}:
+    name: Analytic account 1 test
+    
+-
+  !record {model: crossovered.budget, id: openstc_achats_tests_budget1}:
+    name: Budget 1 test
+    service_id: openstc_achats_tests_service1
+    code: TEST 1
+    date_from: "2013-01-01"
+    date_to: "2013-12-31"
+-
+  !record {model: crossoverd.budget.lines, id: openstc_achats_tests_budget1_line1}:
+    analytic_account_id: openstc_achats_tests_analytic_account1
+    openstc_general_account: openstc_achats_tests_account1
+    openstc_code_antenne: 1
+    date_from: "2013-01-01"
+    date_to: "2013-12-31"
+    planned_amount: 1500.0
+    crossovered_budget_id: openstc_achats_tests_budget1
+
+-
+  first, i recreate with an xml_id the purchase_order created during purchase.order.ask tests
+-
+  !record {model: purchase.order, id: openstc_achats_tests_po1}:
+    description: Commande 1 Test
+    partner_id: openstc_achats_tests_partner1
+    partner_address_id: openstc_achats_tests_partner1_address1
+    pricelist_id: product.list0
+    user_id: openstc_achats_tests_buyer
+    service_id: openstc_achats_tests_service1
+-
+  i test if sequence is correctly set with service name
+-
+  !assert {model: purchase.order, id: openstc_achats_tests_po1, severity: error, string: "PO Sequence not correctly set, check _custom_sequence method"}:
+    - name.find('xxx') == -1 or name.find('SER') > -1
+
+-
+  i create another purchase order to test that budget consumption is correctly viewed by order_lines of 1st po
+-
+  !record {model: purchase.order, id: openstc_acahts_tests_po2}:
+    description: Commande 2 Test
+    partner_id: openstc_achats_tests_partner1
+    partner_address_id: openstc_achats_tests_partner1_address1
+    pricelist_id: product.list0
+    user_id: openstc_achats_tests_buyer
+    service_id: openstc_achats_tests_service1
+    order_line:
+      - product_id: openstc_achats_tests_prod1
+        product_qty: 2.0
+        price_unit: 15.0
+        budget_line_id: openstc_achats_tests_budget1_line1
+
+-
+  i validate it
+-
+  !function {model: purchase.order, name: openstc_confirm}:
+    - eval: ref('openstc_achats_tests_po2')
+      model: purchase.order
+-
+  i check that wkf has correctly evolved to confirmed
+-
+  !assert {model: purchase.order, id: openstc_achats_tests_po2, severity: error, string: po must be confirmed check opentsc_confirm method}:
+    - validation == 'done'
+
+-
+  then, i create order_lines and associate them to 1st purchase order created before
+-
+  !record {model: purchase.order.line, id: openstc_achats_tests_po1_line1, view: false}:
+    order_id: openstc_achats_tests_po1
+    product_id: openstc_achats_tests_prod1
+    product_qty: 10.0
+    price_unit: 12.0
+    product_uom: 1
+    name: Product 1 Line 1
+    date_planned: !eval "str(datetime.now())"
+    budget_line_id: openstc_achats_tests_budget1_line1
+    merge_line_ids:
+      - product_qty: 5.0
+        service_id: openstc_achats_tests_service1
+    
+-
+  !record {model: purchase.order.line, id: openstc_achats_tests_po1_line2, view: false}:
+    order_id: openstc_achats_tests_po1 
+    product_id: openstc_achats_tests_prod2
+    product_qty: 20.0
+    price_unit: 8.0
+    product_uom: 1
+    name: Product2 Line2
+    date_planned: !eval "str(datetime.now())"
+    budget_line_id: openstc_achats_tests_budget1_line1
+    
+-
+  i check their values amount_ttc, tx_erosion and budget_dispo and in_stock
+-
+  !assert {model: purchase.order.line, id: openstc_achats_tests_po1_line1, severity: error, string: "Amount TTC is not correct, check its calculation method"}:
+    - amount_ttc == 10.0 * 12.0
+    - tx_erosion == 10.0
+    - budget_dispo == 1350.0
+    - in_stock == 5.0
+-
+  !assert {model: purchase.order.line, id: openstc_achats_tests_po1_line2, severity: error, string: "Amount TTC is not correct, check its calculation method"}:
+    - amount_ttc == 20.0 * 8.0
+    - tx_erosion == 10.0
+    - budget_dispo == 1350.0
+-
+  finally, i rollback database udpates after all of my tests files are executed
+-
+  !python {model: open.engagement}: |
+    cr.rollback()

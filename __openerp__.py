@@ -38,7 +38,8 @@
         "security/ir.model.access.csv",
         
         "unit_tests/unit_tests.xml",
-        "unit_tests/openstc_achats_devis_tests.yml",
+        "test/openstc_achats_devis_tests.yml",
+        "test/openstc_achats_commande_tests.yml",
              ],
     "demo": [],
     "test": [],

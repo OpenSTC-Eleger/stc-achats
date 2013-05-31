@@ -478,6 +478,8 @@ class purchase_order(osv.osv):
     
     def create_engage(self, cr, uid, id, context=None):
         po = self.browse(cr, uid, id, context=context)
+        if not context or context == None:
+            context = {}
         res_id = 0
         if not po.engage_id:
                 service_id = po.service_id
@@ -486,6 +488,7 @@ class purchase_order(osv.osv):
                 res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
                                                                            'service_id':service_id.id,
                                                                            'purchase_order_id':po.id}, context)
+                assert res_id and res_id > 0, "Error during creation of open.engagement object"
                 wf_service = netsvc.LocalService('workflow')
                 wf_service.trg_validate(po.user_id.id, 'open.engagement', res_id, 'confirm', cr)
         else:
@@ -507,7 +510,7 @@ class purchase_order(osv.osv):
                 self.write(cr, uid, ids, {'validation':'engagement_to_check', 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)}, context=context)
                 #TODO: send mail to DST ?
             else:
-                engage_id = self.create_engage(cr, uid, ids, context=context)
+                engage_id = self.create_engage(cr, po.user_id.id, ids, context=context)
                 self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
                 self.validate_po_invoice(cr, uid, ids, context=context)
 #            #On vérifie si on a un budget suffisant pour chaque ligne d'achat

@@ -264,19 +264,6 @@
 			</field>
 		</record>
 
-		<record id="open_achat_account_analytic_account_inherit_form"
-			model="ir.ui.view">
-			<field name="name">account.analytic.account.open.form</field>
-			<field name="model">account.analytic.account</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="account.view_account_analytic_account_form" />
-			<field name="arch" type="xml">
-				<page string="Account Data" position="inside">
-					<field name="service_id" context="{'only_my_services':'1'}"/>
-				</page>
-			</field>
-		</record>
-
 		<record id="open_engage_tree_view" model="ir.ui.view">
 			<field name="name">open.engagement.tree</field>
 			<field name="model">open.engagement</field>

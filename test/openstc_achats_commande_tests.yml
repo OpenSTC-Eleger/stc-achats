@@ -15,6 +15,7 @@
     login: buyer
     new_password: buyer
     max_po_amount_no_market: 150.0
+    user_email: bruno.plancher@siclic.fr
     service_ids:
       - openstc_achats_tests_service1
     groups_id:
@@ -28,6 +29,7 @@
     name: DST test
     login: dst
     new_password: dst
+    user_email: bruno.plancher@siclic.fr
     service_ids:
       - openstc_achats_tests_service1
     groups_id:
@@ -40,6 +42,7 @@
     name: Elu test
     login: elu
     new_password: elu
+    user_email: bruno.plancher@siclic.fr
     service_ids: 
       - openstc_achats_tests_service1
     groups_id:
@@ -68,7 +71,7 @@
     date_from: "2013-01-01"
     date_to: "2013-12-31"
 -
-  !record {model: crossoverd.budget.lines, id: openstc_achats_tests_budget1_line1}:
+  !record {model: crossovered.budget.lines, id: openstc_achats_tests_budget1_line1}:
     analytic_account_id: openstc_achats_tests_analytic_account1
     openstc_general_account: openstc_achats_tests_account1
     openstc_code_antenne: 1
@@ -96,7 +99,7 @@
 -
   i create another purchase order to test that budget consumption is correctly viewed by order_lines of 1st po
 -
-  !record {model: purchase.order, id: openstc_acahts_tests_po2}:
+  !record {model: purchase.order, id: openstc_achats_tests_po2}:
     description: Commande 2 Test
     partner_id: openstc_achats_tests_partner1
     partner_address_id: openstc_achats_tests_partner1_address1
@@ -108,7 +111,15 @@
         product_qty: 2.0
         price_unit: 15.0
         budget_line_id: openstc_achats_tests_budget1_line1
-
+        merge_line_ids:
+         - product_qty: 1.0
+           service_id: openstc_achats_tests_service1
+-
+  i check that in_stock fields is correctly computed and if tx_erosion is correct
+-
+  !assert {model: purchase.order, id: openstc_achats_tests_po2, severity: error, string: "incorrect value returned for in_stock fields, check its method calcuation"}:
+    - order_line[0].in_stock == 1.0
+    - order_line[0].tx_erosion == 0.0
 -
   i validate it
 -
@@ -120,7 +131,22 @@
 -
   !assert {model: purchase.order, id: openstc_achats_tests_po2, severity: error, string: po must be confirmed check opentsc_confirm method}:
     - validation == 'done'
-
+-
+  i check if report is created
+-
+  !assert {model: ir.attachment, search: "[('res_id','=',ref('openstc_achats_tests_po2')),('res_model','=','purchase.order')]" , severity: error, string: "Report not created for this po, check _create_report_and_attach method", count: 1}
+-
+  and i check if open.engagement is created and has correct values
+-
+  !assert {model: open.engagement, search: "[('purchase_order_id','=',ref('openstc_achats_tests_po2'))]", severity: error, string: "open.engagement is not created, check create_engage method", count: 1}
+-
+  !assert {model: open.engagement, search: "[('purchase_order_id','=',ref('openstc_achats_tests_po2'))]", severity: error, string: "open.engagement is created but has not correct values", count: 1}:
+    - purchase_order_id != False
+    - purchase_order_id.id == ref('openstc_achats_tests_po2')
+    - user_id.id == purchase_order_id.user_id.id
+    - service_id.id == purchase_order_id.service_id.id
+    - description == purchase_order_id.description
+  
 -
   then, i create order_lines and associate them to 1st purchase order created before
 -
@@ -133,6 +159,7 @@
     name: Product 1 Line 1
     date_planned: !eval "str(datetime.now())"
     budget_line_id: openstc_achats_tests_budget1_line1
+    account_analytic_id: openstc_achats_tests_analytic_account1
     merge_line_ids:
       - product_qty: 5.0
         service_id: openstc_achats_tests_service1
@@ -147,20 +174,55 @@
     name: Product2 Line2
     date_planned: !eval "str(datetime.now())"
     budget_line_id: openstc_achats_tests_budget1_line1
+    account_analytic_id: openstc_achats_tests_analytic_account1
     
 -
-  i check their values amount_ttc, tx_erosion and budget_dispo and in_stock
+  i check their values amount_ttc and budget_dispo
 -
   !assert {model: purchase.order.line, id: openstc_achats_tests_po1_line1, severity: error, string: "Amount TTC is not correct, check its calculation method"}:
     - amount_ttc == 10.0 * 12.0
-    - tx_erosion == 10.0
-    - budget_dispo == 1350.0
-    - in_stock == 5.0
+    - budget_dispo == 1470.0
 -
   !assert {model: purchase.order.line, id: openstc_achats_tests_po1_line2, severity: error, string: "Amount TTC is not correct, check its calculation method"}:
     - amount_ttc == 20.0 * 8.0
-    - tx_erosion == 10.0
-    - budget_dispo == 1350.0
+    - budget_dispo == 1470.0
+-
+  and i test that budget line has correct infos (consummed amount and tx_erosion)
+-
+  !assert {model: crossovered.budget.lines, id: openstc_achats_tests_budget1_line1, severity: error, string: "budget_lines has incorrecte values on functionnal fields, check their calculation method"}:
+    - openstc_practical_amount == 30.0
+    - openstc_erosion == 2.0
+-
+  now i check validation of 1st po, requiring DST and Elu signs 
+-
+  !python {model: purchase.order}: |
+    self.openstc_confirm(cr, ref('openstc_achats_tests_buyer'), ref('openstc_achats_tests_po1'))
+-
+  i check that purchase is waiting sign of DST and has found correct elu_attached
+- 
+  !assert {model: purchase.order, id: openstc_achats_tests_po1}:
+    - validation == 'engagement_to_check'
+    - check_dst is False
+    - elu_id.id == ref('openstc_achats_tests_elu')
+-
+  i simulate DST check
+-
+  !python {model: purchase.order}: |
+    self.action_dst_check(cr, ref('openstc_achats_tests_dst'), ref('openstc_achats_tests_po1'))
+-
+  i check that an email se sent to elu
+-
+  !assert {model: mail.message, search: "[('res_id','=',ref('openstc_achats_tests_po1')), ('model','=','purchase.order'),('subject','like','%sign%')]", count: 1, severity: error, string: "Failed to send mail to Elu, check email.template or action_dst_check method"}
+-
+  then i simulate Elu check
+-
+  !python {model: purchase.order}: |
+    self.check_elu(cr, ref('openstc_achats_tests_elu'), ref('openstc_achats_tests_po1'))
+-
+  and i check that purchase is correctly confirmed
+-
+  !assert {model: purchase.order, id: openstc_achats_tests_po1, severity: error, string: "purchase must be confirmed, check validate_po_invoice and check_elu methods"}:
+    - validation == 'done'
 -
   finally, i rollback database udpates after all of my tests files are executed
 -

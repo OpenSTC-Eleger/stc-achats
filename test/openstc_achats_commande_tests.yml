@@ -223,8 +223,3 @@
 -
   !assert {model: purchase.order, id: openstc_achats_tests_po1, severity: error, string: "purchase must be confirmed, check validate_po_invoice and check_elu methods"}:
     - validation == 'done'
--
-  finally, i rollback database udpates after all of my tests files are executed
--
-  !python {model: open.engagement}: |
-    cr.rollback()

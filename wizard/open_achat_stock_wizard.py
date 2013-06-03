@@ -120,10 +120,10 @@ class openstc_open_engage_refuse_inv_wizard(osv.osv_memory):
         if isinstance(ids, list):
             ids = ids[0]
         wizard = self.browse(cr, uid, ids, context)
-        if 'attach_id' in context:
-            attach = self.pool.get("ir.attachment").browse(cr, uid, context['attach_id'], context)
-            #On indique le msg que devra afficher le mail
-            self.pool.get("open.engagement").write(cr, uid, attach.res_id, {'justificatif_refus':wizard.justif_refuse}, context=context)
+        assert 'attach_id' in context, "Context Value Error, attach_id must be in context when displaying wizard, check action_refuse_invoice_to_pay of ir_attachment"
+        attach = self.pool.get("ir.attachment").browse(cr, uid, context['attach_id'], context)
+        #On indique le msg que devra afficher le mail
+        self.pool.get("open.engagement").write(cr, uid, attach.res_id, {'justificatif_refus':wizard.justif_refuse}, context=context)
         self.pool.get("ir.attachment").write(cr, uid, attach.id, {'justif_refuse':wizard.justif_refuse}, context=context)
         return self.pool.get("ir.attachment").refuse_invoice_to_pay(cr, uid, attach.id, context)
 

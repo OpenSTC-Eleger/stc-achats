@@ -415,7 +415,6 @@ class open_engagement(osv.osv):
                                ('waiting_invoice_validated','Attente Facture Fournisseur Validée par Acheteur'),('except_invoice','Refus pour Paiement'),
                                ('done','Clos'),('except_check','Engagement Refusé')]
     _name="open.engagement"
-    #TODO: Voir si un fields.reference pourrait fonctionner pour les documents associés a l'engagement (o2m de plusieurs models)
     _columns = {
         'name':fields.char('Numéro de Suivi de commande', size=16, required=True),
         'description':fields.related('purchase_order_id', 'description', string='Objet de l\'achat', type="char"),
@@ -593,7 +592,6 @@ class open_engagement(osv.osv):
     
     def procuration_dst(self,cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'procuration_dst':True}, context=context)
-        #TODO: faire un res.log au DST
         return {
             'type':'ir.actions.act_window',
             'res_model':'open.engagement',
@@ -631,7 +629,6 @@ class open_engagement(osv.osv):
                 #On vérifie si le compte Analytique est associé A un service technique
                 if not line.budget_line_id.crossovered_budget_id.service_id:
                     #On regroupe les montants par budget analytique
-                    #TODO: Utiliser name_get si name ne rencoit pas le nom complet (cad avec le nom des comptes parents)
                     raise osv.except_osv(_('Error'),_('Budget %s has not any service associated') % line.budget_line_id.name)
                 account_amount.setdefault(line.budget_line_id.id,{'line_id':[],'service_id':0})
                 account_amount[line.budget_line_id.id]['line_id'].append(line.id)
@@ -968,7 +965,6 @@ class openstc_merge_line_ask(osv.osv):
     @param vals : list of dicts containing prod_id, qte_to_deliver and merge_ask_id, used to create some stock.move
     @return: True
     """
-    #TODO:
     def create_moves(self, cr, uid, vals, context=None):
         #create one move per list item
         prod_obj = self.pool.get("product.product")
@@ -980,7 +976,6 @@ class openstc_merge_line_ask(osv.osv):
                 merge = merge_obj.browse(cr, uid, item['merge_ask_id'], context)
                 prod = merge.product_id
                 qty_available = prod.qty_available or 0.0
-                #TODO: check if qty_deliver + qty already delivered <= merge.product_qty, otherwise raise an exception 
                 assert item['qty'] <= qty_available, 'Error, you try to supply a qty of products bigger than qty available in stock'
                 #move creation
                 values = move_obj.onchange_product_id(cr, uid, [], prod_id=item['prod_id'])['value']

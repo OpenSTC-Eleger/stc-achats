@@ -40,6 +40,7 @@
         "unit_tests/unit_tests.xml",
         "test/openstc_achats_devis_tests.yml",
         "test/openstc_achats_commande_tests.yml",
+        "test/openstc_achats_suivi_commandes_tests.yml",
              ],
     "demo": [],
     "test": [],

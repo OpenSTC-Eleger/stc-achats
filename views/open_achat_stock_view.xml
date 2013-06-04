@@ -100,7 +100,7 @@
 						<!-- <field name="price_unit"/> -->
 						<field name="amount_ttc" />
 						<!-- <field name="budget_dispo_info" />-->
-						<!-- <field name="account_analytic_id" string="Ligne Budgétaire" />-->
+						<!-- <field name="account_analytic_id"/>-->
 						<field name="budget_line_id" required="1" groups="analytic.group_analytic_accounting"/>
 						<field name="dispo" />
 						<field name="engage_line_id" />
@@ -113,13 +113,13 @@
 				</field>
 				<button name="button_dummy" position="replace"/>
 				<button name="purchase_confirm" position="replace">
-				    <button name="button_dummy" states="draft" string="Vérifier les budgets" context="{'display_popup':'1'}"
+				    <button name="button_dummy" states="draft" string="Check budgets" context="{'display_popup':'1'}"
 				         type="object" icon="gtk-execute" attrs="{'invisible':[('validation','&lt;&gt;','budget_to_check')]}"/>
 					<field name="need_confirm" invisible="1"/>
 					<field name="all_budget_dispo" invisible="1"/>
-					<button name="openstc_confirm" string="Soumettre commande à validation"
+					<button name="openstc_confirm" string="Put purchase to validation"
 						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')],'readonly':[('all_budget_dispo','=',False)]}" />
-					<button name="openstc_confirm" string="Valider et générer la commande (pdf)" type="object" icon="gtk-go-forward" 
+					<button name="openstc_confirm" string="Validate and generate purchase order (pdf)" type="object" icon="gtk-go-forward" 
 						attrs="{'invisible': ['|',('need_confirm','=',True),('validation','&lt;&gt;','budget_to_check')]}" />
 					<button name="write_ciril_engage" attrs="{'invisible':[('validation','&lt;&gt;','done')]}" icon="gtk-execute"
 						    string="Create Engage(s) export file" type="object"/>
@@ -138,11 +138,6 @@
 						<button name="signal_except_check" string="Refuser la commande par l'Elu"
 							icon="gtk-cancel" type="workflow"
 							groups="openstc_achat_stock.openstc_elu" />
-						
-<!-- 						<group colspan="1" col="2"> -->
-<!-- 						    <field name="attach_datas_fname_sumup" invisible="1"/> -->
-<!-- 						    <field name="attach_datas_sumup" filename="attach_datas_fname_sumup"/> -->
-<!-- 						</group> -->
 					</group>
 					
 				</button>
@@ -173,7 +168,7 @@
 				<xpath
 					expr="//notebook/page[@string='Order Line']/field[@name='account_analytic_id']"
 					position="replace">
-					<field name="account_analytic_id" string="Ligne Budgétaire"
+					<field name="account_analytic_id" string="Budget line"
 						required="1" groups="analytic.group_analytic_accounting"
 						domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('crossovered_budget_line','&lt;&gt;',False)]"
 						 invisible="1"/>
@@ -208,7 +203,7 @@
 			<field name="model">purchase.order.ask</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Demandes de Devis">
+				<form string="Purchase Order Asks">
 					<group col="6" colspan="4">
 						<field name="sequence" />
 						<field name="name" required="1" />
@@ -235,7 +230,7 @@
 					<newline />
 					<field name="order_lines" nolabel="1" colspan="4"
 						attrs="{'readonly':[('state','=','done')]}">
-						<tree string="Produits de la Demande" editable="top">
+						<tree string="Produdcts of the ask" editable="top">
 							<field name="product_id" domain="[('purchase_ok','=',True)]" context="{'default_purchase_ok':True}"
 								on_change="onchange_product_id(product_id)" attrs="{'readonly':[('state','&lt;&gt;', 'draft')]}" />
 							<field name="description" required="1"
@@ -253,11 +248,11 @@
 					<field name="purchase_order_id" attrs="{'invisible':[('state','&lt;&gt;', 'done')]}" />
 					
 					<group colspan="4" col="3">
-						<button name="print_report" string="Générer le devis (pdf)"
+						<button name="print_report" string="Generate Ask (pdf)"
 							type="object" icon="gtk-print"/>
-						<button name="send_ask" string="Envoyer le devis aux fournisseurs (e-mail)"
+						<button name="send_ask" string="Send ask to supplier (email)"
 							type="object" states="draft" icon="gtk-execute" />
-						<button name="to_draft_po" string="Générer le Bon de Commande"
+						<button name="to_draft_po" string="Generate Purchase Order"
 							type="object" states="draft" icon="gtk-go-forward"/>
 					</group>
 				</form>
@@ -283,7 +278,7 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form>
-						<group col="6" colspan="4" string="Infos Générales"
+						<group col="6" colspan="4" string="General infos"
 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier">
 							<field name="name" />
 							<field name="description" />
@@ -295,7 +290,7 @@
 							<field name="invoice_ok" invisible="1" />
 						</group>
 					
-<!-- 					<group col="2" string="Réception de produits" colspan="1" -->
+<!-- 					<group col="2" string="Products picking" colspan="1" -->
 <!-- 						attrs="{'invisible':[('state','in',('draft','to_validate'))]}"> -->
 						
 <!-- 						<button name="open_purchase" type="object" -->
@@ -304,7 +299,7 @@
 <!-- 						<field name="reception_ok" /> -->
 <!-- 						<button name="open_stock_moves" type="object" -->
 <!-- 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier" -->
-<!-- 							string="Voir Réception de Produits associée" states="waiting_reception" -->
+<!-- 							string="See reception of products linked" states="waiting_reception" -->
 <!-- 							icon="gtk-print-preview" /> -->
 <!-- 					</group> -->
 
@@ -328,11 +323,11 @@
 								help="Refuser la facture pour paiement, vous allez saisir un bref justificatif"
 								states="to_check,except_send_mail" />
 							<button name="engage_complete" type="object" icon="gtk-ok"
-								help="Indiquer que la commande est entiérement soldée, cela clos ce suivi de commande"
+								help="To indicate that purchase is entirely paid, this terminate the open.engagement"
 								attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"
-								confirm="Attention, vous allez clore ce suivi de commande. Ce qui signifie que tous les produits ont été reçus et que l'ensemble de la commande a été payée par la compta. Si ce n'est pas le cas, veuillez cliquez sur Annuler." />
+								confirm="Be carefull, You are closing this open.engagement. This means that all products have been received and all of the purchase is paid by accountant service. If not, Please click on Cancel." />
 							<button name="dummy" icon="gtk-help"
-								help="Ceci indique que c'est cette facture qui A permis de clore ce suivi commande"
+								help="This indicates that this invoice permits to terminate this open.engagement"
 								attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}" />
 						</tree>
 					</field>
@@ -341,12 +336,12 @@
 						statusbar_visible="draft,to_validate,waiting_reception,engage_to_terminate,done" />
 					<field name="reception_ok" />
 					<button name="open_purchase" type="object"
-							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande"
+							groups="openstc_achat_stock.openstc_elu" string="See purchase order"
 							icon="gtk-edit" />
 					
 					<button name="open_stock_moves" type="object"
 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
-							string="Voir Réception de Produits associée" states="waiting_reception"
+							string="Open product reception" states="waiting_reception"
 							icon="gtk-print-preview" />
 				</form>
 			</field>
@@ -396,8 +391,8 @@
 			<field name="inherit_id" ref="account_budget.crossovered_budget_view_tree" />
 			<field name="arch" type="xml">
 				<field name="date_to" position="after">
-					<field name="planned_amount" sum="Montant Plannifié" />
-					<field name="openstc_practical_amount" sum="Montant Consommé" />
+					<field name="planned_amount" sum="Planned amount" />
+					<field name="openstc_practical_amount" sum="Consummed amount" />
 				</field>
 			</field>
 		</record>
@@ -414,8 +409,8 @@
 					    <field name="openstc_general_account"/>
 					    <field name="openstc_code_antenne"/>
 						<field name="analytic_account_id" groups="analytic.group_analytic_accounting" />
-						<field name="planned_amount" sum="Montant Planifié" />
-						<field name="openstc_practical_amount" sum="Montant consommé" />
+						<field name="planned_amount" sum="Planned amount" />
+						<field name="openstc_practical_amount" sum="Consummed amount" />
 						<field name="openstc_erosion" />
 					</tree>
 				</xpath>
@@ -470,7 +465,7 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Demande de Fournitures">
-					<group col="4" colspan="4" string="Informations Générales">
+					<group col="4" colspan="4" string="General Infos">
 						<field name="sequence"
 							attrs="{'readonly':[('state','not in',('draft','waiting_validation'))]}" />
 						<field name="name"
@@ -515,7 +510,7 @@
 			<field name="model">openstc.merge.line.ask</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Besoins en Fournitures Exprimés">
+				<tree string="Asks Products needs">
 					<field name="product_id" domain="[('purchase_ok','=',True)]"/>
 					<field name="service_id" />
 					<field name="site_id" />
@@ -526,10 +521,10 @@
 					<field name="merge_ask_donable" />
 					<field name="merge_ask_done" />
 					<button name="to_respond" type="object"
-						help="Répondre A ce Besoin Précisément (la qté fournie est limitée au stock disponible)"
+						help="Respond at this need precisely (Qty supplied is limited by stock qty)"
 						icon="gtk-go-forward" attrs="{'invisible':[('qty_available','=',0)]}" />
 					<button name="to_do_purchase" type="object"
-						help="Crée une commande spécifique A ce Besoin" icon="gtk-edit"
+						help="Create a specific purchase for this need" icon="gtk-edit"
 						attrs="{'invisible':[('merge_ask_donable','=',True)]}" />
 				</tree>
 			</field>
@@ -542,9 +537,9 @@
 			<field name="arch" type="xml">
 				<search string="Besoins">
 					<filter name="ask_ok" string="Besoins Satisfaisables"
-						domain="[('merge_ask_donable','=',True)]" help="Besoins où le stock est dispo" />
-					<filter name="to_purchase" string="Besoins nécessitant une Réappro"
-						domain="[('merge_ask_donable','=',False)]" help="Besoins nécessitant de réapprovisionner le stock" />
+						domain="[('merge_ask_donable','=',True)]" help="Needs that stock is sufficient" />
+					<filter name="to_purchase" string="Needs that need reappro"
+						domain="[('merge_ask_donable','=',False)]" help="Needs needed stock reappro" />
 				</search>
 			</field>
 		</record>
@@ -571,13 +566,13 @@
 			<field name="model">openstc.merge.line.ask.respond.wizard</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Répondre Aux Besoins">
-					<label string="Voulez-vous vraiment répondre A ces Besoins ?"
+				<form string="Respond to needs">
+					<label string="Do you really want to respond to these needs ?"
 						colspan="4" />
 					<field name="merge_ask_ids" colspan="4" nolabel="1" />
 					<newline />
 					<button special="cancel" string="Annuler" icon="gtk-cancel" />
-					<button name="to_respond" type="object" string="Répondre aux Besoins"
+					<button name="to_respond" type="object" string="Respond to ask"
 						icon="gtk-go-forward" />
 				</form>
 			</field>
@@ -588,25 +583,25 @@
 			<field name="model">openstc.merge.line.ask.po.wizard</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Réapprovisionner pour répondre A ces Besoins">
-					<label string="Voulez-vous vraiment lancer une Réappro pour ces Besoins ?"
+				<form string="Do you really want to respond to these needs">
+					<label string="Do you really want to ask ?"
 						colspan="4" />
 					<field name="merge_ask_ids" colspan="4" nolabel="1" />
 					<newline />
 					<group col="6" colspan="4">
 						<label string="Retour en Arriere." colspan="2" />
 						<label
-							string="Vous pouvez faire un Achat sans marché, c'est A dire que vous devrez passer par une demande de prix."
+							string="You can make a purchase out of a market, this mean that you have to make a purchase ordre ask."
 							colspan="2" />
 						<label
-							string="Vous pouvez faire un Achat avec Marché, vous serez directement dirigé vers un Bon de Commande associé au Marché correspondant aux fournitures désignées."
+							string="You can make purchase onto a market, You'll be direcly directd to prucahse order linked with a market corresponding to products selected."
 							colspan="2" />
 					</group>
 					<group col="6" colspan="4">
 						<button special="cancel" string="Annuler" icon="gtk-cancel" />
-						<button name="to_po_ask" type="object" string="Faire un Achat sans marché"
+						<button name="to_po_ask" type="object" string="Make a purchase out of market"
 							icon="gtk-go-forward" />
-						<button name="to_po" type="object" string="Faire un Achat avec marché"
+						<button name="to_po" type="object" string="Make a purchase onto a market"
 							icon="gtk-go-forward" />
 					</group>
 				</form>
@@ -620,7 +615,7 @@
 			<field name="arch" type="xml">
 				<form>
 					<label
-						string="Veuillez Saisir la raison de votre refus pour le paiement de la facture sélectionnée"
+						string="Please write justification of your refusal for payment of selected invoice"
 						colspan="4" />
 					<field name="justif_refuse" colspan="4" nolabel="1" />
 					<button special="cancel" string="Anuler" icon="gtk-cancel" />
@@ -638,7 +633,7 @@
 			<field name="arch" type="xml">
 				<form string="Donner une note explicative pour votre Autorisation">
 					<label
-						string="Veuillez préciser la raison de votre choix"
+						string="Please explain your acceptation"
 						colspan="4" />
 					<field name="justif_check" colspan="4" nolabel="1" />
 					<button special="cancel" string="Anuler" icon="gtk-cancel" />
@@ -660,7 +655,7 @@
 					<group col="1" colspan="4"
 						attrs="{'invisible':[('state','&lt;&gt;','refused')]}">
 						<field name="state" invisible="1" />
-						<separator string="Justificatif de l'acheteur de son Refus pour Paiement" />
+						<separator string="Buyer Justification for his invoice refusal" />
 						<field name="justif_refuse" nolabel="1" />
 					</group>
 				</group>
@@ -674,7 +669,7 @@
 			<field name="inherit_id" ref="base.view_company_form" />
 			<field name="arch" type="xml">
 				<page string="Configuration" position="inside">
-					<separator string="Préférenes Comptabilité Collectivité"
+					<separator string="Accountant paramters of collectivity"
 						colspan="4" />
 					<field name="base_seuil_po" />
 				</page>

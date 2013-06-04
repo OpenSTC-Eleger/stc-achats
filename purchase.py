@@ -603,6 +603,7 @@ class purchase_order(osv.osv):
         ret.update({'merge_line_ids':[(4,x.id)for x in order_line.merge_line_ids]})
         return ret
     
+    
 purchase_order()
 
 

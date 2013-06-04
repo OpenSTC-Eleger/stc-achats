@@ -41,14 +41,11 @@ def import_data(cr, con):
     services_dict = {}
     services_line_nb = {}
 
-    #get all account_account values to compare with csv file
-    cr.execute('select id,code,name from openstc_service;')
-    for item in cr.fetchall():
-        services_dict[item[1]] = [item[0],item[2]]
     fichier = open(path, "r")
-    #check if all account_account needed exist, exit with error status otherwise
     for line in fichier:
-        account = line.split(';')[6]
+        line_split = line.split(';')
+        #check if all account_account needed exist, exit with error status otherwise
+        account = line_split[6]
         cr.execute('select id,code from account_account where code like \'%s\';' % str(account + '%'))
         res = cr.fetchone()
         if res:
@@ -77,7 +74,22 @@ def import_data(cr, con):
     fichier.close()
     for item in analytics_to_create:
         cr.execute('insert into account_analytic_account(state, name) values(\'open\',%s)', (item[0],))
-    
+    #create services that are not in bd, update others with ciril infos
+    for service in services_line_nb.values():
+        cr.execute('select id,code,name from openstc_service where unaccent(name) ilike %s;', (service[0][3],))
+        res = cr.fetchone()
+        if not res:
+            cr.execute('insert into openstc_service(name, code, code_serv_ciril, code_gest_ciril, code_function_ciril) values(%s,%s,%s,%s,%s);', (service[0][3],
+                                                                                                                                              service[0][2],
+                                                                                                                                              service[0][2],
+                                                                                                                                              service[0][0],
+                                                                                                                                              service[0][1]))
+        else:
+            cr.execute('update openstc_service set code=%s, code_serv_ciril=%s, code_gest_ciril=%s, code_function_ciril=%s where id=%s', (service[0][2],
+                                                                                                                                        service[0][2],
+                                                                                                                                        service[0][0],
+                                                                                                                                        service[0][1],
+                                                                                                                                        res[0]))
     
     #import data of budgets
     now = datetime.now()
@@ -90,7 +102,7 @@ def import_data(cr, con):
         cr.execute('insert into account_budget_post(id,name,code,company_id) values(%s,\'Factice\',\'factice\',1);', (post_id,))
         cr.execute('insert into account_budget_rel(account_id,budget_id) values((select id from account_account limit 1),%s)',(post_id,))
     else:
-        post_id = post_id['id']
+        post_id = post_id[0]
         
     cr.execute('select id, name from account_analytic_account;')
     for item in cr.fetchall():
@@ -102,11 +114,11 @@ def import_data(cr, con):
         date_from = '%s-01-01' % now.year
         date_to = '%s-12-31' % now.year
         #we create one crossovered budget for all budget lines of same service
-        cr.execute('insert into crossovered_budget(state, company_id, name,code,date_from,date_to,service_id) values(\'draft\',1,%s,%s,%s,%s,%s);', (current_service + ' ' + str(now.year),
+        cr.execute('insert into crossovered_budget(state, company_id, name,code,date_from,date_to,service_id) values(\'draft\',1,%s,%s,%s,%s,(select id from openstc_service where code=%s limit 1));', (current_service + ' ' + str(now.year),
                                                                                                         data[0][2] + ' ' + str(now.year), 
                                                                                                         date_from, 
                                                                                                         date_to,
-                                                                                                        services_dict[data[0][2]][0]))
+                                                                                                        data[0][2]))
         cr.execute('select id from crossovered_budget order by id desc limit 1')
         budget_id = cr.fetchone()[0]
         #we create one record per budget line in csv, item contains each line split by csv separator

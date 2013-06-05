@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 6.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-29 10:31+0000\n"
-"PO-Revision-Date: 2013-04-29 10:31+0000\n"
+"POT-Creation-Date: 2013-06-05 08:20+0000\n"
+"PO-Revision-Date: 2013-06-05 08:20+0000\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16,43 +16,17 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:319
-#, python-format
-msgid "There is missing budget attributions in order lines"
-msgstr "Vous n'avez pas spécifié de budget pour certains articles de votre commande"
-
-#. module: openstc_achat_stock
-#: field:openstc.service,code_function_ciril:0
-msgid "Ciril Function Code"
-msgstr "Code Fonction CIRIL"
-
-#. module: openstc_achat_stock
-#: help:openstc.service,code_function_ciril:0
-msgid "this field refer to function pkey from Ciril instance"
-msgstr "Ce champs fait référence au Code de la Fonctionnelle M14 dans votre logiciel CIRIL"
-
-#. module: openstc_achat_stock
-#: field:openstc.service,code_gest_ciril:0
-msgid "Ciril Gestionnaire Code"
-msgstr "Code gestionnaire CIRIL"
-
-#. module: openstc_achat_stock
-#: help:openstc.service,code_gest_ciril:0
-msgid "this field refer to gestionnaire pkey from Ciril instance"
-msgstr "Ce champs fait référence au Code Gestionnaire dans votre logiciel CIRIL"
-
-#. module: openstc_achat_stock
-#: field:purchase.order,account_analytic_id:0
-msgid "Ligne Budgétaire Par défaut"
-msgstr "Ligne Budgétaire Par défaut"
+#: view:purchase.order:0
+msgid "Validées"
+msgstr "Validées"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,all_budget_dispo:0
 msgid "All Budget Dispo ?"
-msgstr "All Budget Dispo ?"
+msgstr "Tous les budgets sont Dispo ?"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:564
+#: code:addons/openstc_achat_stock/purchase.py:571
 #, python-format
 msgid "DST have to check purchase first"
 msgstr "le DST doit signer d'abord la commande"
@@ -68,14 +42,29 @@ msgid "Facture Validée"
 msgstr "Facture Validée"
 
 #. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.po.wizard:0
+msgid "Make a purchase out of market"
+msgstr "Faire un acaht hors marché"
+
+#. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
 msgid "Supplier address :"
 msgstr "Adresse Fournisseur :"
 
 #. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "A signer par responsable(s)"
+msgstr "A signer par responsable(s)"
+
+#. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
 msgid "Buyer"
 msgstr "Acheteur"
+
+#. module: openstc_achat_stock
+#: view:openstc.merge.line.ask:0
+msgid "Needs that need reappro"
+msgstr "Besoins nécessitant une réappro"
 
 #. module: openstc_achat_stock
 #: model:ir.actions.report.xml,name:openstc_achat_stock.report_purchase_order_sumup
@@ -115,19 +104,19 @@ msgid "Qté Restante A Fournir"
 msgstr "Qté Restante A Fournir"
 
 #. module: openstc_achat_stock
-#: model:ir.model,name:openstc_achat_stock.model_account_analytic_account
-msgid "Analytic Account"
-msgstr "Compte analytique"
+#: view:openstc.merge.line.ask:0
+msgid "Needs that stock is sufficient"
+msgstr "Besoins où le stock est insuffisant"
+
+#. module: openstc_achat_stock
+#: model:email.template,subject:openstc_achat_stock.openstc_email_template_engage_inv_valid
+msgid "Suivi commande ${object.name or 'inconnu'} : Une Facture est Validée pour paiement"
+msgstr "Suivi commande ${object.name or 'inconnu'} : Une Facture est Validée pour paiement"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_res_partner
 msgid "Partner"
 msgstr "Partenaire"
-
-#. module: openstc_achat_stock
-#: constraint:account.analytic.account:0
-msgid "Error! You can not create recursive analytic accounts."
-msgstr "Erreur ! Vous ne pouvez pas créer de comptes analytiques récursifs."
 
 #. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.openstc_purchases_to_check
@@ -145,10 +134,20 @@ msgid "My Boards"
 msgstr "Mon tableau de bord"
 
 #. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Commandes dont les budgets sont suffisants et qui sont validées par l'acheteur (et les responsables si besoin). Un suivi de commande a été créé pour l'acheteur."
+msgstr "Commandes dont les budgets sont suffisants et qui sont validées par l'acheteur (et les responsables si besoin). Un suivi de commande a été créé pour l'acheteur."
+
+#. module: openstc_achat_stock
 #: field:purchase.order.ask.line,po_ask_id:0
 #: field:purchase.order.ask.partners,po_ask_id:0
 msgid "Demande associée"
 msgstr "Demande associée"
+
+#. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.po.wizard:0
+msgid "You can make a purchase out of a market, this mean that you have to make a purchase ordre ask."
+msgstr "Vous pouvez faire un achat hors marché, vous devrez donc passer par une demande de Devis."
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
@@ -181,6 +180,11 @@ msgid "M14 account corresponding to this budget line"
 msgstr "Compte M14 correspondant à cette ligne budgétaire"
 
 #. module: openstc_achat_stock
+#: view:crossovered.budget:0
+msgid "Consummed amount"
+msgstr "Montant Consommé"
+
+#. module: openstc_achat_stock
 #: field:openstc.service,code_serv_ciril:0
 msgid "Ciril Service Code"
 msgstr "Code service de CIRIL"
@@ -192,9 +196,9 @@ msgid "Budget to check"
 msgstr "Budget à valider"
 
 #. module: openstc_achat_stock
-#: field:crossovered.budget.lines,name:0
-msgid "Budget name"
-msgstr "Nom budget"
+#: view:purchase.order.ask:0
+msgid "Purchase Order Asks"
+msgstr "Demandes de Devis"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_account_tax
@@ -214,9 +218,9 @@ msgid "Clos"
 msgstr "Clos"
 
 #. module: openstc_achat_stock
-#: model:ir.model,name:openstc_achat_stock.model_crossovered_budget
-msgid "Budget"
-msgstr "Budget"
+#: field:openstc.merge.line.ask,qty_delivered:0
+msgid "Qté Livrée"
+msgstr "Qté Livrée"
 
 #. module: openstc_achat_stock
 #: field:stock.move,merge_ask_id:0
@@ -229,17 +233,21 @@ msgid "Contact"
 msgstr "Contact"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:127
-#: code:addons/openstc_achat_stock/open_achat_stock.py:158
+#: code:addons/openstc_achat_stock/purchase.py:305
 #, python-format
-msgid "You must supply at least one order line before sending mail"
-msgstr "Vous devez renseigner au moins un article avant d'envoyer un mail aux fournisseurs"
+msgid "There is missing budget attributions in order lines"
+msgstr "Vous n'avez pas spécifié de budget pour certains articles de votre commande"
 
 #. module: openstc_achat_stock
 #: field:open.engagement,elu_id:0
 #: field:purchase.order,elu_id:0
 msgid "Elu Concerné"
 msgstr "Elu Concerné"
+
+#. module: openstc_achat_stock
+#: view:purchase.order.ask:0
+msgid "Produdcts of the ask"
+msgstr "Produits du Devis"
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_achats
@@ -252,9 +260,14 @@ msgid "A Traiter"
 msgstr "A Traiter"
 
 #. module: openstc_achat_stock
-#: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask_partners
-msgid "purchase.order.ask.partners"
-msgstr "purchase.order.ask.partners"
+#: view:open.engagement:0
+msgid "numéro de suivi commande"
+msgstr "numéro de suivi commande"
+
+#. module: openstc_achat_stock
+#: selection:open.engagement,state:0
+msgid "Engagement Refusé"
+msgstr "Engagement Refusé"
 
 #. module: openstc_achat_stock
 #: help:res.users,max_po_amount_no_market:0
@@ -267,14 +280,14 @@ msgid "Achats-Stocks"
 msgstr "Achats-Stocks"
 
 #. module: openstc_achat_stock
-#: view:open.engagement:0
-msgid "Voir Réception de Produits associée"
-msgstr "Voir Réception de Produits associée"
+#: view:purchase.order.ask:0
+msgid "Generate Purchase Order"
+msgstr "Generate Purchase Order"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.po.wizard:0
-msgid "Faire un Achat avec marché"
-msgstr "Faire un Achat avec marché"
+#: view:openstc.open.engage.refuse.inv.wizard:0
+msgid "Please write justification of your refusal for payment of selected invoice"
+msgstr "Please write justification of your refusal for payment of selected invoice"
 
 #. module: openstc_achat_stock
 #: field:crossovered.budget.lines,openstc_general_account:0
@@ -293,6 +306,11 @@ msgid "you can not end this engage because some invoices attached have to be che
 msgstr "Vous ne pouvez pas clore ce suivi commande car des factures sont à vérifier"
 
 #. module: openstc_achat_stock
+#: field:open.engagement,name:0
+msgid "Numéro de Suivi de commande"
+msgstr "Numéro de Suivi de commande"
+
+#. module: openstc_achat_stock
 #: selection:openstc.ask.prod,state:0
 msgid "Terminée"
 msgstr "Terminée"
@@ -303,24 +321,25 @@ msgid "Service Bénéficiaire"
 msgstr "Service Bénéficiaire"
 
 #. module: openstc_achat_stock
-#: selection:open.engagement,state:0
-msgid "Attente Réception Produits et Facture Fournisseur incluse"
-msgstr "Attente Réception Produits et Facture Fournisseur incluse"
-
-#. module: openstc_achat_stock
 #: constraint:account.move.line:0
 msgid "You can not create journal items on an account of type view."
 msgstr "Vous ne pouvez pas passer d'écriture sur un compte de type 'vue'"
 
 #. module: openstc_achat_stock
-#: field:res.users,code_user_ciril:0
-msgid "Ciril user code"
-msgstr "Code utilisateur CIRIL"
+#: field:open.engagement.line,name:0
+#: field:purchase.order.line,engage_line_id:0
+msgid "Numéro d'Engagement"
+msgstr "Numéro d'Engagement"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
-msgid "Soumettre commande à validation"
-msgstr "Soumettre commande à validation"
+#: selection:ir.attachment,state:0
+msgid "Echec envoi du mail"
+msgstr "Echec envoi du mail"
+
+#. module: openstc_achat_stock
+#: view:board.board:0
+msgid "Asks pending"
+msgstr "Demande de Devis à terminer"
 
 #. module: openstc_achat_stock
 #: field:open.engagement,description:0
@@ -328,6 +347,11 @@ msgstr "Soumettre commande à validation"
 #: field:purchase.order.ask,name:0
 msgid "Objet de l'achat"
 msgstr "Objet de l'achat"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Commandes où les budgets sont à saisir ou sont insuffisants"
+msgstr "Commandes où les budgets sont à saisir ou sont insuffisants"
 
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,move_line_id:0
@@ -345,11 +369,6 @@ msgid "Montant par Bon de Commande"
 msgstr "Montant par Bon de Commande"
 
 #. module: openstc_achat_stock
-#: sql_constraint:account.tax:0
-msgid "Tax Name must be unique per company!"
-msgstr "Tax Name must be unique per company!"
-
-#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask_verif_budget
 msgid "purchase.order.ask.verif.budget"
 msgstr "purchase.order.ask.verif.budget"
@@ -360,9 +379,9 @@ msgid "Demande de Fournitures"
 msgstr "Demande de Fournitures"
 
 #. module: openstc_achat_stock
-#: view:purchase.order.line:0
-msgid "Ligne Budgétaire"
-msgstr "Ligne Budgétaire"
+#: field:crossovered.budget.lines,name:0
+msgid "Budget name"
+msgstr "Nom budget"
 
 #. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.action_view_engagements
@@ -371,7 +390,12 @@ msgid "Suivis de mes commandes"
 msgstr "Suivis de mes commandes"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:134
+#: field:ir.attachment,attach_made_done:0
+msgid "Cette Facture Clos ce suivi commande"
+msgstr "Cette Facture Clos ce suivi commande"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:135
 #, python-format
 msgid "You must supply a positive quantity and price_unit"
 msgstr "Vous devez fournir une quantité et un prix Supérieurs à zéro"
@@ -380,6 +404,11 @@ msgstr "Vous devez fournir une quantité et un prix Supérieurs à zéro"
 #: field:purchase.order.line,tx_erosion_info:0
 msgid "Taux Erosion de votre Service (%)"
 msgstr "Taux Erosion de votre Service (%)"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Valider la commande par l'Elu"
+msgstr "Valider la commande par l'Elu"
 
 #. module: openstc_achat_stock
 #: field:openstc.partner.activity,complete_name:0
@@ -398,9 +427,9 @@ msgid "Purchase Order Lines"
 msgstr "Lignes d'ordre d'achat"
 
 #. module: openstc_achat_stock
-#: constraint:account.move.line:0
-msgid "The selected account of your Journal Entry forces to provide a secondary currency. You should remove the secondary currency on the account or select a multi-currency view on the journal."
-msgstr "Le compte sélectionné dans votre ligne d'écriture requiert une deuxième devise. Vous devez soit supprimer la deuxième devise sur le compte, soit sélectionner une vue multi-devise sur le journal."
+#: view:open.engagement:0
+msgid "Be carefull, You are closing this open.engagement. This means that all products have been received and all of the purchase is paid by accountant service. If not, Please click on Cancel."
+msgstr "Attention, vous allez clore cet suivi. Cela veut dire que tous les produits sont réceptionnés et que toutes les factures sont payées par le service comptable. Veuillez annuler dans le cas contraire."
 
 #. module: openstc_achat_stock
 #: view:open.engagement:0
@@ -413,7 +442,7 @@ msgid "Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'ann�
 msgstr "Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'année A aujourd'hui."
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:129
+#: code:addons/openstc_achat_stock/purchase.py:118
 #, python-format
 msgid "you associated merge lines that does not math the product of this order line"
 msgstr "Vous avez regroupé des Besoins qui ne font pas tous référence au même produit que cette ligne d'achat"
@@ -425,7 +454,7 @@ msgid "Engagements Générés"
 msgstr "Engagements Générés"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1018
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1015
 #, python-format
 msgid "stock of the product %s is unavailable to stafisfy this need"
 msgstr "La quantité en stock du produit %s est insuffisante pour répondre à ce(s) besoin(s)"
@@ -487,13 +516,7 @@ msgstr "Site Bénéficiaire"
 #. module: openstc_achat_stock
 #: constraint:product.product:0
 msgid "Error: Invalid ean code"
-msgstr "Erreur: code EAN invalide"
-
-#. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:634
-#, python-format
-msgid "Analytic account %s has not any service associated"
-msgstr "le Compte analytique %s n'a aucun service d'associé"
+msgstr "Erreur : Code EAN invalide"
 
 #. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.openstc_merge_line_to_po_action_wizard
@@ -539,7 +562,40 @@ msgid "Service concerné"
 msgstr "Service concerné"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:908
+#: model:email.template,body_text:openstc_achat_stock.openstc_email_template_engage_to_validate
+msgid "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.\n"
+"		    Celui-ci A besoin de votre signature pour pouvoir engager cette commande.\n"
+"		    \n"
+"			% if object.current_url:\n"
+"		    <p>Pour cela, veuillez suivre ce lien : ${object.current_url}, et cliquer sur \n"
+"		    Valider Commande ou Refuser Commande, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>\n"
+"		    % endif\n"
+"		    % if not object.current_url:\n"
+"		    Pour cela, ouvrez votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel et allez dans la section Commande. \n"
+"		    Ouvrez la commande indiquée dans ce mail et cliquez sur le bouton \"signature Elu\" si vous l'approuvez.\n"
+"		    % endif\n"
+"			"
+msgstr "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.\n"
+"		    Celui-ci A besoin de votre signature pour pouvoir engager cette commande.\n"
+"		    \n"
+"			% if object.current_url:\n"
+"		    <p>Pour cela, veuillez suivre ce lien : ${object.current_url}, et cliquer sur \n"
+"		    Valider Commande ou Refuser Commande, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>\n"
+"		    % endif\n"
+"		    % if not object.current_url:\n"
+"		    Pour cela, ouvrez votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel et allez dans la section Commande. \n"
+"		    Ouvrez la commande indiquée dans ce mail et cliquez sur le bouton \"signature Elu\" si vous l'approuvez.\n"
+"		    % endif\n"
+"			"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:907
 #, python-format
 msgid "Erreur, stock move associated to merge lines does not rely to same product"
 msgstr "Erreur, stock move associated to merge lines does not rely to same product"
@@ -548,6 +604,16 @@ msgstr "Erreur, stock move associated to merge lines does not rely to same produ
 #: selection:open.engagement,state:0
 msgid "Attente Facture Fournisseur Validée par Acheteur"
 msgstr "Attente Facture Fournisseur Validée par Acheteur"
+
+#. module: openstc_achat_stock
+#: selection:ir.attachment,state:0
+msgid "RAS"
+msgstr "RAS"
+
+#. module: openstc_achat_stock
+#: view:openstc.merge.line.ask:0
+msgid "Create a specific purchase for this need"
+msgstr "Create a specific purchase for this need"
 
 #. module: openstc_achat_stock
 #: view:openstc.ask.prod:0
@@ -572,9 +638,9 @@ msgid "URL Courante"
 msgstr "URL Courante"
 
 #. module: openstc_achat_stock
-#: selection:purchase.order,validation:0
-msgid "Budget A Vérfier"
-msgstr "Budget A Vérfier"
+#: view:purchase.order:0
+msgid "Commandes soumises à validation par l'acheteur, seuls les responsables peuvent signer (DST, Elu, etc.)"
+msgstr "Commandes soumises à validation par l'acheteur, seuls les responsables peuvent signer (DST, Elu, etc.)"
 
 #. module: openstc_achat_stock
 #: field:openstc.service,open_engagement_ids:0
@@ -587,16 +653,40 @@ msgid "open.engagement.line"
 msgstr "open.engagement.line"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.po.wizard:0
-msgid "Vous pouvez faire un Achat avec Marché, vous serez directement dirigé vers un Bon de Commande associé au Marché correspondant aux fournitures désignées."
-msgstr "Vous pouvez faire un Achat avec Marché, vous serez directement dirigé vers un Bon de Commande associé au Marché correspondant aux fournitures désignées."
-
-#. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:666
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1019
+#: code:addons/openstc_achat_stock/open_achat_stock.py:664
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1016
 #, python-format
 msgid "Erreur"
 msgstr "Erreur"
+
+#. module: openstc_achat_stock
+#: model:email.template,body_text:openstc_achat_stock.openstc_email_template_ask_prod
+msgid "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    Bonjour, \n"
+"		    \n"
+"		    Veuillez trouver ci-joint notre Demande de Devis : ${object.name}.\n"
+"		    \n"
+"		    En vous souhaitant bonne réception.\n"
+"		    \n"
+"		    Cordialement,\n"
+"		    ${object.user_id.name}\n"
+"		    ${object.user_id.company_id.name}\n"
+"		    "
+msgstr "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    Bonjour, \n"
+"		    \n"
+"		    Veuillez trouver ci-joint notre Demande de Devis : ${object.name}.\n"
+"		    \n"
+"		    En vous souhaitant bonne réception.\n"
+"		    \n"
+"		    Cordialement,\n"
+"		    ${object.user_id.name}\n"
+"		    ${object.user_id.company_id.name}\n"
+"		    "
 
 #. module: openstc_achat_stock
 #: field:open.engagement,attach_datas_fname_sumup:0
@@ -609,9 +699,9 @@ msgid "Confirmer Votre Demande"
 msgstr "Confirmer Votre Demande"
 
 #. module: openstc_achat_stock
-#: view:open.engagement:0
-msgid "Voir la Commande"
-msgstr "Voir la Commande"
+#: view:purchase.order:0
+msgid "A saisir"
+msgstr "A saisir"
 
 #. module: openstc_achat_stock
 #: constraint:account.move.line:0
@@ -619,9 +709,9 @@ msgid "The date of your Journal Entry is not in the defined period! You should c
 msgstr "La date de votre écriture ne correspond pas à la période définie! Vous devez modifier la date ou supprimer la contrainte de date du journal."
 
 #. module: openstc_achat_stock
-#: view:openstc.ask.prod:0
-msgid "Informations Générales"
-msgstr "Informations Générales"
+#: view:openstc.merge.line.ask.respond.wizard:0
+msgid "Respond to needs"
+msgstr "Respond to needs"
 
 #. module: openstc_achat_stock
 #: selection:ir.attachment,state:0
@@ -629,30 +719,53 @@ msgid "Facture Refusée"
 msgstr "Facture Refusée"
 
 #. module: openstc_achat_stock
+#: model:ir.actions.act_window,name:openstc_achat_stock.openstc_my_engages_in_progress
+msgid "My Engages in Progress"
+msgstr "Suivis de commande à traiter"
+
+#. module: openstc_achat_stock
 #: field:openstc.partner.activity,parent_activity_id:0
 msgid "Parent Activity"
 msgstr "Activité parente"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:702
+#: code:addons/openstc_achat_stock/purchase.py:137
+#, python-format
+msgid "this analytic account has not any budget line associated"
+msgstr "Ce compte analytique n'est associé à aucune ligne budgétaire"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:700
 #, python-format
 msgid "No purchase found for this engage, please create a new one"
 msgstr "Aucune commande trouvée pour ce suivi de commande, veuillez re-créer une commande"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.po.wizard:0
-msgid "Voulez-vous vraiment lancer une Réappro pour ces Besoins ?"
-msgstr "Voulez-vous vraiment lancer une Réappro pour ces Besoins ?"
+#: model:email.template,body_html:openstc_achat_stock.openstc_email_template_engage_inv_refused
+msgid "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour la raison suivante : </p>\n"
+"		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>\n"
+"		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>\n"
+"		    "
+msgstr "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour la raison suivante : </p>\n"
+"		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>\n"
+"		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>\n"
+"		    "
 
 #. module: openstc_achat_stock
-#: view:purchase.order.ask:0
-msgid "Asks no longer available"
-msgstr "Devis périmés"
+#: report:purchase.order.sumup:0
+msgid "Tél. :"
+msgstr "Tél. :"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.po.wizard:0
-msgid "Réapprovisionner pour répondre A ces Besoins"
-msgstr "Réapprovisionner pour répondre A ces Besoins"
+#: field:purchase.order,account_analytic_id:0
+msgid "Ligne Budgétaire Par défaut"
+msgstr "Ligne Budgétaire Par défaut"
 
 #. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
@@ -664,6 +777,10 @@ msgstr "Justification acheteur"
 msgid "Total :"
 msgstr "Total :"
 
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "General infos"
+msgstr "Infos générales"
 
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,po_line_id:0
@@ -675,6 +792,16 @@ msgstr "Ligne Commande associée"
 #, python-format
 msgid "DST have to check engage first"
 msgstr "Le DST doit signer en premier"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "Suivis comande dont la facture est a payer"
+msgstr "Suivis comande dont la facture est a payer"
+
+#. module: openstc_achat_stock
+#: field:open.engagement,date_engage_done:0
+msgid "Date de Cloture de la commande"
+msgstr "Date de Cloture de la commande"
 
 #. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
@@ -694,6 +821,12 @@ msgid "Budget Disponible"
 msgstr "Budget Disponible"
 
 #. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/base.py:221
+#, python-format
+msgid "you can not end this engage because some products are waiting for reception (do it in OpenERP)"
+msgstr "Vous ne pouvez pas clore ce suivi de commande car certains produits sont encore à réception (le faire via OpenERP)"
+
+#. module: openstc_achat_stock
 #: field:openstc.ask.prod,sequence:0
 msgid "Numéro de la Demande"
 msgstr "Numéro de la Demande"
@@ -709,17 +842,12 @@ msgid "Annuler Demande"
 msgstr "Annuler Demande"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:44
-#, python-format
-msgid "you are not in any service"
-msgstr "Vous ne faites partie d'aucun service"
-
-#. module: openstc_achat_stock
 #: field:open.engagement,engage_to_treat:0
 msgid "Engage to Treat"
 msgstr "Suivis de commande à Traiter"
 
 #. module: openstc_achat_stock
+#: view:purchase.order.line:0
 #: field:purchase.order.line,budget_line_id:0
 msgid "Budget line"
 msgstr "Ligne budgétaire"
@@ -755,10 +883,9 @@ msgid "Notification"
 msgstr "Notification"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:148
-#, python-format
-msgid "this analytic account has not any budget line associated"
-msgstr "Ce compte analytique n'est associé à aucune ligne budgétaire"
+#: view:open.engagement:0
+msgid "Suivis commande"
+msgstr "Suivis commande"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask_line
@@ -789,19 +916,14 @@ msgid "unknown"
 msgstr "unknown"
 
 #. module: openstc_achat_stock
-#: report:purchase.order.sumup:0
-msgid "Engaged Budget"
-msgstr "Engaged Budget"
-
-#. module: openstc_achat_stock
-#: view:openstc.merge.line.ask:0
-msgid "Répondre A ce Besoin Précisément (la qté fournie est limitée au stock disponible)"
-msgstr "Répondre A ce Besoin Précisément (la qté fournie est limitée au stock disponible)"
-
-#. module: openstc_achat_stock
 #: selection:purchase.order.ask.partners,notif_state:0
 msgid "Mail Envoyé"
 msgstr "Mail Envoyé"
+
+#. module: openstc_achat_stock
+#: report:purchase.order.sumup:0
+msgid "Engaged Budget"
+msgstr "Engaged Budget"
 
 #. module: openstc_achat_stock
 #: field:purchase.order.ask.partners,selected:0
@@ -814,7 +936,7 @@ msgid "Refuse purchase by DST"
 msgstr "Refuser la commande (DST)"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:164
+#: code:addons/openstc_achat_stock/open_achat_stock.py:165
 #, python-format
 msgid "You must supply a positive quantity before printing pdf report"
 msgstr "Vous devez renseigner une quantité supèrieure à zéro avant de générer le Devis PDF"
@@ -835,7 +957,7 @@ msgid "Regroupement des Besoins"
 msgstr "Regroupement des Besoins"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1008
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1005
 #, python-format
 msgid "Vous ne pouvez pas répondre A ce besoin car la quantité en stock de cette fourniture est nul, procédez A une Réappro ou attendez q'une Réappro soit faite"
 msgstr "Vous ne pouvez pas répondre A ce besoin car la quantité en stock de cette fourniture est nul, procédez A une Réappro ou attendez q'une Réappro soit faite"
@@ -845,6 +967,11 @@ msgstr "Vous ne pouvez pas répondre A ce besoin car la quantité en stock de ce
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_stock_view_budgets
 msgid "Budgets"
 msgstr "Budgets"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Commandes entièrement livrées (ou prestations entièrement réalisées), seul l'acheteur peut indiquer cela."
+msgstr "Commandes entièrement livrées (ou prestations entièrement réalisées), seul l'acheteur peut indiquer cela."
 
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,qty_available:0
@@ -867,6 +994,11 @@ msgid "Done Ask"
 msgstr "Devis périmé"
 
 #. module: openstc_achat_stock
+#: field:open.engagement,date_engage_validated:0
+msgid "Date Validation de la commande"
+msgstr "Date Validation de la commande"
+
+#. module: openstc_achat_stock
 #: report:purchase.order.ask:0
 #: report:purchase.order.sumup:0
 msgid "Qty"
@@ -883,7 +1015,7 @@ msgid "res.users"
 msgstr "res.users"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:125
+#: code:addons/openstc_achat_stock/open_achat_stock.py:126
 #, python-format
 msgid "You have to choose a supplier, and only one"
 msgstr "Vous devez sélectionner le fournisseur que vous voulez garder et n'en choisir qu'un seul"
@@ -894,7 +1026,7 @@ msgid "Order Reference must be unique per Company!"
 msgstr "La référence de commande doit être unique par société !"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:537
+#: code:addons/openstc_achat_stock/purchase.py:544
 #, python-format
 msgid "Some purchase order lines does not match amount budget line available : %s"
 msgstr "Un ou plusieurs achat ne rentre pas dans votre budget : %s"
@@ -926,10 +1058,24 @@ msgid "My Budget"
 msgstr "Mon Budget"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:374
-#, python-format
-msgid "Engage must be check and validated for this purchase"
-msgstr "l'Engagment doit-être signé et validé pour pousuivre cette commande"
+#: model:email.template,body_text:openstc_achat_stock.openstc_email_template_engage_inv_valid
+msgid "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}.\n"
+"		    Vous pouvez voir cette facture en piéce jointe A ce mail.\n"
+"		    "
+msgstr "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}.\n"
+"		    Vous pouvez voir cette facture en piéce jointe A ce mail.\n"
+"		    "
+
+#. module: openstc_achat_stock
+#: model:ir.ui.menu,name:openstc_achat_stock.menu_openstc_achat_stock_journal_analytic_view
+msgid "Analytic journals"
+msgstr "Journaux analytiques"
 
 #. module: openstc_achat_stock
 #: selection:open.engagement,state:0
@@ -946,15 +1092,30 @@ msgid "Activities"
 msgstr "Activités"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:151
+#: code:addons/openstc_achat_stock/open_achat_stock.py:152
 #, python-format
 msgid "You must supply a positive quantity"
 msgstr "Vous devez renseigner une quantité supérieure à zéro"
 
 #. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.po.wizard:0
+msgid "Make a purchase onto a market"
+msgstr "Make a purchase onto a market"
+
+#. module: openstc_achat_stock
 #: selection:openstc.ask.prod,state:0
 msgid "En cours de Traitement"
 msgstr "En cours de Traitement"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "Suivis commande en Refus de Paiement"
+msgstr "Suivis commande en Refus de Paiement"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "Suivis commande en Brouillons ou en attente signature DST + Elu"
+msgstr "Suivis commande en Brouillons ou en attente signature DST + Elu"
 
 #. module: openstc_achat_stock
 #: view:open.engagement.check.elu.wizard:0
@@ -963,9 +1124,9 @@ msgid "Valider"
 msgstr "Valider"
 
 #. module: openstc_achat_stock
-#: field:open.engagement,justificatif_refus:0
-msgid "Justification de votre Refus pour Paiement"
-msgstr "Justification de votre Refus pour Paiement"
+#: view:purchase.order.ask:0
+msgid "Send ask to supplier (email)"
+msgstr "Envoyer devis aux fournisseurs (email)"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_open_engagement
@@ -981,6 +1142,12 @@ msgstr "Stocks"
 #: field:open.engagement.line,amount:0
 msgid "Montant de l'Engagement"
 msgstr "Montant de l'Engagement"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:664
+#, python-format
+msgid "Aucune facture OpenERP n'est associée a l'engagement, cela est nécessaire pour mettre a jour les lignes de budgets."
+msgstr "Aucune facture OpenERP n'est associée a l'engagement, cela est nécessaire pour mettre a jour les lignes de budgets."
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_openstc_achat_stock_account_analytic_view
@@ -1009,9 +1176,9 @@ msgid "Rapport des Coûts des Sites et Services"
 msgstr "Rapport des Coûts des Sites et Services"
 
 #. module: openstc_achat_stock
-#: view:open.engagement:0
-msgid "Infos Générales"
-msgstr "Infos Générales"
+#: selection:purchase.order,validation:0
+msgid "Budget A vérfier"
+msgstr "Budget A vérfier"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,user_id:0
@@ -1024,9 +1191,24 @@ msgid "openstc.merge.line.ask"
 msgstr "openstc.merge.line.ask"
 
 #. module: openstc_achat_stock
+#: model:ir.model,name:openstc_achat_stock.model_crossovered_budget
+msgid "Budget"
+msgstr "Budget"
+
+#. module: openstc_achat_stock
+#: field:purchase.order,engage_id:0
+msgid "Suivi commande associé"
+msgstr "Suivi commande associé"
+
+#. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
 msgid "Validated By"
 msgstr "Validé par"
+
+#. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.po.wizard:0
+msgid "Do you really want to ask ?"
+msgstr "Voulez-vous vraiment répondre à ces besoins ?"
 
 #. module: openstc_achat_stock
 #: view:open.engagement:0
@@ -1039,7 +1221,7 @@ msgid "Asks being able to create purchase orders"
 msgstr "Devis prêts pour créer des Commandes"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:189
+#: code:addons/openstc_achat_stock/purchase.py:175
 #, python-format
 msgid "merge lines qty that you have planned is greater than product qty to purchase."
 msgstr "Vous avez défini des besoins supérieurs à la quantité de produits à acheter."
@@ -1067,29 +1249,14 @@ msgid "Justificatif du Refus de paiement de la facture"
 msgstr "Justificatif du Refus de paiement de la facture"
 
 #. module: openstc_achat_stock
-#: view:ir.attachment:0
-msgid "Justificatif de l'acheteur de son Refus pour Paiement"
-msgstr "Justificatif de l'acheteur de son Refus pour Paiement"
-
-#. module: openstc_achat_stock
 #: help:res.users,max_po_amount:0
 msgid "Montant Max autorisé par Bon de Commande"
 msgstr "Montant Max autorisé par Bon de Commande"
 
 #. module: openstc_achat_stock
-#: selection:purchase.order,validation:0
-msgid "Commande A Vérifier"
-msgstr "Commande A Vérifier"
-
-#. module: openstc_achat_stock
 #: help:res.partner,code_tiers_ciril:0
 msgid "this field refer to pkey from Ciril instance"
 msgstr "Fait référence au code Tiers de votre logiciel CIRIL"
-
-#. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.respond.wizard:0
-msgid "Voulez-vous vraiment répondre A ces Besoins ?"
-msgstr "Voulez-vous vraiment répondre A ces Besoins ?"
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_stock_view_inventory_form
@@ -1145,6 +1312,17 @@ msgid "production center"
 msgstr "Centre de production"
 
 #. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:632
+#, python-format
+msgid "Budget %s has not any service associated"
+msgstr "Budget %s n'a acuune service associé"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "To indicate that purchase is entirely paid, this terminate the open.engagement"
+msgstr "Indique que la commande est soldée, cela clos le suivi de commande"
+
+#. module: openstc_achat_stock
 #: field:purchase.order.ask.verif.budget,po_ammount:0
 msgid "Montant de l'achat"
 msgstr "Montant de l'achat"
@@ -1173,7 +1351,7 @@ msgstr "Opération de manutention"
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0
 msgid "Asks waiting for mail sending or waiting for supplier choose"
-msgstr "Asks waiting for mail sending or waiting for supplier choose"
+msgstr "Devis en attente de choix fournisseur ou notification par mail des fournisseurs"
 
 #. module: openstc_achat_stock
 #: selection:purchase.order.ask.partners,state:0
@@ -1211,6 +1389,35 @@ msgid "Regards,"
 msgstr "Cordialement,"
 
 #. module: openstc_achat_stock
+#: model:email.template,body_html:openstc_achat_stock.openstc_email_template_ask_prod
+msgid "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>Bonjour,</p> \n"
+"		    <br />\n"
+"		    <p>Veuillez trouver ci-joint notre Demande de Devis : ${object.name}.</p>\n"
+"		    <br />\n"
+"		    <p>En vous souhaitant bonne réception.</p>\n"
+"		    <br />\n"
+"		    <p>Cordialement,</p>\n"
+"		    <p>${object.user_id.name}</p>\n"
+"		    <p>${object.user_id.company_id.name}</p>\n"
+"		    "
+msgstr "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>Bonjour,</p> \n"
+"		    <br />\n"
+"		    <p>Veuillez trouver ci-joint notre Demande de Devis : ${object.name}.</p>\n"
+"		    <br />\n"
+"		    <p>En vous souhaitant bonne réception.</p>\n"
+"		    <br />\n"
+"		    <p>Cordialement,</p>\n"
+"		    <p>${object.user_id.name}</p>\n"
+"		    <p>${object.user_id.company_id.name}</p>\n"
+"		    "
+
+#. module: openstc_achat_stock
 #: model:email.template,subject:openstc_achat_stock.openstc_email_template_engage_to_validate
 msgid "La Commande ${object.name or 'inconnu'} Nécessite votre signature"
 msgstr "La Commande ${object.name or 'inconnu'} Nécessite votre signature"
@@ -1221,14 +1428,9 @@ msgid "Devis Clos"
 msgstr "Devis Clos"
 
 #. module: openstc_achat_stock
-#: field:openstc.merge.line.ask,qty_delivered:0
-msgid "Qté Livrée"
-msgstr "Qté Livrée"
-
-#. module: openstc_achat_stock
-#: view:openstc.merge.line.ask:0
-msgid "Besoins nécessitant une Réappro"
-msgstr "Besoins nécessitant une Réappro"
+#: view:openstc.merge.line.ask.respond.wizard:0
+msgid "Respond to ask"
+msgstr "Respond to ask"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_openstc_service
@@ -1246,9 +1448,9 @@ msgid "openstc/Elu"
 msgstr "openstc/Elu"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
-msgid "Vérifier les budgets"
-msgstr "Vérifier les budgets"
+#: view:ir.attachment:0
+msgid "Buyer Justification for his invoice refusal"
+msgstr "Justification acheteur pour son refus"
 
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,merge_ask_donable:0
@@ -1271,6 +1473,11 @@ msgid "Commandes Validées"
 msgstr "Commandes Validées"
 
 #. module: openstc_achat_stock
+#: help:openstc.service,code_gest_ciril:0
+msgid "this field refer to gestionnaire pkey from Ciril instance"
+msgstr "Ce champs fait référence au Code Gestionnaire dans votre logiciel CIRIL"
+
+#. module: openstc_achat_stock
 #: view:crossovered.budget:0
 #: view:crossovered.budget.lines:0
 msgid "Budget Lines"
@@ -1282,10 +1489,16 @@ msgid "You can not move products from or to a location of the type view."
 msgstr "Vous ne pouvez pas modifier le stock de produits avec un emplacement de stock de type 'Vue'"
 
 #. module: openstc_achat_stock
-#: view:crossovered.budget:0
 #: view:crossovered.budget.lines:0
 msgid "Montant consommé"
 msgstr "Montant consommé"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/open_achat_stock.py:128
+#: code:addons/openstc_achat_stock/open_achat_stock.py:159
+#, python-format
+msgid "You must supply at least one order line before sending mail"
+msgstr "Vous devez renseigner au moins un article avant d'envoyer un mail aux fournisseurs"
 
 #. module: openstc_achat_stock
 #: field:ir.attachment,state:0
@@ -1298,9 +1511,9 @@ msgid "Etat"
 msgstr "Etat"
 
 #. module: openstc_achat_stock
-#: view:res.company:0
-msgid "Préférenes Comptabilité Collectivité"
-msgstr "Préférenes Comptabilité Collectivité"
+#: view:purchase.order:0
+msgid "Closes"
+msgstr "Closes"
 
 #. module: openstc_achat_stock
 #: view:board.board:0
@@ -1313,6 +1526,11 @@ msgid "purchase.order.ask"
 msgstr "purchase.order.ask"
 
 #. module: openstc_achat_stock
+#: field:open.engagement,engage_lines:0
+msgid "Numéros d'Engagements"
+msgstr "Numéros d'Engagements"
+
+#. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/purchase.py:372
 #, python-format
 msgid "Budgets must be checked and available for this purchase"
@@ -1321,17 +1539,29 @@ msgstr "Les budgets doivent être suffisant pour cette commande"
 #. module: openstc_achat_stock
 #: constraint:res.users:0
 msgid "The chosen company is not in the allowed companies for this user"
-msgstr "La société choisie n'est pas autorisée pour cet utilisateur."
+msgstr "La société choisie ne fait pas partie des sociétés autorisées pour cet utilisateur"
 
 #. module: openstc_achat_stock
-#: field:open.engagement.line,account_analytic_id:0
+#: model:email.template,body_html:openstc_achat_stock.openstc_email_template_engage_inv_valid
+msgid "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée Au suivi de commande ${object.name or 'inconnu'}.</p>\n"
+"		    \n"
+"		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>\n"
+"		    "
+msgstr "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée Au suivi de commande ${object.name or 'inconnu'}.</p>\n"
+"		    \n"
+"		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>\n"
+"		    "
+
+#. module: openstc_achat_stock
+#: field:open.engagement.line,budget_line_id:0
 msgid "Ligne Budgétaire Engagée"
 msgstr "Ligne Budgétaire Engagée"
-
-#. module: openstc_achat_stock
-#: view:openstc.open.engage.refuse.inv.wizard:0
-msgid "Veuillez Saisir la raison de votre refus pour le paiement de la facture sélectionnée"
-msgstr "Veuillez Saisir la raison de votre refus pour le paiement de la facture sélectionnée"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,need_confirm:0
@@ -1349,11 +1579,6 @@ msgid "Journal Items"
 msgstr "Écritures comptables"
 
 #. module: openstc_achat_stock
-#: selection:ir.attachment,state:0
-msgid "RAS"
-msgstr "RAS"
-
-#. module: openstc_achat_stock
 #: field:purchase.order.line,in_stock:0
 #: field:purchase.order.line,in_stock_info:0
 msgid "Qté qui sera Stockée"
@@ -1365,7 +1590,7 @@ msgid "You must assign a production lot for this product"
 msgstr "Vous devez affecter un lot de fabrication pour ce produit."
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1019
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1016
 #, python-format
 msgid "Les stocks du produit %s sont insuffisants pour répondre A une partie des besoins que vous avez sélectionnés."
 msgstr "Les stocks du produit %s sont insuffisants pour répondre A une partie des besoins que vous avez sélectionnés."
@@ -1381,12 +1606,28 @@ msgid "Répondre A ces Besoins"
 msgstr "Répondre A ces Besoins"
 
 #. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "This indicates that this invoice permits to terminate this open.engagement"
+msgstr "Indique que cette facture a permis de clore ce suivi de commande"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "Open product reception"
+msgstr "Voir réception de produits"
+
+#. module: openstc_achat_stock
 #: field:openstc.service,purchase_order_ids:0
 msgid "Purchases made by this service"
 msgstr "Commandes de ce service"
 
 #. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.respond.wizard:0
+msgid "Do you really want to respond to these needs ?"
+msgstr "Voulez-vous vraiment répondre à ces besoins ?"
+
+#. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.action_view_all_engagements
+#: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_view_all_engagements
 msgid "Suivi de toutes les commandes"
 msgstr "Suivi de toutes les commandes"
 
@@ -1402,14 +1643,19 @@ msgid "General"
 msgstr "Général"
 
 #. module: openstc_achat_stock
+#: selection:purchase.order,validation:0
+msgid "Commande A signer"
+msgstr "Commande A signer"
+
+#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_account_invoice
 msgid "Invoice"
 msgstr "Facture"
 
 #. module: openstc_achat_stock
-#: report:purchase.order.sumup:0
-msgid "Tél. :"
-msgstr "Tél. :"
+#: selection:open.engagement,state:0
+msgid "Attente Réception Produits et Facture Fournisseur incluse"
+msgstr "Attente Réception Produits et Facture Fournisseur incluse"
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_openstc_achat_stock_analytic_config
@@ -1430,9 +1676,14 @@ msgid "Annuler"
 msgstr "Annuler"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask:0
-msgid "Crée une commande spécifique A ce Besoin"
-msgstr "Crée une commande spécifique A ce Besoin"
+#: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask_partners
+msgid "purchase.order.ask.partners"
+msgstr "purchase.order.ask.partners"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "See purchase order"
+msgstr "Voir la commande"
 
 #. module: openstc_achat_stock
 #: help:res.company,base_seuil_po:0
@@ -1451,8 +1702,8 @@ msgid "Product"
 msgstr "Produit"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:120
-#: code:addons/openstc_achat_stock/open_achat_stock.py:148
+#: code:addons/openstc_achat_stock/open_achat_stock.py:121
+#: code:addons/openstc_achat_stock/open_achat_stock.py:149
 #, python-format
 msgid "You must supply at least one supplier before sending mail"
 msgstr "Vous devez renseigner au moins un fournisseur avec d'envoyer le mail"
@@ -1463,14 +1714,25 @@ msgid "Voir Fournitures"
 msgstr "Voir Fournitures"
 
 #. module: openstc_achat_stock
-#: model:ir.ui.menu,name:openstc_achat_stock.menu_openstc_achat_stock_journal_analytic_view
-msgid "Analytic journals"
-msgstr "Journaux analytiques"
+#: view:openstc.merge.line.ask:0
+msgid "Asks Products needs"
+msgstr "Demandes de fournitures"
+
+#. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/purchase.py:374
+#, python-format
+msgid "Engage must be check and validated for this purchase"
+msgstr "l'Engagment doit-être signé et validé pour pousuivre cette commande"
 
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0
 msgid "Confirmed Ask"
 msgstr "Devis confirmé"
+
+#. module: openstc_achat_stock
+#: view:purchase.order.ask:0
+msgid "Generate Ask (pdf)"
+msgstr "Générer Devis (pdf)"
 
 #. module: openstc_achat_stock
 #: field:openstc.ask.prod,user_id:0
@@ -1480,15 +1742,13 @@ msgstr "Demandeur"
 #. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.openstc_merge_line_ask_view
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_stock_view_merge_line_ask
-#: view:openstc.merge.line.ask:0
 msgid "Besoins en Fournitures Exprimés"
 msgstr "Besoins en Fournitures Exprimés"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/base.py:221
-#, python-format
-msgid "you can not end this engage because some products are waiting for reception (do it in OpenERP)"
-msgstr "Vous ne pouvez pas clore ce suivi de commande car certains produits sont encore à réception (le faire via OpenERP)"
+#: selection:purchase.order,validation:0
+msgid "Commande validée"
+msgstr "Commande validée"
 
 #. module: openstc_achat_stock
 #: field:purchase.order.ask,date_order:0
@@ -1506,6 +1766,11 @@ msgid "You can not create journal items on closed account."
 msgstr "Vous ne pouvez pas passer d'écritures sur un compte clôturé."
 
 #. module: openstc_achat_stock
+#: view:openstc.merge.line.ask:0
+msgid "Needs needed stock reappro"
+msgstr "Besoins nécessitant une réappro"
+
+#. module: openstc_achat_stock
 #: field:res.users,max_po_amount_no_market:0
 msgid "Seuil max par commande hors marché"
 msgstr "Seuil max par commande hors marché"
@@ -1516,11 +1781,17 @@ msgid "Ask to confirm"
 msgstr "Devis à confirmer"
 
 #. module: openstc_achat_stock
+#: sql_constraint:account.move.line:0
+msgid "Wrong credit or debit value in accounting entry !"
+msgstr "Valeur erronée au crédit ou au débit de la pièce comptable !"
+
+#. module: openstc_achat_stock
 #: field:open.engagement,id:0
 msgid "Id"
 msgstr "Id"
 
 #. module: openstc_achat_stock
+#: field:crossovered.budget,service_id:0
 #: view:purchase.order.ask:0
 #: report:purchase.order.sumup:0
 msgid "Service"
@@ -1537,53 +1808,32 @@ msgid "Prix Unitaire (remplie après facturation)"
 msgstr "Prix Unitaire (remplie après facturation)"
 
 #. module: openstc_achat_stock
-#: view:purchase.order.ask:0
-msgid "Générer le devis (pdf)"
-msgstr "Générer le devis (pdf)"
-
-#. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:133
+#: code:addons/openstc_achat_stock/purchase.py:122
 #: constraint:purchase.order.line:0
 #, python-format
 msgid "Error, product qty is lower than summed merge lines product qty"
 msgstr "Erreur, la quantité de produit à acheter est inférieure à celle des Besoins associés"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:665
+#: code:addons/openstc_achat_stock/open_achat_stock.py:663
 #, python-format
 msgid "An OpenERP Invoice associated to this engage is needed, can not update budgets without"
 msgstr "Une facture doit-être associée à ce suivi de commande, sinon impossible de mettre à jour les budgets"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask:0
-msgid "Besoins nécessitant de réapprovisionner le stock"
-msgstr "Besoins nécessitant de réapprovisionner le stock"
-
-#. module: openstc_achat_stock
-#: view:crossovered.budget:0
 #: field:crossovered.budget,planned_amount:0
 msgid "Montant Plannifié"
 msgstr "Montant Plannifié"
 
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0
-msgid "Envoyer le devis aux fournisseurs (e-mail)"
-msgstr "Envoyer le devis aux fournisseurs (e-mail)"
-
-#. module: openstc_achat_stock
-#: view:board.board:0
-msgid "Asks pending"
-msgstr "Demande de Devis à terminer"
+msgid "Asks no longer available"
+msgstr "Devis périmés"
 
 #. module: openstc_achat_stock
 #: field:res.company,base_seuil_po:0
 msgid "Seuil (Commande Hors Marché) Maximal"
 msgstr "Seuil (Commande Hors Marché) Maximal"
-
-#. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.respond.wizard:0
-msgid "Répondre Aux Besoins"
-msgstr "Répondre Aux Besoins"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_ir_attachment
@@ -1596,10 +1846,15 @@ msgid "Fax :"
 msgstr "Fax :"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:259
+#: code:addons/openstc_achat_stock/open_achat_stock.py:260
 #, python-format
 msgid "You have to configure a warehouse"
 msgstr "Vous devez configurer un entrepôt"
+
+#. module: openstc_achat_stock
+#: view:open.engagement:0
+msgid "Suivis commande Clos (facture payée et et réception produits / prestation complet et validé)"
+msgstr "Suivis commande Clos (facture payée et et réception produits / prestation complet et validé)"
 
 #. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.action_open_achat_stock_reception_picking_move
@@ -1607,14 +1862,24 @@ msgid "Réception par Produits"
 msgstr "Réception par Produits"
 
 #. module: openstc_achat_stock
+#: view:res.company:0
+msgid "Accountant paramters of collectivity"
+msgstr "Accountant paramters of collectivity"
+
+#. module: openstc_achat_stock
+#: view:purchase.order.ask.verif.budget:0
+msgid "Générer Engagement"
+msgstr "Générer Engagement"
+
+#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_purchase_order
 msgid "Purchase Order"
 msgstr "Bon de commande"
 
 #. module: openstc_achat_stock
-#: sql_constraint:account.move.line:0
-msgid "Wrong credit or debit value in accounting entry !"
-msgstr "Valeur erronée au crédit ou au débit de la pièce comptable !"
+#: view:crossovered.budget:0
+msgid "Planned amount"
+msgstr "Montant planifié"
 
 #. module: openstc_achat_stock
 #: view:purchase.order.ask.verif.budget:0
@@ -1628,6 +1893,11 @@ msgid "Error sending mail with invoice attached to accountant %s"
 msgstr "Erreur lors de l'envoi de la facture par mail au service comptable %s"
 
 #. module: openstc_achat_stock
+#: field:open.engagement,user_id:0
+msgid "Acheteur"
+msgstr "Acheteur"
+
+#. module: openstc_achat_stock
 #: field:purchase.order,po_ask_date:0
 msgid "Date Demande Devis"
 msgstr "Date Demande Devis"
@@ -1638,9 +1908,9 @@ msgid "Procuration DST ?"
 msgstr "Procuration DST ?"
 
 #. module: openstc_achat_stock
-#: view:purchase.order.ask:0
-msgid "Générer le Bon de Commande"
-msgstr "Générer le Bon de Commande"
+#: field:openstc.service,code_gest_ciril:0
+msgid "Ciril Gestionnaire Code"
+msgstr "Code gestionnaire CIRIL"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_openstc_pret_emprunt_wizard
@@ -1663,11 +1933,6 @@ msgid "Besoins Satisfaisables"
 msgstr "Besoins Satisfaisables"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
-msgid "Valider et générer la commande (pdf)"
-msgstr "Valider et générer la commande (pdf)"
-
-#. module: openstc_achat_stock
 #: constraint:res.company:0
 msgid "Error! You can not create recursive companies."
 msgstr "Erreur ! Vous ne pouvez pas créer de sociétés récursives"
@@ -1678,9 +1943,41 @@ msgid "Attente PU"
 msgstr "Attente PU"
 
 #. module: openstc_achat_stock
+#: view:openstc.ask.prod:0
+msgid "General Infos"
+msgstr "Infos générales"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Validate and generate purchase order (pdf)"
+msgstr "Valider et générer commande (pdf)"
+
+#. module: openstc_achat_stock
 #: field:purchase.order.line,amount_ttc:0
 msgid "Montant"
 msgstr "Montant"
+
+#. module: openstc_achat_stock
+#: field:open.engagement.line,engage_id:0
+msgid "Engagement Associé"
+msgstr "Engagement Associé"
+
+#. module: openstc_achat_stock
+#: model:email.template,body_text:openstc_achat_stock.openstc_email_template_engage_inv_refused
+msgid "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour les raisons suivantes :\n"
+"		    ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}\n"
+"		    Vous pouvez voir cette facture en piéce jointe A ce mail.\n"
+"		    "
+msgstr "\n"
+"		    Message Automatique\n"
+"		    \n"
+"		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour les raisons suivantes :\n"
+"		    ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}\n"
+"		    Vous pouvez voir cette facture en piéce jointe A ce mail.\n"
+"		    "
 
 #. module: openstc_achat_stock
 #: field:open.engagement,purchase_order_id:0
@@ -1689,7 +1986,7 @@ msgid "Commande associée"
 msgstr "Commande associée"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/purchase.py:189
+#: code:addons/openstc_achat_stock/purchase.py:175
 #, python-format
 msgid "Warning"
 msgstr "Attention"
@@ -1715,6 +2012,11 @@ msgid "Ciril Partner Code"
 msgstr "Code Tiers CIRIL"
 
 #. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Check budgets"
+msgstr "Vérifier budgets"
+
+#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_openstc_merge_line_ask_po_wizard
 msgid "openstc.merge.line.ask.po.wizard"
 msgstr "openstc.merge.line.ask.po.wizard"
@@ -1722,7 +2024,7 @@ msgstr "openstc.merge.line.ask.po.wizard"
 #. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/open_achat_stock.py:564
 #: code:addons/openstc_achat_stock/open_achat_stock.py:565
-#: code:addons/openstc_achat_stock/purchase.py:553
+#: code:addons/openstc_achat_stock/purchase.py:560
 #, python-format
 msgid "Error, fail to notify Elu by mail, your check is avoid for this time"
 msgstr "Erreur, Echec de l'envoi du mail notifiant l'Elu, votre signature n'est pas prise en compte pour cette fois"
@@ -1731,16 +2033,6 @@ msgstr "Erreur, Echec de l'envoi du mail notifiant l'Elu, votre signature n'est 
 #: field:openstc.service,purchase_order_ask_ids:0
 msgid "Purchase Asks made by this service"
 msgstr "Devis faits par ce service"
-
-#. module: openstc_achat_stock
-#: view:account.analytic.account:0
-msgid "Account Data"
-msgstr "Données du compte"
-
-#. module: openstc_achat_stock
-#: view:openstc.merge.line.ask:0
-msgid "Besoins où le stock est dispo"
-msgstr "Besoins où le stock est dispo"
 
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,invoice_line_id:0
@@ -1753,9 +2045,9 @@ msgid "Invoice Line"
 msgstr "Lignes de facture"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.po.wizard:0
-msgid "Faire un Achat sans marché"
-msgstr "Faire un Achat sans marché"
+#: constraint:account.move.line:0
+msgid "The selected account of your Journal Entry forces to provide a secondary currency. You should remove the secondary currency on the account or select a multi-currency view on the journal."
+msgstr "Le compte sélectionné dans votre ligne d'écriture requiert une deuxième devise. Vous devez soit supprimer la deuxième devise sur le compte, soit sélectionner une vue multi-devise sur le journal."
 
 #. module: openstc_achat_stock
 #: constraint:stock.move:0
@@ -1763,12 +2055,17 @@ msgid "You try to assign a lot which is not from the same product"
 msgstr "Vous essayez d'affecter un lot qui n'est pas pour ce produit."
 
 #. module: openstc_achat_stock
+#: field:ir.attachment,engage_done:0
+msgid "Suivi commande Clos"
+msgstr "Suivi commande Clos"
+
+#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_openstc_ask_prod
 msgid "openstc.ask.prod"
 msgstr "openstc.ask.prod"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:240
+#: code:addons/openstc_achat_stock/open_achat_stock.py:241
 #, python-format
 msgid "Price units of somes products are missing"
 msgstr "Le prix unitaire d'un ou plusieurs articles n'a pas été renseigné"
@@ -1779,7 +2076,11 @@ msgid "Disponible en Stock (Calculé A la saisie de la Demande)"
 msgstr "Disponible en Stock (Calculé A la saisie de la Demande)"
 
 #. module: openstc_achat_stock
-#: view:crossovered.budget:0
+#: model:email.template,subject:openstc_achat_stock.openstc_email_template_engage_inv_refused
+msgid "Suivi commande ${object.name or 'inconnu'} : Une Facture est refusée pour paiement"
+msgstr "Suivi commande ${object.name or 'inconnu'} : Une Facture est refusée pour paiement"
+
+#. module: openstc_achat_stock
 #: view:crossovered.budget.lines:0
 msgid "Montant Planifié"
 msgstr "Montant Planifié"
@@ -1818,6 +2119,12 @@ msgid "openstc.partner.activity"
 msgstr "openstc.partner.activity"
 
 #. module: openstc_achat_stock
+#: code:addons/openstc_achat_stock/purchase.py:374
+#, python-format
+msgid "Purchase to check"
+msgstr "Commande à signer"
+
+#. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,product_id:0
 #: field:purchase.order.ask.line,product_id:0
 msgid "Produit"
@@ -1829,7 +2136,7 @@ msgid "CIRIL Budget Code"
 msgstr "Code budget CIRIL"
 
 #. module: openstc_achat_stock
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1007
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1004
 #, python-format
 msgid "you can't satisfy this need because stock product qty is null, make a delivering ask or wait for one."
 msgstr "Vous ne pouvez pas répondre à ce(s) besoin(s) car il ne reste plus de ce produit en stock, Faites une réappro"
@@ -1845,6 +2152,11 @@ msgid "Site Demandeur"
 msgstr "Site Demandeur"
 
 #. module: openstc_achat_stock
+#: field:openstc.service,code_function_ciril:0
+msgid "Ciril Function Code"
+msgstr "Code Fonction CIRIL"
+
+#. module: openstc_achat_stock
 #: view:open.engagement.check.elu.wizard:0
 #: view:openstc.open.engage.refuse.inv.wizard:0
 msgid "Anuler"
@@ -1854,35 +2166,44 @@ msgstr "Anuler"
 #: code:addons/openstc_achat_stock/account.py:51
 #: code:addons/openstc_achat_stock/base.py:214
 #: code:addons/openstc_achat_stock/base.py:221
-#: code:addons/openstc_achat_stock/open_achat_stock.py:120
-#: code:addons/openstc_achat_stock/open_achat_stock.py:125
-#: code:addons/openstc_achat_stock/open_achat_stock.py:127
-#: code:addons/openstc_achat_stock/open_achat_stock.py:134
-#: code:addons/openstc_achat_stock/open_achat_stock.py:146
-#: code:addons/openstc_achat_stock/open_achat_stock.py:148
-#: code:addons/openstc_achat_stock/open_achat_stock.py:151
-#: code:addons/openstc_achat_stock/open_achat_stock.py:158
-#: code:addons/openstc_achat_stock/open_achat_stock.py:164
-#: code:addons/openstc_achat_stock/open_achat_stock.py:240
-#: code:addons/openstc_achat_stock/open_achat_stock.py:259
+#: code:addons/openstc_achat_stock/open_achat_stock.py:121
+#: code:addons/openstc_achat_stock/open_achat_stock.py:126
+#: code:addons/openstc_achat_stock/open_achat_stock.py:128
+#: code:addons/openstc_achat_stock/open_achat_stock.py:135
+#: code:addons/openstc_achat_stock/open_achat_stock.py:147
+#: code:addons/openstc_achat_stock/open_achat_stock.py:149
+#: code:addons/openstc_achat_stock/open_achat_stock.py:152
+#: code:addons/openstc_achat_stock/open_achat_stock.py:159
+#: code:addons/openstc_achat_stock/open_achat_stock.py:165
+#: code:addons/openstc_achat_stock/open_achat_stock.py:241
+#: code:addons/openstc_achat_stock/open_achat_stock.py:260
 #: code:addons/openstc_achat_stock/open_achat_stock.py:565
 #: code:addons/openstc_achat_stock/open_achat_stock.py:577
-#: code:addons/openstc_achat_stock/open_achat_stock.py:634
-#: code:addons/openstc_achat_stock/open_achat_stock.py:665
-#: code:addons/openstc_achat_stock/open_achat_stock.py:702
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1007
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1008
-#: code:addons/openstc_achat_stock/open_achat_stock.py:1018
-#: code:addons/openstc_achat_stock/purchase.py:44
-#: code:addons/openstc_achat_stock/purchase.py:129
-#: code:addons/openstc_achat_stock/purchase.py:319
+#: code:addons/openstc_achat_stock/open_achat_stock.py:632
+#: code:addons/openstc_achat_stock/open_achat_stock.py:663
+#: code:addons/openstc_achat_stock/open_achat_stock.py:700
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1004
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1005
+#: code:addons/openstc_achat_stock/open_achat_stock.py:1015
+#: code:addons/openstc_achat_stock/purchase.py:118
+#: code:addons/openstc_achat_stock/purchase.py:305
 #: code:addons/openstc_achat_stock/purchase.py:476
-#: code:addons/openstc_achat_stock/purchase.py:537
-#: code:addons/openstc_achat_stock/purchase.py:553
-#: code:addons/openstc_achat_stock/purchase.py:564
+#: code:addons/openstc_achat_stock/purchase.py:544
+#: code:addons/openstc_achat_stock/purchase.py:560
+#: code:addons/openstc_achat_stock/purchase.py:571
 #, python-format
 msgid "Error"
 msgstr "Erreur"
+
+#. module: openstc_achat_stock
+#: field:res.users,code_user_ciril:0
+msgid "Ciril user code"
+msgstr "Code utilisateur CIRIL"
+
+#. module: openstc_achat_stock
+#: view:openstc.merge.line.ask.po.wizard:0
+msgid "You can make purchase onto a market, You'll be direcly directd to prucahse order linked with a market corresponding to products selected."
+msgstr "Vous pouvez faire un achat dans le cadre d'un marché. Vous serez dirigé vers une commande en rapport avec un marché correspondant à ces produits"
 
 #. module: openstc_achat_stock
 #: sql_constraint:account.invoice:0
@@ -1890,14 +2211,14 @@ msgid "Invoice Number must be unique per Company!"
 msgstr "Le numéro de facture doit être unique par société !"
 
 #. module: openstc_achat_stock
-#: sql_constraint:res.users:0
-msgid "You can not have two users with the same login !"
-msgstr "VOus ne pouvez pas avoir deux utilsiateurs avec le même login !"
+#: view:open.engagement:0
+msgid "Suivis commande en attente de couments Comptables"
+msgstr "Suivis commande en attente de couments Comptables"
 
 #. module: openstc_achat_stock
-#: field:open.engagement,user_id:0
-msgid "Personnel Engagé"
-msgstr "Personnel Engagé"
+#: sql_constraint:res.users:0
+msgid "You can not have two users with the same login !"
+msgstr "Vous ne pouvez pas avoir deux utilisateurs avec le même identifiant !"
 
 #. module: openstc_achat_stock
 #: field:ir.attachment,justif_refuse:0
@@ -1920,14 +2241,9 @@ msgid "Purchases to Check"
 msgstr "Commandes en attente de validation"
 
 #. module: openstc_achat_stock
-#: selection:ir.attachment,state:0
-msgid "Echec envoi du mail"
-msgstr "Echec envoi du mail"
-
-#. module: openstc_achat_stock
-#: selection:purchase.order,validation:0
-msgid "Bon de Commande Validable"
-msgstr "Bon de Commande Validable"
+#: field:open.engagement,justificatif_refus:0
+msgid "Justification de votre Refus pour Paiement"
+msgstr "Justification de votre Refus pour Paiement"
 
 #. module: openstc_achat_stock
 #: field:crossovered.budget,theo_amount:0
@@ -1941,8 +2257,8 @@ msgstr "Service comptable"
 
 #. module: openstc_achat_stock
 #: view:openstc.merge.line.ask.po.wizard:0
-msgid "Vous pouvez faire un Achat sans marché, c'est A dire que vous devrez passer par une demande de prix."
-msgstr "Vous pouvez faire un Achat sans marché, c'est A dire que vous devrez passer par une demande de prix."
+msgid "Do you really want to respond to these needs"
+msgstr "Voulez-vous vraiment répondre à ces besoins"
 
 #. module: openstc_achat_stock
 #: field:open.engagement,service_id:0
@@ -1954,12 +2270,41 @@ msgid "Service Demandeur"
 msgstr "Service Demandeur"
 
 #. module: openstc_achat_stock
-#: view:openstc.merge.line.ask.respond.wizard:0
-msgid "Répondre aux Besoins"
-msgstr "Répondre aux Besoins"
+#: model:email.template,body_html:openstc_achat_stock.openstc_email_template_engage_to_validate
+msgid "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.</p>\n"
+"		    \n"
+"		    <p>Celui-ci A besoin de votre signature pour pouvoir engager cette commande.</p>\n"
+"		    % if object.current_url:\n"
+"		    <p>Pour cela, veuillez cliquer sur <a href=\"${object.current_url}\">ce lien</a>, et cliquer sur \n"
+"		    Valider Commande ou Refuser Commande, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>\n"
+"		    % endif\n"
+"		    % if not object.current_url:\n"
+"		    <p>Pour cela, ouvrez  votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel \n"
+"		    et allez dans la section Commande. \n"
+"		    Ouvrez la commande indiquée dans ce mail et cliquez sur le bouton \"signature Elu\" si vous l'approuvez.</p>\n"
+"			% endif\n"
+"		    "
+msgstr "\n"
+"		    <h2>Message Automatique</h2>\n"
+"		    \n"
+"		    <p>${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.</p>\n"
+"		    \n"
+"		    <p>Celui-ci A besoin de votre signature pour pouvoir engager cette commande.</p>\n"
+"		    % if object.current_url:\n"
+"		    <p>Pour cela, veuillez cliquer sur <a href=\"${object.current_url}\">ce lien</a>, et cliquer sur \n"
+"		    Valider Commande ou Refuser Commande, selon votre décision. vous devrez renseigner votre identifiant et votre mot de passe.</p>\n"
+"		    % endif\n"
+"		    % if not object.current_url:\n"
+"		    <p>Pour cela, ouvrez  votre navigateur et ouvrez OpenERP, utilisez votre mot de passe habituel \n"
+"		    et allez dans la section Commande. \n"
+"		    Ouvrez la commande indiquée dans ce mail et cliquez sur le bouton \"signature Elu\" si vous l'approuvez.</p>\n"
+"			% endif\n"
+"		    "
 
 #. module: openstc_achat_stock
-#: view:crossovered.budget:0
 #: field:crossovered.budget,openstc_practical_amount:0
 #: field:crossovered.budget.lines,openstc_practical_amount:0
 msgid "Montant Consommé"
@@ -1975,6 +2320,11 @@ msgstr "Fournisseurs"
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_stock_view_ask_prod
 msgid "Demandes de Fournitures"
 msgstr "Demandes de Fournitures"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Refuser la commande par l'Elu"
+msgstr "Refuser la commande par l'Elu"
 
 #. module: openstc_achat_stock
 #: field:purchase.order.ask.line,description:0
@@ -2034,14 +2384,19 @@ msgid "Montant Pratique"
 msgstr "Montant Pratique"
 
 #. module: openstc_achat_stock
+#: view:open.engagement.check.elu.wizard:0
+msgid "Please explain your acceptation"
+msgstr "Please explain your acceptation"
+
+#. module: openstc_achat_stock
 #: view:openstc.report.service.site.cost.wizard:0
 msgid "Imprimer"
 msgstr "Imprimer"
 
 #. module: openstc_achat_stock
-#: view:purchase.order.ask:0
-msgid "Produits de la Demande"
-msgstr "Produits de la Demande"
+#: view:purchase.order:0
+msgid "Put purchase to validation"
+msgstr "Soumettre commande à validation"
 
 #. module: openstc_achat_stock
 #: field:purchase.order.ask.line,infos:0
@@ -2066,7 +2421,17 @@ msgid "Error, product qty is lower than product qty of summed merge lines you ha
 msgstr "Erreur, la quantité de ce produit est plus faible que celle des différents besoins que vous avez regroupé pour ce produit"
 
 #. module: openstc_achat_stock
+#: view:openstc.merge.line.ask:0
+msgid "Respond at this need precisely (Qty supplied is limited by stock qty)"
+msgstr "Répondre à ce besoin précisément (la qté qui sera fournie est limitée par le stock restant)"
+
+#. module: openstc_achat_stock
 #: field:purchase.order.ask.line,price_unit:0
 msgid "Prix Unitaire convenu"
 msgstr "Prix Unitaire convenu"
+
+#. module: openstc_achat_stock
+#: help:openstc.service,code_function_ciril:0
+msgid "this field refer to function pkey from Ciril instance"
+msgstr "Ce champs fait référence au Code de la Fonctionnelle M14 dans votre logiciel CIRIL"
 

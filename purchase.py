@@ -371,7 +371,7 @@ class purchase_order(osv.osv):
                 if po.validation == 'budget_to_check':
                     raise osv.except_osv(_('Budget to check'),_('Budgets must be checked and available for this purchase'))
                 elif po.validation == 'engagement_to_check':
-                    raise osv.except_osv(_('Engage to check'),_('Engage must be check and validated for this purchase'))
+                    raise osv.except_osv(_('Purchase to check'),_('Purchase must be check and validated for this purchase'))
             elif po.amount_total > 0.0:
                 self._create_report_attach(cr, uid, po, context)
         if ok:

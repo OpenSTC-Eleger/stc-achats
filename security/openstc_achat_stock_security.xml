@@ -17,7 +17,7 @@
 			<field name="name">Engagements Rule Access To own</field>
 			<field name="model_id" ref="model_open_engagement" />
 			<field name="domain_force">[('user_id','=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager')])]" name="groups" />
+			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />
 			<field eval="1" name="perm_write" />
@@ -29,7 +29,7 @@
 			<field name="model_id" ref="model_crossovered_budget_lines" />
 			<!--<field name="domain_force">[('analytic_account_id.service_id.id','in',[x.id for x in user.service_ids])]</field>-->
 			<field name="domain_force">[('crossovered_budget_id.service_id.id','in',[x.id for x in user.service_ids])]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager')])]" name="groups" />
+			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />
 			<field eval="1" name="perm_write" />
@@ -40,7 +40,7 @@
 			<field name="name">Budget Rule Access To own</field>
 			<field name="model_id" ref="model_crossovered_budget" />
 			<field name="domain_force">[('service_id.id','in',[x.id for x in user.service_ids])]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager')])]" name="groups" />
+			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />
 			<field eval="1" name="perm_write" />
@@ -74,7 +74,7 @@
 			<field name="name">Account Invoices Rule Access</field>
 			<field name="model_id" ref="model_account_invoice" />
 			<field name="domain_force">[('user_id','=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager')])]" name="groups" />
+			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />
 			<field eval="1" name="perm_write" />
@@ -85,7 +85,7 @@
 			<field name="name">Purchase Order Asks Rule Access</field>
 			<field name="model_id" ref="model_purchase_order_ask" />
 			<field name="domain_force">[('user_id','=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager')])]" name="groups" />
+			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
 			<field eval="1" name="perm_read" />
 			<field eval="1" name="perm_create" />
 			<field eval="1" name="perm_write" />

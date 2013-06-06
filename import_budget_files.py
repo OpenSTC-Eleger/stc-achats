@@ -114,7 +114,7 @@ def import_data(cr, con):
         date_from = '%s-01-01' % now.year
         date_to = '%s-12-31' % now.year
         #we create one crossovered budget for all budget lines of same service
-        cr.execute('insert into crossovered_budget(state, company_id, name,code,date_from,date_to,service_id) values(\'draft\',1,%s,%s,%s,%s,(select id from openstc_service where code=%s limit 1));', (current_service + ' ' + str(now.year),
+        cr.execute('insert into crossovered_budget(state, company_id, name,code,date_from,date_to,service_id) values(\'draft\',1,%s,%s,%s,%s,(select id from openstc_service where code_serv_ciril=%s limit 1));', (current_service + ' ' + str(now.year),
                                                                                                         data[0][2] + ' ' + str(now.year), 
                                                                                                         date_from, 
                                                                                                         date_to,

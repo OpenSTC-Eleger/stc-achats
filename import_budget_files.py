@@ -74,23 +74,23 @@ def import_data(cr, con):
     fichier.close()
     for item in analytics_to_create:
         cr.execute('insert into account_analytic_account(state, name) values(\'open\',%s)', (item[0],))
-    #create services that are not in bd, update others with ciril infos
-    for service in services_line_nb.values():
-        cr.execute('select id,code,name from openstc_service where unaccent(name) ilike %s;', (service[0][3],))
-        res = cr.fetchone()
-        if not res:
-            cr.execute('insert into openstc_service(name, code, code_serv_ciril, code_gest_ciril, code_function_ciril) values(%s,%s,%s,%s,%s);', (service[0][3],
-                                                                                                                                              service[0][2],
-                                                                                                                                              service[0][2],
-                                                                                                                                              service[0][0],
-                                                                                                                                              service[0][1]))
-        else:
-            cr.execute('update openstc_service set code=%s, code_serv_ciril=%s, code_gest_ciril=%s, code_function_ciril=%s where id=%s', (service[0][2],
-                                                                                                                                        service[0][2],
-                                                                                                                                        service[0][0],
-                                                                                                                                        service[0][1],
-                                                                                                                                        res[0]))
-    
+#    #create services that are not in bd, update others with ciril infos
+#    for service in services_line_nb.values():
+#        cr.execute('select id,code,name from openstc_service where unaccent(name) ilike %s;', (service[0][3],))
+#        res = cr.fetchone()
+#        if not res:
+#            cr.execute('insert into openstc_service(name, code, code_serv_ciril, code_gest_ciril, code_function_ciril) values(%s,%s,%s,%s,%s);', (service[0][3],
+#                                                                                                                                              service[0][2],
+#                                                                                                                                              service[0][2],
+#                                                                                                                                              service[0][0],
+#                                                                                                                                              service[0][1]))
+#        else:
+#            cr.execute('update openstc_service set code=%s, code_serv_ciril=%s, code_gest_ciril=%s, code_function_ciril=%s where id=%s', (service[0][2],
+#                                                                                                                                        service[0][2],
+#                                                                                                                                        service[0][0],
+#                                                                                                                                        service[0][1],
+#                                                                                                                                        res[0]))
+#    
     #import data of budgets
     now = datetime.now()
     cr.execute('select id from account_budget_post;')

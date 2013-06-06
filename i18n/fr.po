@@ -923,7 +923,7 @@ msgstr "Mail Envoyé"
 #. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
 msgid "Engaged Budget"
-msgstr "Engaged Budget"
+msgstr "Budget Engagé"
 
 #. module: openstc_achat_stock
 #: field:purchase.order.ask.partners,selected:0
@@ -1001,6 +1001,24 @@ msgstr "Date Validation de la commande"
 #. module: openstc_achat_stock
 #: report:purchase.order.ask:0
 #: report:purchase.order.sumup:0
+msgid "Qty"
+msgstr "Qté"
+
+#. module: purchase
+#: report:purchase.order:0
+#: report:purchase.order:0
+msgid "Subtotal"
+msgstr "Sous-total"
+
+#. module: purchase
+#: report:purchase.order:0
+#: report:purchase.order:0
+msgid "Supplier address :"
+msgstr "Adresse fournisseur :"
+
+#. module: purchase
+#: report:purchase.order:0
+#: report:purchase.order:0
 msgid "Qty"
 msgstr "Qté"
 

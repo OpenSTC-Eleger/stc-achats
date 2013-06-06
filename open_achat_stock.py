@@ -1147,8 +1147,8 @@ class openstc_service(osv.osv):
         'code_serv_ciril':fields.char('Ciril Service Code',size=8, help="this field refer to service pkey from Ciril instance"),
         'code_function_ciril':fields.char('Ciril Function Code',size=8, help="this field refer to function pkey from Ciril instance"),
         'code_gest_ciril':fields.char('Ciril Gestionnaire Code',size=8, help="this field refer to gestionnaire pkey from Ciril instance"),
-        'purchase_order_ids':fields.one2many('purchase.order','service_id','Purchases made by this service'),
-        'purchase_order_ask_ids':fields.one2many('purchase.order.ask','service_id','Purchase Asks made by this service'),
+        #'purchase_order_ids':fields.one2many('purchase.order','service_id','Purchases made by this service'),
+        #'purchase_order_ask_ids':fields.one2many('purchase.order.ask','service_id','Purchase Asks made by this service'),
         #'open_engagement_ids':fields.one2many('open.engagement','service_id','Engages made by this service'),
         }
     

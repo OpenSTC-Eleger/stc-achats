@@ -1136,9 +1136,9 @@ class openstc_service(osv.osv):
                 return super(openstc_service, self).search(cr, uid, args + my_args, offset=offset, limit=limit, order=order, context=context, count=count)
         return super(openstc_service, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
     
-    def onchange_code_serv_ciril(self, cr, uid, ids, code_serv_ciril=False):
+    def onchange_code_serv_ciril(self, cr, uid, ids, code_serv_ciril=False,code=False):
         ret = {'value':{}}
-        if code_serv_ciril:
+        if code_serv_ciril and not code:
             ret['value'].update({'code':code_serv_ciril})
         return ret
     

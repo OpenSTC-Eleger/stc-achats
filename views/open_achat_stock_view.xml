@@ -376,7 +376,7 @@
 					<filter name="except" string="Litigieux"
 						domain="[('state','=','except_invoice')]" help="Suivis commande en Refus de Paiement" />
 					<field name="name" string="numéro de suivi commande" filter_domain="[('name','ilike',self)]" />
-					<field name="service_id"  string="Service concerné" domain="[('open_engagement_ids','&lt;&gt;',False)]"
+					<field name="service_id"  string="Service concerné" 
 						filter_domain="[('service_id','=',self)]" widget="selection" />
 					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]"
 						filter_domain="[('supplier_id','=',self)]" widget="selection" />
@@ -745,8 +745,7 @@
 		            <filter name="done" string="Done Ask"
 							domain="[('state','=','done')]" help="Asks no longer available"/>
 		            	            
-		            <field name="service_id" domain="[('purchase_order_ask_ids', '&lt;&gt;', False)]"
-		                filter_domain="[('service_id','=',self)]" string="Service" widget="selection"/>
+		            <field name="service_id" filter_domain="[('service_id','=',self)]" string="Service" widget="selection"/>
 		    	</search>
 		    </field>
 		</record>

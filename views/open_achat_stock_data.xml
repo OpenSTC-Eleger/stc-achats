@@ -19,9 +19,19 @@
 			<field name="password">elu1</field>
 			<field name="groups_id" eval="[(4, ref('openstc_elu'))]" />
 		</record>
+		
+		
+		
 	</data>
-
 	<data>
+	    <record id="openstc_achat_stock_smtp_server" model="ir.mail_server">
+	        <field name="name">Default SMTP SICLIC Server</field>
+	        <field name="smtp_host">mta.saas.siclic.fr</field>
+	        <field name="smtp_port">25</field>
+	        <field name="smtp_encryption">none</field>
+	        <field name="sequence">5</field>
+	    </record>
+	    
 		<record id="openstc_email_template_engage_inv_valid" model="email.template">
 			<field name="name">Facture Validée</field>
 			<field name="model_id" ref="model_open_engagement" />

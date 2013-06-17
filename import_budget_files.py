@@ -74,7 +74,7 @@ def import_data(cr, con):
     fichier.close()
     for item in analytics_to_create:
         cr.execute('insert into account_analytic_account(state, name) values(\'open\',%s)', (item[0],))
-#    #create services that are not in bd, update others with ciril infos
+#    #create services that are not in db, update others with ciril infos
 #    for service in services_line_nb.values():
 #        cr.execute('select id,code,name from openstc_service where unaccent(name) ilike %s;', (service[0][3],))
 #        res = cr.fetchone()

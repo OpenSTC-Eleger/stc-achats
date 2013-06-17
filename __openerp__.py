@@ -43,6 +43,7 @@
         "test/openstc_achats_commande_tests.yml",
         "test/openstc_achats_suivi_commandes_tests.yml",
              ],
+    "init_xml":["views/openstc_achat_stock_init_data.xml"],
     "demo": [],
     "test": [],
     "installable": True,

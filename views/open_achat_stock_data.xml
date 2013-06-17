@@ -20,8 +20,6 @@
 			<field name="groups_id" eval="[(4, ref('openstc_elu'))]" />
 		</record>
 		
-		
-		
 	</data>
 	<data>	    
 		<record id="openstc_email_template_engage_inv_valid" model="email.template">

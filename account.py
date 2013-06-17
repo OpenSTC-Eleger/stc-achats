@@ -114,3 +114,19 @@ class account_tax(osv.osv):
         }
         
 account_tax()
+
+class account_account(osv.osv):
+    _inherit = "account.account"
+    
+    #add analytic purchase journal to purchase journal (m20 field)
+    def init_stc_achat_accounting(self, cr, uid, analytic_journal_id, context=None):
+        if analytic_journal_id:
+            journal_id = self.pool.get("account.journal").search(cr, uid, [('code','=','EXJ')])
+            if journal_id:
+                self.pool.get("account.journal").write(cr, uid, journal_id, {'analytic_journal_id':analytic_journal_id})
+                return True
+            print "Error, purchase journal not found"
+            return False
+        print "Error, analytic purchase journal not found"
+        return False
+    

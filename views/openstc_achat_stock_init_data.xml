@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data noupdate="1">
+		<record model="account.analytic.journal" id="openstc_achat_stock_analytic_jour">
+		    <field name="name">Achats</field>
+	    	<field name="code">ACHATS</field>
+		    <field name="type">purchase</field>
+		</record>
+	</data>
+	<data>
+	    <function name="init_stc_achat_accounting" model="account.account">
+			<value eval="ref('openstc_achat_stock.openstc_achat_stock_analytic_jour')"/>
+		</function>
+	</data>
+	
+</openerp>

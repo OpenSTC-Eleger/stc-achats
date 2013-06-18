@@ -1,20 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data noupdate="1">
-
+	
+	    		
 		<record id="openstc_elu" model="res.groups">
 			<field name="name">openstc/Elu</field>
 			<field name="category_id" ref="base.module_category_project_management" />
 			<field name="implied_ids" eval="[(4,ref('analytic.group_analytic_accounting')),(4,ref('account.group_account_user')),(4,ref('purchase.group_purchase_manager')),(4, ref('stock.group_stock_user')),(4, ref('base.group_sale_manager'))]" />
 		</record>
-
-		<record id="openstc.openstc_manager" model="res.groups">
-			<field name="implied_ids" eval="[(4,ref('analytic.group_analytic_accounting')),(4,ref('account.group_account_user')),(4,ref('purchase.group_purchase_manager'))]" />
-		</record>
-
-    	<record id="openstc.openstc_dst" model="res.groups">
-			<field name="implied_ids" eval="[(4,ref('analytic.group_analytic_accounting')),(4,ref('account.group_account_user')),(4,ref('purchase.group_purchase_manager'))]" />
-    	</record>
 		
 		<record id="openstc_elu_1" model="res.users">
 			<field name="name">Elu 1</field>
@@ -22,9 +15,11 @@
 			<field name="password">elu1</field>
 			<field name="groups_id" eval="[(4, ref('openstc_elu'))]" />
 		</record>
-		
+
 	</data>
-	<data>	    
+	<data>
+
+ 
 		<record id="openstc_email_template_engage_inv_valid" model="email.template">
 			<field name="name">Facture Validée</field>
 			<field name="model_id" ref="model_open_engagement" />

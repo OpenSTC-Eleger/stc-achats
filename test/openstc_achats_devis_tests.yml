@@ -141,10 +141,10 @@
 -
   and i check if state notif mail is correctly set for each supplier
 -
-  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner1, severity: error, string: "state notif mail is not correctly set for partner1, he musts have received the mail"}:
+  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner1, severity: warning, string: "state notif mail is not correctly set for partner1, he musts have received the mail"}:
     - notif_state == 'mail'    
 -
-  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner2, severity: error, string: "state notif mail is not correctly set for partner1, he musts not have received the mail"}:
+  !assert {model: purchase.order.ask.partners, id: openstc_achats_tests_devis_partner2, severity: warning, string: "state notif mail is not correctly set for partner1, he musts not have received the mail"}:
     - notif_state == 'error_mail'    
 
 -

@@ -56,7 +56,7 @@
 -
   i check that mail is sent with the text written above
 -
-  !assert {model: mail.message, search: "[('res_id','=',ref('openstc_achats_tests_open_engagement1')), ('model','=', 'open.engagement'), ('subject', 'like','%refus%')]", count: 1, severity: error, string: "error during generating or sending email, check email.template or refuse_invoice_to_pay method of ir_attachment"}:
+  !assert {model: mail.message, search: "[('res_id','=',ref('openstc_achats_tests_open_engagement1')), ('model','=', 'open.engagement'), ('subject', 'like','%refus%')]", count: 1, severity: warning, string: "error during generating or sending email, check email.template or refuse_invoice_to_pay method of ir_attachment"}:
     - state == 'sent'
     - body_html.find('automatic tests') != -1
     - body_text.find('automatic tests') != -1
@@ -101,7 +101,7 @@
 -
   i check that mail is sent
 -
-  !assert {model: mail.message, search: "[('res_id','=',ref('openstc_achats_tests_open_engagement1')), ('model','=','open.engagement'), ('subject', 'like','%Valid%')]", count: 1, severity: error, string: "error during generating or sending email, check email.template or send_invoice_to_pay method of ir_attachment"}:
+  !assert {model: mail.message, search: "[('res_id','=',ref('openstc_achats_tests_open_engagement1')), ('model','=','open.engagement'), ('subject', 'like','%Valid%')]", count: 1, severity: warning, string: "error during generating or sending email, check email.template or send_invoice_to_pay method of ir_attachment"}:
     - state == 'sent'
     - attachment_ids != False
     - attachment_ids[0].name == "F-2013-01-01-0002"

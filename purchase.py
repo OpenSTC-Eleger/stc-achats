@@ -322,6 +322,7 @@ class purchase_order(osv.osv):
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
             'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
+            'mail_sent':fields.boolean('Mail sent ?', invisible=True),
 
             }
     _defaults = {
@@ -329,7 +330,8 @@ class purchase_order(osv.osv):
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
-        'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context)
+        'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context),
+        'mail_sent' : lambda *a: False,
         }
 
     
@@ -556,10 +558,12 @@ class purchase_order(osv.osv):
         if isinstance(template_id, list):
             template_id = template_id[0]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
+        mail_sent = True
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            raise osv.except_osv(_('Error'),_('Error, fail to notify Elu by mail, your check is avoid for this time'))
+            mail_sent = False
+            #raise osv.except_osv(_('Error'),_('Error, fail to notify Elu by mail, your check is avoid for this time'))
             #return False
-        po.write({'check_dst':True})
+        po.write({'check_dst':True,'mail_sent':mail_sent})
         #return True
         return {'type':'ir.actions.act_window.close'}
     

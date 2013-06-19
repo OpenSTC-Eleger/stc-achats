@@ -129,6 +129,9 @@
 						<field name="check_dst" colspan="2" invisible="1" readonly="1"/>
 						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc.openstc_dst"
 						    icon="gtk-apply" attrs="{'invisible':[('check_dst','=',True)]}"/>
+						<field name="mail_sent" invisible="1"/>
+						<button name="action_dst_check" type="object" string="Renvoyer le mail à l'Elu" groups="openstc.openstc_dst"
+						    icon="gtk-execute" attrs="{'invisible':['|',('mail_sent','=',True),('check_dst','=',False)]}"/>
 						<button name="signal_except_check" string="Refuse purchase by DST"
 							icon="gtk-cancel" type="workflow"
 							groups="openstc.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
@@ -341,7 +344,7 @@
 					
 					<button name="open_stock_moves" type="object"
 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
-							string="Open product reception" states="waiting_reception"
+							string="Open product reception"	attrs="{'invisible':['|',('state','&lt;&gt;','waiting_reception'),('reception_ok','=',True)]}"
 							icon="gtk-print-preview" />
 				</form>
 			</field>

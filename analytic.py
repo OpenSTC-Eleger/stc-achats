@@ -87,6 +87,7 @@ class crossovered_budget_lines(osv.osv):
         #first, we get engage_lines that matches dates and current budget line analytic account
         ret = {}
         for line in self.browse(cr, uid, ids, context):
+            ret.setdefault(line.id,{})
             engage_line_ids = self.pool.get("open.engagement.line").search(cr, uid, [('budget_line_id','=',line.id),
                                                                                      ('engage_id.date_engage_validated','<=', line.date_to),
                                                                                      ('engage_id.date_engage_validated','>=',line.date_from),
@@ -99,19 +100,15 @@ class crossovered_budget_lines(osv.osv):
                     amount += engage_line.amount
             else:
                 amount = line.practical_amount
-            ret[line.id] = amount
-        return ret
-    
-    def _openstc_erosion(self, cr, uid, ids, name, args, context=None):
-        ret = {}
-        for line in self.browse(cr, uid, ids, context):
-            ret[line.id] = line.openstc_practical_amount * 100.0 / line.planned_amount
+            ret[line.id]['openstc_practical_amount'] = amount
+            ret[line.id]['openstc_erosion'] = amount * 100.0 / line.planned_amount
+            
         return ret
     
     _inherit = "crossovered.budget.lines"
     _columns = {
-            'openstc_practical_amount':fields.function(_openstc_pract, method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
-            'openstc_erosion':fields.function(_openstc_erosion, method=True, string="Taux d'érosion (%)", type="float", digits_compute=dp.get_precision('Account')),
+            'openstc_practical_amount':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
+            'openstc_erosion':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Taux d'érosion (%)", type="float", digits_compute=dp.get_precision('Account')),
             'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
             'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
             'name':fields.related('analytic_account_id','complete_name',string='Budget name',type='char',store=True),

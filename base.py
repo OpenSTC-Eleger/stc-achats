@@ -209,7 +209,7 @@ class ir_attachment(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         attach = self.browse(cr, uid, ids, context)
-        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','in',('to_check','except_send_mail'))], context=context)
+        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','=','to_check')], context=context)
         if attach_ids:
             raise osv.except_osv(_('Error'), _('you can not end this engage because some invoices attached have to be checked'))
         else:

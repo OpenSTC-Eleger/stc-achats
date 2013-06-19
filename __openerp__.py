@@ -8,7 +8,7 @@
 {
     "name": "openstc_achat_stock",
     "version": "0.1",
-    "depends": ["purchase", "accountant", "product", "stock", "analytic", "account_budget", "openstc"],
+    "depends": ["purchase", "account_accountant", "product", "stock", "analytic", "account_budget", "openstc"],
     "author": "PYF & BP",
     "category": "Category",
     "description": """
@@ -38,10 +38,7 @@
         "security/ir.model.access.csv",
         
         #"unit_tests/unit_tests.xml",
-        "test/cr_commit.yml",
-        "test/openstc_achats_devis_tests.yml",
-        "test/openstc_achats_commande_tests.yml",
-        "test/openstc_achats_suivi_commandes_tests.yml",
+        "test/cr_commit.yml", "test/openstc_achats_devis_tests.yml", "test/openstc_achats_commande_tests.yml", "test/openstc_achats_suivi_commandes_tests.yml",
              ],
     "init_xml":["views/openstc_achat_stock_init_data.xml"],
     "demo": [],

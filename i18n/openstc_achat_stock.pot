@@ -1528,6 +1528,11 @@ msgid "Cliquez sur Imprimer pour visualiser les Couts des Sites du début d'ann�
 msgstr ""
 
 #. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Send again mail to Elu"
+msgstr "Renvoyer mail à l'Elu"
+
+#. module: openstc_achat_stock
 #: model:ir.actions.act_window,name:openstc_achat_stock.openstc_ask_prod_action_view
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock_stock_view_ask_prod
 msgid "Demandes de Fournitures"

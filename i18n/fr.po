@@ -1971,6 +1971,11 @@ msgid "Validate and generate purchase order (pdf)"
 msgstr "Valider et générer commande (pdf)"
 
 #. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Send again mail to Elu"
+msgstr "Renvoyer mail à l'Elu"
+
+#. module: openstc_achat_stock
 #: field:purchase.order.line,amount_ttc:0
 msgid "Montant"
 msgstr "Montant"

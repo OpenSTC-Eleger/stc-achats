@@ -6,10 +6,27 @@
             <field name="name">openstc.achat.crossovered.budget.line.tree</field>
             <field name="model">crossovered.budget.lines</field>
             <field name="type">tree</field>
+            <field name="sequence">6</field>
             <field name="arch" type="xml">
 				<tree string="Budget Lines">
 				    <field name="openstc_general_account"/>
 				    <field name="openstc_code_antenne"/>
+					<field name="analytic_account_id" groups="analytic.group_analytic_accounting" />
+					<field name="planned_amount" sum="Montant Planifié" />
+					<field name="openstc_practical_amount" sum="Montant consommé" />
+					<field name="openstc_erosion" />
+				</tree>
+			</field>
+		</record>
+	    
+	    <record model="ir.ui.view" id="openstc_achat_crossovered_budget_board_line_tree">
+            <field name="name">openstc.achat.crossovered.budget.line.board.tree</field>
+            <field name="model">crossovered.budget.lines</field>
+            <field name="type">tree</field>
+            <field name="sequence">12</field>
+            <field name="arch" type="xml">
+				<tree string="Budget Lines">
+				    <field name="crossovered_budget_id" invisible="1"/>
 					<field name="analytic_account_id" groups="analytic.group_analytic_accounting" />
 					<field name="planned_amount" sum="Montant Planifié" />
 					<field name="openstc_practical_amount" sum="Montant consommé" />
@@ -23,7 +40,8 @@
             <field name="res_model">crossovered.budget.lines</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-			<field name="view_id" ref="openstc_achat_crossovered_budget_line_tree"/>
+			<field name="view_id" ref="openstc_achat_crossovered_budget_board_line_tree"/>
+			<field name="context">{'group_by':'crossovered_budget_id'}</field>
         </record>
 	    
 	    <record id="openstc_my_asks_in_progress" model="ir.actions.act_window">

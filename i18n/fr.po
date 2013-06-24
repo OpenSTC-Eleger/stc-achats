@@ -75,7 +75,7 @@ msgstr "Résumé de l'Achat"
 #. module: openstc_achat_stock
 #: field:purchase.order,validation:0
 msgid "Etape Validation"
-msgstr "Etape Validation"
+msgstr "Etape"
 
 #. module: openstc_achat_stock
 #: field:open.engagement,check_dst:0
@@ -192,7 +192,7 @@ msgstr "Code service de CIRIL"
 #. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/purchase.py:372
 #, python-format
-msgid "Budget to check"
+msgid "Budget to Check"
 msgstr "Budget à valider"
 
 #. module: openstc_achat_stock
@@ -282,7 +282,7 @@ msgstr "Achats-Stocks"
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0
 msgid "Generate Purchase Order"
-msgstr "Generate Purchase Order"
+msgstr "Générer Commandes"
 
 #. module: openstc_achat_stock
 #: view:openstc.open.engage.refuse.inv.wizard:0
@@ -1195,7 +1195,7 @@ msgstr "Rapport des Coûts des Sites et Services"
 
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
-msgid "Budget A vérfier"
+msgid "Budget To Check"
 msgstr "Budget A vérfier"
 
 #. module: openstc_achat_stock
@@ -1662,7 +1662,7 @@ msgstr "Général"
 
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
-msgid "Commande A signer"
+msgid "Purchase to Check"
 msgstr "Commande A signer"
 
 #. module: openstc_achat_stock
@@ -1765,7 +1765,7 @@ msgstr "Besoins en Fournitures Exprimés"
 
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
-msgid "Commande validée"
+msgid "Purchase validated"
 msgstr "Commande validée"
 
 #. module: openstc_achat_stock
@@ -2409,7 +2409,7 @@ msgstr "Montant Pratique"
 #. module: openstc_achat_stock
 #: view:open.engagement.check.elu.wizard:0
 msgid "Please explain your acceptation"
-msgstr "Please explain your acceptation"
+msgstr "Veuillez indiquer la raison de votre autorisation"
 
 #. module: openstc_achat_stock
 #: view:openstc.report.service.site.cost.wizard:0

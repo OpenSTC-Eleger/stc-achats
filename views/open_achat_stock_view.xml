@@ -67,7 +67,6 @@
 				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']"
 					position="after">
 					<group col="6" colspan="4">
-						<field name="validation" invisible="1"/>
 						<field name="engage_id" invisible="1"/>
 					</group>
 				</xpath>
@@ -142,7 +141,13 @@
 							icon="gtk-cancel" type="workflow"
 							groups="openstc_achat_stock.openstc_elu" />
 					</group>
-					
+				</button>
+				<button name="%(purchase.report_purchase_order)d" position="after">
+					<group colspan="3" col="6">
+						<field name="validation"/>
+						<field name="check_dst" readonly="1" attrs="{'invisible':[('state','&lt;&gt;','draft'),('need_confirm','=',False)]}"/>
+						<field name="check_elu" readonly="1" attrs="{'invisible':[('state','&lt;&gt;','draft'),('need_confirm','=',False)]}"/>     
+					</group>
 				</button>
 				<button name="action_cancel" position="replace"/>
 				

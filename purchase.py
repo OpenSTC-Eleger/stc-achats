@@ -264,8 +264,8 @@ class purchase_order(osv.osv):
             
         return ret
     
-    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget A vérfier'),('engagement_to_check','Commande A signer'),
-                                  ('done','Commande validée')]
+    AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget to Check'),('engagement_to_check','Purchase to Check'),
+                                  ('done','Purchase validated')]
     _inherit = 'purchase.order'
     _name = 'purchase.order'
     
@@ -317,6 +317,7 @@ class purchase_order(osv.osv):
             'account_analytic_id':fields.many2one('crossovered.budget.lines', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
             'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
             'check_dst':fields.boolean('Signature DST'),
+            'check_elu':fields.boolean('Signature Elu'),
             'current_url':fields.char('URL Courante',size=256),
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
@@ -574,7 +575,7 @@ class purchase_order(osv.osv):
         if not po.check_dst:
             raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
         engage_id = self.create_engage(cr, po.user_id.id, po.id, context)
-        po.write({'validation':'done','engage_id':engage_id})
+        po.write({'validation':'done','engage_id':engage_id,'check_elu':True})
         self.validate_po_invoice(cr, uid, ids, context=context)
         return {
                 'type':'ir.actions.act_window.close',

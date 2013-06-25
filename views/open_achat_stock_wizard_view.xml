@@ -1,33 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data>
-
-		<record model="ir.ui.view" id="view_po_ask_verif_budget_wizard_form">
-			<field name="name">purchase.order.ask.verif.budget.wizard</field>
-			<field name="model">purchase.order.ask.verif.budget</field>
+		
+	    <record model="ir.ui.view" id="open_engage_check_elu_wizard_form">
+			<field name="name">open.engagement.check.elu.wizard.form</field>
+			<field name="model">open.engagement.check.elu.wizard</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<separator string="Choisir le compte Analytique associé"
-					colspan="4" />
-				<field name="analytic_account_id"
-					on_change="onchange_analytic_account_id(analytic_account_id)" />
-				<field name="service_id" />
-				<newline />
-				<separator string="Vérifier le budget de votre service"
-					colspan="4" />
-				<group col="2" colspan="2">
-					<field name="po_ammount" />
-					<field name="budget_dispo_info" />
-				</group>
-				<field name="tx_erosion_info" />
-				<field name="tx_erosion" invisible="1" />
-				<field name="budget_dispo" invisible="1" />
-				<button special="cancel" string="Annuler" icon="gtk-cancel" />
-				<button name="to_draft_engage" type="object" string="Générer Engagement"
-					icon="gtk-ok" />
+				<form string="Donner une note explicative pour votre Autorisation">
+				    <label string="Please explain your acceptation" colspan="4"/>
+				    <field name="justif_check" colspan="4" nolabel="1"/>
+				    <button special="cancel" string="Anuler" icon="gtk-cancel"/>
+				    <button name="check_elu" type="object" string="Valider" icon="gtk-go-forward"/>
+				</form>
 			</field>
 		</record>
-
+	    
 		<record model="ir.ui.view" id="openstc_view_service_site_cost_wizard">
 			<field name="name">openstc.report.service.site.cost.wizard</field>
 			<field name="model">openstc.report.service.site.cost.wizard</field>

@@ -295,6 +295,51 @@ class purchase_order(osv.osv):
                     ret[po.id] = False
         return ret
     
+    def _get_engage_attaches(self, cr, uid, ids, field_name, arg=None, context=None):
+
+        po_ids = ids
+        cr.execute('''select a.id, a.res_id, a.state, a.engage_done
+                    from ir_attachment as a 
+                    where a.res_id in %s and a.res_model = %s
+                    group by a.res_id, a.id
+                    order by a.create_date DESC''',(tuple(ids), self._name))
+        ret = {}
+        search_ids = []
+        search_ids.extend(ids)
+        for id in ids:
+            ret.setdefault(id, {'attach_ids':[],'engage_to_treat':False,'all_invoices_treated':False})
+        for r in cr.fetchall():
+            if r[1] in ids:
+                #if attach is an invoice and if computation need to continue
+                if not ret[r[1]]['engage_to_treat'] and r[2] <> 'not_invoice':
+                    #if an invoice has to be check, purchase will appear in board
+                    if r[2] in ('to_check','except_send_mail') and not r[3]:
+                        ret[r[1]]['engage_to_treat'] = True
+                        ret[r[1]]['all_invoices_treated'] = False
+                    #as long as no invoices are found to be treated, we consider purchase to be endable
+                    elif not ret[r[1]]['all_invoices_treated']:
+                        ret[r[1]]['all_invoices_treated'] = True
+                ret[r[1]]['attach_ids'].append(r[0])
+            
+                
+        return ret
+    
+    def _search_engage_to_treat(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        if ('engage_to_treat','=',True) in args:
+            cr.execute("select res_id from ir_attachment where state in ('to_check','except_send_mail') and res_model = %s and engage_done=False group by res_id;",(self._name,))
+            return [('id','in',[x for x in cr.fetchall()])]
+        return []
+    
+    def search_all_invoices_treated(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        if ('all_invoices_treated','=',True) in args:
+            cr.execute("select res_id from ir_attachment where state not in ('to_check','not_invoice') and res_model = %s and engage_done = False group by res_id;",(self._name,))
+            return [('id','in',[x for x in cr.fetchall()])]
+        return []
+    
     def button_dummy(self, cr, uid, ids, context={}):
         display = False
         if context:
@@ -307,7 +352,6 @@ class purchase_order(osv.osv):
     
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
-            'engage_id':fields.many2one('open.engagement','Suivi commande associé',readonly=True),
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Objet de l\'achat',size=128),
@@ -324,7 +368,17 @@ class purchase_order(osv.osv):
             'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'mail_sent':fields.boolean('Mail sent ?', invisible=True),
-
+            #fields moved from open.engagement
+            'date_engage_validated':fields.date('Date Validation de la commande', readonly=True),
+            'date_engage_done':fields.datetime('Date de Cloture de la commande',readonly=True),
+            'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
+            'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
+            'engage_lines':fields.one2many('open.engagement.line','engage_id',string='Numéros d\'Engagements'),
+            'attach_ids':fields.function(_get_engage_attaches, multi="attaches", type='one2many', relation='ir.attachment',string='Documents Joints'),
+            'id':fields.integer('Id'),
+            'current_url':fields.char('URL Courante',size=256),
+            'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
+            'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             }
     _defaults = {
         'check_dst':lambda *a: False,
@@ -362,6 +416,13 @@ class purchase_order(osv.osv):
             ids = [ids]
         super(purchase_order, self).write(cr, uid, ids, vals, context)
         return True
+    
+    def search(self, cr, uid, args=[],offset=0,limit=None, order=None,context=None, count=False):
+        if context and context is not None:
+            if 'only_engage_todo' in context:
+                my_args = [('engage_to_treat','=',True)]
+                return super(purchase_order, self).search(cr, uid, args + my_args, offset=offset, limit=limit, order=order,context=context,count=count)
+        return super(purchase_order, self).search(cr, uid, args, offset=offset, limit=limit, order=order,context=context,count=count)
     
     
     def wkf_confirm_order(self, cr, uid, ids, context=None):
@@ -453,7 +514,7 @@ class purchase_order(osv.osv):
         return elu_id and elu_id[0] or False
     
     #Construction dynamique de l'url à envoyer dans les mails
-    #http://127.0.0.1:8069/web/webclient/home#id=${object.id}&view_type=page&model=open.engagement
+    #http://127.0.0.1:8069/web/webclient/home#id=${object.id}&view_type=page&model=purchase.order
     def compute_current_url(self, cr, uid, id, context=None):
         web_root_url = self.pool.get('ir.config_parameter').get_param(cr, uid, 'web.base.url')
         model = self._name
@@ -484,19 +545,39 @@ class purchase_order(osv.osv):
         if not context or context == None:
             context = {}
         res_id = 0
-        if not po.engage_id:
-                service_id = po.service_id
-                context.update({'user_id':uid,'service_id':service_id.id})
-                #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
-                res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
-                                                                           'service_id':service_id.id,
-                                                                           'purchase_order_id':po.id}, context)
-                assert res_id and res_id > 0, "Error during creation of open.engagement object"
-                wf_service = netsvc.LocalService('workflow')
-                wf_service.trg_validate(po.user_id.id, 'open.engagement', res_id, 'confirm', cr)
-        else:
-            res_id = po.engage_id.id
-        return res_id
+        service_id = po.service_id
+        context.update({'user_id':uid,'service_id':service_id.id})
+        #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
+        self.validated_engage(cr, uid, [id], context)
+        return True
+    
+    def validated_engage(self, cr, uid, ids, context=None):
+        if not isinstance(ids, list):
+            ids = [ids]
+        #Creation of engage lines, grouped by budget_line instead of one per order_line
+        if not context:
+            context = {}
+        #line_obj = self.pool.get("purchase.order.line")
+        engage_line_obj = self.pool.get("open.engagement.line")
+        account_amount = {}
+        for po in self.browse(cr, uid, ids, context):
+            for line in po.order_line:
+                #We verify that budget is associated to a service
+                if not line.budget_line_id.crossovered_budget_id.service_id:
+                    raise osv.except_osv(_('Error'),_('Budget %s has not any service associated') % line.budget_line_id.name)
+                #we group amount by budget
+                account_amount.setdefault(line.budget_line_id.id,{'line_id':[],'service_id':0})
+                account_amount[line.budget_line_id.id]['line_id'].append(line.id)
+                account_amount[line.budget_line_id.id]['service_id'] = line.budget_line_id.crossovered_budget_id.service_id.id
+            engage_line = []
+            #we create associated engage lines
+            for key, value in account_amount.items():
+                context.update({'service_id':value['service_id']})
+                engage_line.append(engage_line_obj.create(cr, uid, {'order_line':[(4,x) for x in value['line_id']]}, context=context))
+            #And we associate engage.lines created to current purchase
+            self.write(cr, uid, [po.id], {'engage_lines':[(4,x) for x in engage_line], 'date_engage_validated':fields.date.context_today(self, cr, uid, context)}, context=context)
+            #self.validate_po_invoice(cr, uid, ids, context)
+        return True
     
     def openstc_confirm(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
@@ -516,28 +597,6 @@ class purchase_order(osv.osv):
                 engage_id = self.create_engage(cr, po.user_id.id, ids, context=context)
                 self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
                 self.validate_po_invoice(cr, uid, ids, context=context)
-#            #On vérifie si on a un budget suffisant pour chaque ligne d'achat
-#            #On gère aussi le cas de plusieurs lignes référants au même compte analytique
-#            if not po.engage_id:
-#                service_id = po.service_id
-#                context.update({'user_id':uid,'service_id':service_id.id})
-#                #Création de l'engagement et mise à jour des comptes analytiques des lignes de commandes (pour celles ou rien n'est renseigné
-#                res_id = self.pool.get("open.engagement").create(cr, uid, {'user_id':uid,
-#                                                                           'service_id':service_id.id,
-#                                                                           'purchase_order_id':ids}, context)
-#                if res_id:
-#                    engage = self.pool.get("open.engagement").read(cr, uid, res_id, ['name'])
-#                    self.log(cr, uid, ids, _('Engage %s was created at %s') % (engage['name'], datetime.now()))
-#                    po.write({'validation':'engagement_to_check'})
-#            else:
-#                res_id = po.engage_id.id
-#            return {
-#                'type':'ir.actions.act_window',
-#                'target':'current',
-#                'res_model':'open.engagement',
-#                'view_mode':'form',
-#                'res_id':res_id
-#                }
         else:
             msg_error = ""
             cpt = 0
@@ -580,12 +639,7 @@ class purchase_order(osv.osv):
         return {
                 'type':'ir.actions.act_window.close',
         }
-    
-#    def action_invoice_create(self, cr, uid, ids, context=None):
-#        inv_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, context)
-#        for purchase in self.browse(cr, uid, ids, context):
-#            self.pool.get("open.engagement").write(cr, uid, purchase.engage_id.id, {'account_invoice_id':inv_id})
-#        return inv_id
+
     
     def write_ciril_engage(self, cr, uid, ids, context=None):
         ret = ''
@@ -607,6 +661,61 @@ class purchase_order(osv.osv):
         ret = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)
         ret.update({'merge_line_ids':[(4,x.id)for x in order_line.merge_line_ids]})
         return ret
+    
+    def open_stock_moves(self, cr, uid, ids, context=None):
+        stock_ids = []
+        for po in self.browse(cr, uid, ids):
+            lines = [x.id for x in po.order_line]
+            stock_ids.extend(self.pool.get("stock.move").search(cr, uid, [('purchase_line_id','in',lines)]))
+
+        #We modify the active_ids context key to bypass the stock_move step interface (wizard actually wait for stock_move active_ids)
+        active_ids = context.get('active_ids',ids)
+        active_model = context.get('active_model')
+        context.update({'active_ids':stock_ids,'old_active_ids':active_ids,'active_model':'stock.move','old_active_model':active_model})
+        if not 'active_id' in context:
+            context.update({'active_id':ids[0]})
+        return {
+            'type':'ir.actions.act_window',
+            'res_model':'stock.partial.move',
+            'context':context,
+            'view_mode':'form',
+            'target':'new',
+            }
+    
+    def write_ciril_engage(self, cr, uid, ids, context=None):
+        ret = ''
+        template = template_ciril_txt_file_engagement()
+        
+        for po in self.browse(cr, uid, ids ,context=context):
+            ret += template.create_file(po)
+            #write content in an ir.attachment
+            ret = base64.b64encode(ret)
+            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
+                                                            'datas_fname':'engages.txt',
+                                                            'datas':ret,
+                                                            'res_model':self._name,
+                                                            'res_id':po.id
+                                                            })
+        return {'type':'ir.actions.act_window_close'}
+    
+    def all_reception_done(self, cr, uid, ids):
+        if isinstance(ids, list):
+            ids = ids[0]
+        #On vérifie que toutes le réceptions de produits sont faites
+        po = self.browse(cr, uid, ids)
+        for line in po.order_line:
+            for move in line.move_ids:
+                if move.state <> 'done':
+                    return False
+            #if not engage.reception_ok:
+            #    self.write(cr, uid, ids, {'reception_ok':True})
+        return True
+    
+    def engage_done(self, cr, uid, ids, context=None):
+        po = self.browse(cr, uid, ids[0], context=context)
+        self.write(cr, uid, ids, {'state':'done','date_engage_done':datetime.now()})
+        self.pool.get('ir.attachment').write(cr, uid, [x.id for x in po.attach_ids], {'engage_done':True}, context=context)
+        return True
     
     
 purchase_order()

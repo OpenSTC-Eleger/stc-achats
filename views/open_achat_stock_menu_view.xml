@@ -60,24 +60,6 @@
 			<field name="domain">[('state','&lt;&gt;','draft'),('is_emprunt','=',False)]</field>
 		</record>
 
-		<record id="action_view_engagements" model="ir.actions.act_window">
-			<field name="name">Suivis de mes commandes</field>
-			<field name="res_model">open.engagement</field>
-			<field name="type">ir.actions.act_window</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-			<field name="domain">[('user_id','=',uid)]</field>
-			<field name="context">{'search_default_in_progress':'1','search_default_to_validate':'1','search_default_to_pay':'1'}</field>
-		</record>
-
-		<record id="action_view_all_engagements" model="ir.actions.act_window">
-			<field name="name">Suivi de toutes les commandes</field>
-			<field name="res_model">open.engagement</field>
-			<field name="type">ir.actions.act_window</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-			<field name="context">{'search_default_in_progress':'1','search_default_to_validate':'1','search_default_to_pay':'1'}</field>
-		</record>
 
 		<record id="action_view_all_engagements_line" model="ir.actions.act_window">
 			<field name="name">Engagements Générés</field>
@@ -227,10 +209,6 @@
 			parent="menu_open_achat_stock_achats" action="action_openstc_view_all_purchase" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_purchase" -->
 <!-- 			sequence="3" parent="menu_open_achat_stock_achats" action="action_view_valid_purchase" /> -->
-		<menuitem id="menu_open_achat_stock_view_engagements" groups="openstc.openstc_manager"
-			sequence="4" parent="menu_open_achat_stock_achats" action="action_view_engagements" />
-		<menuitem id="menu_open_achat_stock_view_all_engagements" sequence="5" parent="menu_open_achat_stock_achats"
-			groups="openstc.openstc_dst,openstc_elu" action="action_view_all_engagements" />
 <!-- 		<menuitem id="menu_open_achat_stock_achats_view_invoice" -->
 <!-- 			name="Factures" sequence="6" parent="menu_open_achat_stock_achats" -->
 <!-- 			action="account.action_invoice_tree" /> -->

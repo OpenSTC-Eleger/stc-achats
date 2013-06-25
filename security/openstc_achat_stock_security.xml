@@ -13,17 +13,6 @@
 <!-- 			<field eval="0" name="perm_unlink" /> -->
 <!-- 		</record> -->
 
-		<record model="ir.rule" id="open_engagement_rule_all_access_specific_perso">
-			<field name="name">Engagements Rule Access To own</field>
-			<field name="model_id" ref="model_open_engagement" />
-			<field name="domain_force">[('user_id','=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
-			<field eval="1" name="perm_read" />
-			<field eval="1" name="perm_create" />
-			<field eval="1" name="perm_write" />
-			<field eval="1" name="perm_unlink" />
-		</record>
-
 		<record model="ir.rule" id="openstc_achat_stock_budget_lines_specific">
 			<field name="name">Budget lines Rule Access To own</field>
 			<field name="model_id" ref="model_crossovered_budget_lines" />
@@ -81,29 +70,6 @@
 			<field eval="1" name="perm_unlink" />
 		</record>
 
-		<record model="ir.rule" id="purchase_order_ask_access_specific">
-			<field name="name">Purchase Order Asks Rule Access</field>
-			<field name="model_id" ref="model_purchase_order_ask" />
-			<field name="domain_force">[('user_id','=',user.id)]</field>
-			<field eval="[(6,0,[ref('openstc.openstc_manager'),ref('openstc.openstc_employee')])]" name="groups" />
-			<field eval="1" name="perm_read" />
-			<field eval="1" name="perm_create" />
-			<field eval="1" name="perm_write" />
-			<field eval="1" name="perm_unlink" />
-		</record>
-
-
-		<record model="ir.rule" id="open_engagement_rule_all_access">
-			<field name="name">Engagements Rule All Access</field>
-			<field name="model_id" ref="model_open_engagement" />
-			<field eval="[(6,0,[ref('openstc.openstc_dst'),ref('openstc_elu')])]"
-				name="groups" />
-			<field eval="1" name="perm_read" />
-			<field eval="1" name="perm_create" />
-			<field eval="1" name="perm_write" />
-			<field eval="1" name="perm_unlink" />
-		</record>
-
 		<record model="ir.rule" id="openstc_purchase_order_all_access">
 			<field name="name">Purchase Orders Rule All Access</field>
 			<field name="model_id" ref="model_purchase_order" />
@@ -118,17 +84,6 @@
 		<record model="ir.rule" id="openstc_account_invoice_access_all">
 			<field name="name">Account Invoices Rule All Access</field>
 			<field name="model_id" ref="model_account_invoice" />
-			<field eval="[(6,0,[ref('openstc.openstc_dst'),ref('openstc_elu')])]"
-				name="groups" />
-			<field eval="1" name="perm_read" />
-			<field eval="1" name="perm_create" />
-			<field eval="1" name="perm_write" />
-			<field eval="1" name="perm_unlink" />
-		</record>
-
-		<record model="ir.rule" id="purchase_order_ask_access_all">
-			<field name="name">Purchase Order Asks Rule All Access</field>
-			<field name="model_id" ref="model_purchase_order_ask" />
 			<field eval="[(6,0,[ref('openstc.openstc_dst'),ref('openstc_elu')])]"
 				name="groups" />
 			<field eval="1" name="perm_read" />

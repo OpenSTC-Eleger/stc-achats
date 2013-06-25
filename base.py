@@ -130,16 +130,13 @@ class ir_attachment(osv.osv):
         is_invoice = False
         #invoice : F-yyyy-MM-dd-001
         prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
-        #if attach.res_model == 'open.engagement':
+        #if attach.res_model == 'purchase.order':
         is_invoice = prog.search(attach.datas_fname)
         if is_invoice:
             self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture
-            engage = self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context)
-            print(attach.datas_fname)
-            print(fields.date.context_today(self, cr, uid, context))
-            print(engage.name)
-            self.log(cr, engage.user_id.id, attach_id,_('you have to check invoice %s added at %s on your engage %s') %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
+            #engage = self.pool.get("purchase.order").browse(cr, uid, attach.res_id, context)
+            #self.log(cr, engage.user_id.id, attach_id,_('you have to check invoice %s added at %s on your engage %s') %(attach.datas_fname,fields.date.context_today(self, cr, uid, context), engage.name))
         return attach_id
     
     def send_invoice_to_pay(self, cr, uid, ids, context=None):
@@ -148,19 +145,18 @@ class ir_attachment(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         attach = self.browse(cr, uid, ids, context)
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Valid%')], context=context)
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','purchase.order'),('name','like','%Valid%')], context=context)
         if isinstance(template_id, list):
             template_id = template_id[0]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
         self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail with invoice attached to accountant %s') %(attach.datas_fname))
             self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
         else:
             self.write(cr, uid, [ids], {'state':'validated','action_date':datetime.now()}, context)
         
-        return {'res_model':'open.engagement',
+        return {'res_model':'purchase.order',
                 'view_mode':'form,tree',
                 'target':'current',
                 'res_id':attach.res_id,
@@ -184,18 +180,17 @@ class ir_attachment(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         attach = self.browse(cr, uid, ids, context)
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','open.engagement'),('name','like','%Refus%')], context=context)
+        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','purchase.order'),('name','like','%Refus%')], context=context)
         if isinstance(template_id, list):
             template_id = template_id[0]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, attach.res_id, force_send=False, context=context)
         self.pool.get("mail.message").write(cr, uid, [msg_id], {'attachment_ids':[(4, ids)]}, context=context)
         self.pool.get("mail.message").send(cr, uid, [msg_id], context)
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
-            self.pool.get("open.engagement").log(cr, uid, attach.res_id, _('Error sending mail'), context=context)
             self.write(cr, uid, [ids], {'state':'except_send_mail','action_date':datetime.now()}, context)
         else:
             self.write(cr, uid, [ids], {'state':'refused','action_date':datetime.now()}, context)
-        return {'res_model':'open.engagement',
+        return {'res_model':'purchase.order',
                 'view_mode':'form,tree',
                 'target':'current',
                 'res_id':attach.res_id,
@@ -209,17 +204,16 @@ class ir_attachment(osv.osv):
         if isinstance(ids, list):
             ids = ids[0]
         attach = self.browse(cr, uid, ids, context)
-        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','open.engagement'),('state','=','to_check')], context=context)
+        attach_ids = self.search(cr, uid, [('res_id','=',attach.res_id),('res_model','=','purchase.order'),('state','=','to_check')], context=context)
         if attach_ids:
             raise osv.except_osv(_('Error'), _('you can not end this engage because some invoices attached have to be checked'))
         else:
-            if self.pool.get("open.engagement").browse(cr, uid, attach.res_id, context).reception_ok:
+            if self.pool.get("purchase.order").browse(cr, uid, attach.res_id, context).reception_ok:
                 self.write(cr, uid, [attach.id], {'attach_made_done':True},context=context)
-                wf_service = netsvc.LocalService('workflow')
-                wf_service.trg_validate(uid, 'open.engagement', attach.res_id, 'terminate_engage', cr)
+                self.pool.get("purchase.order").engage_done(cr, uid, [attach.res_id])
             else:
                 raise osv.except_osv(_('Error'), _('you can not end this engage because some products are waiting for reception (do it in OpenERP)'))
-        return {'res_model':'open.engagement',
+        return {'res_model':'purchase.order',
                 'view_mode':'form,tree',
                 'target':'current',
                 'res_id':attach.res_id,

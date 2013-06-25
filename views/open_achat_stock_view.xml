@@ -24,14 +24,17 @@
 			<field name="priority">10</field>
 			<field name="arch" type="xml">
 				<search>
-					<filter name="openstc_draft" string="A saisir" domain="[('validation','=','budget_to_check')]"
-					    help="Commandes où les budgets sont à saisir ou sont insuffisants" icon="terp-document-new"/>
-					<filter name="openstc_to_check" string="A signer par responsable(s)" domain="[('validation','=','engagement_to_check')]" icon="terp-project"
-					    help="Commandes soumises à validation par l'acheteur, seuls les responsables peuvent signer (DST, Elu, etc.)"/>
-					<filter name="openstc_confirm" string="Validées" domain="['&amp;',('validation','=','done'),('shipped','=',False)]" icon="terp-dolar"
-					    help="Commandes dont les budgets sont suffisants et qui sont validées par l'acheteur (et les responsables si besoin). Un suivi de commande a été créé pour l'acheteur."/>
-					<filter name="openstc_done" string="Closes" domain="['&amp;',('validation','=','done'),('shipped','=',True)]" icon="terp-check"
-					    help="Commandes entièrement livrées (ou prestations entièrement réalisées), seul l'acheteur peut indiquer cela."/>
+					<filter name="openstc_draft" string="Budget to check" domain="[('validation','=','budget_to_check')]"
+					    help="Purchases where budgets have to be checked" icon="terp-document-new"/>
+					<filter name="openstc_to_check_dst" string="Purchases to be signed by manager" domain="[('validation','=','engagement_to_check'),('check_dst','=',False)]" icon="terp-project"
+					    help="Purchases to be signed by manager because purchase amount is higher than user max amount."/>
+					<filter name="openstc_to_check_elu" string="Purchases to be signed by elu" domain="[('validation','=','engagement_to_check'),('check_elu','=',False),('check_dst','=',True)]" icon="terp-project"
+					    help="Purchases to be signed by elu before being validated"/>
+					<filter name="openstc_po_shipping" string="Purchases waiting for shipping - payment" domain="[('validation','=','done'),'|',('reception_ok','=',False),('engage_to_treat','=',True)]"
+						help="Purchases with some products waiting for shipment or with some invoices to treat"/>
+					<filter name="openstc_po_shipping" string="Purchases to be done" domain="[('validation','=','done'),('reception_ok','=',True),('all_invoices_treated','=',True)]"
+						help="Purchases paid ans shipped needing to be ended"/>
+					
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>
 					<field name="partner_id" domain="[('supplier','=',True)]" filter_domain="[('partner_id','=',self)]"/>
@@ -64,12 +67,6 @@
 			<field name="priority">9</field>
 			<field name="inherit_id" ref="purchase.purchase_order_form" />
 			<field name="arch" type="xml">
-				<xpath expr="//notebook/page[@string='Purchase Order']/group[@col='11']"
-					position="after">
-					<group col="6" colspan="4">
-						<field name="engage_id" invisible="1"/>
-					</group>
-				</xpath>
 				<xpath
 					expr="//notebook/page[@string='Purchase Order']/field[@name='partner_id']"
 					position="before">
@@ -86,6 +83,10 @@
 				<field name="origin" position="after">
 					<field name="account_analytic_id"
 						groups="base.group_extended" />
+				</field>
+				<field name="date_order" position="after">
+				    <field name="date_engage_validated"/>
+				    <field name="date_engage_done"/>
 				</field>
 				<field name="order_line" position="attributes">
 				    <attribute name="context">{'default_company_id':company_id,'default_budget_line_id':account_analytic_id}</attribute>
@@ -163,7 +164,42 @@
 				<field name="state" position="attributes">
 				    <attribute name="invisible">1</attribute>
 				</field>
-				
+				<page string="Purchase Order" position="after">
+   					<page string="Engage">
+	   					<field name="attach_ids" nolabel="1" colspan="4">
+							<tree string="Documents joints"
+								colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
+								<field name="datas_fname" />
+								<field name="create_uid" />
+								<field name="create_date" />
+								<field name="action_date" />
+								<field name="state" />
+								<field name="engage_done" />
+								<field name="attach_made_done" />
+								<button name="send_invoice_to_pay" type="object" icon="gtk-go-forward"
+									help="Valide et Envoie la Facture au service compta pour paiement"
+									states="to_check,except_send_mail" />
+								<button name="action_refuse_invoice_to_pay" type="object"
+									icon="gtk-cancel"
+									help="Refuser la facture pour paiement, vous allez saisir un bref justificatif"
+									states="to_check,except_send_mail" />
+								<button name="engage_complete" type="object" icon="gtk-ok"
+									help="To indicate that purchase is entirely paid, this terminate the open.engagement"
+									attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"
+									confirm="Be carefull, You are closing this open.engagement. This means that all products have been received and all of the purchase is paid by accountant service. If not, Please click on Cancel." />
+								<button name="dummy" icon="gtk-help"
+									help="This indicates that this invoice permits to terminate this open.engagement"
+									attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}" />
+							</tree>
+						</field>
+					
+					<field name="reception_ok" />
+					
+					<button name="open_stock_moves" type="object"
+							string="Open product reception"	attrs="{'invisible':[('reception_ok','=',True)]}"
+							icon="gtk-print-preview" />
+					</page>
+				</page>
 			</field>
 		</record>
 
@@ -267,94 +303,6 @@
 			</field>
 		</record>
 
-		<record id="open_engage_tree_view" model="ir.ui.view">
-			<field name="name">open.engagement.tree</field>
-			<field name="model">open.engagement</field>
-			<field name="type">tree</field>
-			<field name="arch" type="xml">
-				<tree>
-					<field name="name" />
-					<field name="description" />
-					<field name="state" />
-				</tree>
-			</field>
-		</record>
-
-		<record id="open_engage_form_view" model="ir.ui.view">
-			<field name="name">open.engagement.form</field>
-			<field name="model">open.engagement</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form>
-						<group col="6" colspan="4" string="General infos"
-							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier">
-							<field name="name" />
-							<field name="description" />
-							<field name="purchase_order_id" />
-							<field name="user_id" />
-							<field name="service_id" context="{'only_my_services':'1'}"/>
-							<field name="account_invoice_id" invisible="1" />
-							<field name="date_engage_done" />
-							<field name="invoice_ok" invisible="1" />
-						</group>
-					
-<!-- 					<group col="2" string="Products picking" colspan="1" -->
-<!-- 						attrs="{'invisible':[('state','in',('draft','to_validate'))]}"> -->
-						
-<!-- 						<button name="open_purchase" type="object" -->
-<!-- 							groups="openstc_achat_stock.openstc_elu" string="Voir la Commande" -->
-<!-- 							icon="gtk-edit" /> -->
-<!-- 						<field name="reception_ok" /> -->
-<!-- 						<button name="open_stock_moves" type="object" -->
-<!-- 							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier" -->
-<!-- 							string="See reception of products linked" states="waiting_reception" -->
-<!-- 							icon="gtk-print-preview" /> -->
-<!-- 					</group> -->
-
-<!-- 					<newline /> -->
-					<field name="attach_ids" nolabel="1" colspan="4"
-						groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier">
-						<tree string="Documents joints"
-							colors="blue:state=='to_check';red:state=='refused';orange:state=='except_send_mail';green:state=='validated'">
-							<field name="datas_fname" />
-							<field name="create_uid" />
-							<field name="create_date" />
-							<field name="action_date" />
-							<field name="state" />
-							<field name="engage_done" />
-							<field name="attach_made_done" />
-							<button name="send_invoice_to_pay" type="object" icon="gtk-go-forward"
-								help="Valide et Envoie la Facture au service compta pour paiement"
-								states="to_check,except_send_mail" />
-							<button name="action_refuse_invoice_to_pay" type="object"
-								icon="gtk-cancel"
-								help="Refuser la facture pour paiement, vous allez saisir un bref justificatif"
-								states="to_check,except_send_mail" />
-							<button name="engage_complete" type="object" icon="gtk-ok"
-								help="To indicate that purchase is entirely paid, this terminate the open.engagement"
-								attrs="{'invisible':['|',('engage_done','=',True),('state','=',('not_invoice'))]}"
-								confirm="Be carefull, You are closing this open.engagement. This means that all products have been received and all of the purchase is paid by accountant service. If not, Please click on Cancel." />
-							<button name="dummy" icon="gtk-help"
-								help="This indicates that this invoice permits to terminate this open.engagement"
-								attrs="{'invisible':['|',('attach_made_done','=',False),('state','=','not_invoice')]}" />
-						</tree>
-					</field>
-					
-					<field name="state" widget="statusbar" invisible="1"
-						statusbar_visible="draft,to_validate,waiting_reception,engage_to_terminate,done" />
-					<field name="reception_ok" />
-					<button name="open_purchase" type="object"
-							groups="openstc_achat_stock.openstc_elu" string="See purchase order"
-							icon="gtk-edit" />
-					
-					<button name="open_stock_moves" type="object"
-							groups="openstc.openstc_dst,openstc.openstc_manager,openstc.openstc_qualifier"
-							string="Open product reception"	attrs="{'invisible':['|',('state','&lt;&gt;','waiting_reception'),('reception_ok','=',True)]}"
-							icon="gtk-print-preview" />
-				</form>
-			</field>
-		</record>
-
 		<record model="ir.ui.view" id="view_openstc_open_engage_line_tree">
 			<field name="name">openstc.engagement.line.tree</field>
 			<field name="model">open.engagement.line</field>
@@ -366,32 +314,6 @@
 			</field>
 		</record>
 				
-		<record model="ir.ui.view" id="view_openstc_open_engage_search_view">
-			<field name="name">openstc.engagement.search</field>
-			<field name="model">open.engagement</field>
-			<field name="type">search</field>
-			<field name="arch" type="xml">
-				<search string="Suivis commande">
-					<filter name="to_validate" string="A Signer"
-						domain="[('state','in',('draft','to_validate'))]" help="Suivis commande en Brouillons ou en attente signature DST + Elu" />
-					<filter name="in_progress" string="En Cours"
-						domain="[('state','in',('waiting_reception','waiting_invoice','waiting_invoice_validated'))]"
-						help="Suivis commande en attente de couments Comptables" />
-					<filter name="to_pay" string="Reste A Payer"
-						domain="[('state','=','engage_to_terminate')]" help="Suivis comande dont la facture est a payer" />
-					<filter name="done" string="Clos" domain="[('state','=','done')]"
-						help="Suivis commande Clos (facture payée et et réception produits / prestation complet et validé)" />
-					<filter name="except" string="Litigieux"
-						domain="[('state','=','except_invoice')]" help="Suivis commande en Refus de Paiement" />
-					<field name="name" string="numéro de suivi commande" filter_domain="[('name','ilike',self)]" />
-					<field name="service_id"  string="Service concerné" 
-						filter_domain="[('service_id','=',self)]" widget="selection" />
-					<field name="supplier_id" string="Fournisseur" domain="[('supplier','=',True)]"
-						filter_domain="[('supplier_id','=',self)]" widget="selection" />
-				</search>
-			</field>
-		</record>
-
 		<record id="open_achat_stock_budget_tree_view" model="ir.ui.view">
 			<field name="name">open.achat.stock.crossovered.budget.tree</field>
 			<field name="model">crossovered.budget</field>
@@ -632,26 +554,6 @@
 				</form>
 			</field>
 		</record>
-
-
-		<record id="openstc_open_engage_check_elu_wizard" model="ir.ui.view">
-			<field name="name">open.engagement.check.elu.wizard.form</field>
-			<field name="model">open.engagement.check.elu.wizard</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form string="Donner une note explicative pour votre Autorisation">
-					<label
-						string="Please explain your acceptation"
-						colspan="4" />
-					<field name="justif_check" colspan="4" nolabel="1" />
-					<button special="cancel" string="Anuler" icon="gtk-cancel" />
-					<button name="check_elu" type="object" string="Valider"
-						icon="gtk-go-forward" />
-				</form>
-			</field>
-		</record>
-
-
 
 		<record id="openstc_ir_attachment_inherit_form" model="ir.ui.view">
 			<field name="name">ir.attachment.inherit.form</field>

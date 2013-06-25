@@ -47,18 +47,6 @@
 			<field name="padding">4</field>
 		</record>
 
-		<record id="sequence_open_engage_order_custom_type" model="ir.sequence.type">
-			<field name="name">OpenSTC Open Engage</field>
-			<field name="code">open.engagement</field>
-		</record>
-
-		<record id="seq_open_engage" model="ir.sequence">
-			<field name="name">OpenSTC Open Engage</field>
-			<field name="code">open.engagement</field>
-			<field name="prefix">BE-%(year)s-%(month)s-</field>
-			<field name="padding">4</field>
-		</record>
-
 		<record id="sequence_po_ask_number_type" model="ir.sequence.type">
 			<field name="name">Numéro de Demande Devis</field>
 			<field name="code">po_ask.number</field>

@@ -137,7 +137,7 @@ class template_ciril_txt_file_engagement(object):
             _logger.warning('Trying to use template for engagement without initializing it, forcing init method to it\'s latest version')
             self.__init__()
         #assert not isinstance(record, osv.osv), 'Error, you passed a none osv object to the template file'
-        assert record._name == 'open.engagement', 'Error, you try to write an engage without an open.engagement object'
+        assert record._name == 'purchase.order', 'Error, you try to write an engage without an purchase.order object'
         
         #data_main = self._vars.copy()
         data_main = self.init_main_vals()
@@ -153,8 +153,8 @@ class template_ciril_txt_file_engagement(object):
         #data_main['num_market']['value'] = record.purchase_order_id.partner_id.id
         #data_main['num_commande']['value'] = record.purchase_order_id.partner_id.id
         
-        data_main['code_tiers']['value'] = str(record.purchase_order_id.partner_id.code_tiers_ciril or '') 
-        data_main['num_commande_openstc']['value'] = record.purchase_order_id.name
+        data_main['code_tiers']['value'] = str(record.partner_id.code_tiers_ciril or '') 
+        data_main['num_commande_openstc']['value'] = record.name
         data_main['exercice']['value'] = record.date_engage_validated[:4]
         data_main['date_engage']['value'] = record.date_engage_validated[:10]
         data_main['type_engage']['value'] = 'I'

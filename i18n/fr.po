@@ -1382,7 +1382,7 @@ msgstr "Closes"
 #. module: openstc_achat_stock
 #: view:board.board:0
 msgid "Engage to treat"
-msgstr "Commandes avec des factures à traiter"
+msgstr "Commandes avec des factures à traiter (ou à renvoyer)"
 
 #. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask

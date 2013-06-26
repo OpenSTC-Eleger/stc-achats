@@ -382,7 +382,7 @@ msgid "Purchase Order Lines"
 msgstr "Lignes d'ordre d'achat"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
+#: view:ir.attachment:0
 msgid "Be carefull, You are closing this open.engagement. This means that all products have been received and all of the purchase is paid by accountant service. If not, Please click on Cancel."
 msgstr "Attention, vous allez clore cette commande. Cela veut dire que tous les produits sont réceptionnés et que toutes les factures sont payées par le service comptable. Veuillez annuler dans le cas contraire."
 
@@ -1173,7 +1173,7 @@ msgid "Budget %s has not any service associated"
 msgstr "Budget %s n'a acuune service associé"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
+#: view:ir.attachment:0
 msgid "To indicate that purchase is entirely paid, this terminate the open.engagement"
 msgstr "Indique que la commande est soldée, cela clos la commande"
 

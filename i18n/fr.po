@@ -17,8 +17,18 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
+msgid "Engage"
+msgstr "Gestion commande"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
 msgid "Validées"
 msgstr "Validées"
+
+#. module: openstc_achat_stock
+#: field:ir.attachment,create_uid:0
+msgid "Owner"
+msgstr "Propriétaire du fichier"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,all_budget_dispo:0
@@ -325,11 +335,6 @@ msgid "Montant par Bon de Commande"
 msgstr "Montant par Bon de Commande"
 
 #. module: openstc_achat_stock
-#: model:ir.model,name:openstc_achat_stock.model_purchase_order_ask_verif_budget
-msgid "purchase.order.ask.verif.budget"
-msgstr "purchase.order.ask.verif.budget"
-
-#. module: openstc_achat_stock
 #: view:openstc.ask.prod:0
 msgid "Demande de Fournitures"
 msgstr "Demande de Fournitures"
@@ -343,6 +348,11 @@ msgstr "Nom budget"
 #: field:ir.attachment,attach_made_done:0
 msgid "Cette Facture Clos ce suivi commande"
 msgstr "Cette Facture Clos ce suivi commande"
+
+#. module: openstc_achat_stock
+#: field:ir.attachment,create_date:0
+msgid "Date Created"
+msgstr "Ajouté le"
 
 #. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/open_achat_stock.py:135
@@ -365,11 +375,6 @@ msgstr "Valider la commande par l'Elu"
 #: field:openstc.partner.activity,name:0
 msgid "Activity name"
 msgstr "Activité"
-
-#. module: openstc_achat_stock
-#: view:purchase.order.ask.verif.budget:0
-msgid "Choisir le compte Analytique associé"
-msgstr "Choisir le compte Analytique associé"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
@@ -430,14 +435,6 @@ msgstr "Le nom de la société doit être unique !"
 #: model:ir.model,name:openstc_achat_stock.model_stock_partial_move
 msgid "Partial Move Processing Wizard"
 msgstr "Assistant des mouvements de stock partiel"
-
-#. module: openstc_achat_stock
-#: field:purchase.order.ask.verif.budget,tx_erosion:0
-#: field:purchase.order.ask.verif.budget,tx_erosion_info:0
-#: field:purchase.order.line,tx_erosion:0
-msgid "Taux Erosion de votre Service"
-msgstr "Taux Erosion de votre Service"
-
 #. module: openstc_achat_stock
 #: field:purchase.order,attach_ids:0
 msgid "Documents Joints"
@@ -717,19 +714,12 @@ msgstr "Date de Cloture de la commande"
 #. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
 msgid "Order Date"
-msgstr "Date de création"
+msgstr "Créé le"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
 msgid "Validate purchase by DST"
 msgstr "Valider la commande (DST)"
-
-#. module: openstc_achat_stock
-#: field:purchase.order.ask.verif.budget,budget_dispo:0
-#: field:purchase.order.ask.verif.budget,budget_dispo_info:0
-#: field:purchase.order.line,budget_dispo:0
-msgid "Budget Disponible"
-msgstr "Budget Disponible"
 
 #. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/base.py:215
@@ -757,11 +747,6 @@ msgstr "Annuler Demande"
 #: field:purchase.order.line,budget_line_id:0
 msgid "Budget line"
 msgstr "Ligne budgétaire"
-
-#. module: openstc_achat_stock
-#: field:purchase.order.ask.verif.budget,analytic_account_id:0
-msgid "Compte associé à l'achat"
-msgstr "Compte associé à l'achat"
 
 #. module: openstc_achat_stock
 #: report:purchase.order.ask:0
@@ -1193,11 +1178,6 @@ msgid "To indicate that purchase is entirely paid, this terminate the open.engag
 msgstr "Indique que la commande est soldée, cela clos la commande"
 
 #. module: openstc_achat_stock
-#: field:purchase.order.ask.verif.budget,po_ammount:0
-msgid "Montant de l'achat"
-msgstr "Montant de l'achat"
-
-#. module: openstc_achat_stock
 #: view:purchase.order.ask:0
 #: field:purchase.order.ask,suppliers_id:0
 msgid "Fournisseurs potentiels"
@@ -1465,9 +1445,9 @@ msgid "Répondre A ces Besoins"
 msgstr "Répondre A ces Besoins"
 
 #. module: openstc_achat_stock
-#: view:purchase.order:0
+#: view:ir.attachment:0
 msgid "This indicates that this invoice permits to terminate this open.engagement"
-msgstr "Indique que cette facture a permis de clore ce suivi de commande"
+msgstr "Indique que cette facture a permis de clore cette commande"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
@@ -1519,7 +1499,6 @@ msgstr "Demande de Devis Associée"
 #: view:openstc.merge.line.ask.po.wizard:0
 #: view:openstc.merge.line.ask.respond.wizard:0
 #: view:openstc.report.service.site.cost.wizard:0
-#: view:purchase.order.ask.verif.budget:0
 msgid "Annuler"
 msgstr "Annuler"
 
@@ -1705,11 +1684,6 @@ msgid "Accountant paramters of collectivity"
 msgstr "Accountant paramters of collectivity"
 
 #. module: openstc_achat_stock
-#: view:purchase.order.ask.verif.budget:0
-msgid "Générer Engagement"
-msgstr "Générer Engagement"
-
-#. module: openstc_achat_stock
 #: model:ir.model,name:openstc_achat_stock.model_purchase_order
 msgid "Purchase Order"
 msgstr "Bon de commande"
@@ -1718,11 +1692,6 @@ msgstr "Bon de commande"
 #: view:crossovered.budget:0
 msgid "Planned amount"
 msgstr "Montant planifié"
-
-#. module: openstc_achat_stock
-#: view:purchase.order.ask.verif.budget:0
-msgid "Vérifier le budget de votre service"
-msgstr "Vérifier le budget de votre service"
 
 #. module: openstc_achat_stock
 #: code:addons/openstc_achat_stock/base.py:158
@@ -2076,7 +2045,6 @@ msgstr "Voulez-vous vraiment répondre à ces besoins"
 #: field:openstc.ask.prod,service_id:0
 #: field:purchase.order,service_id:0
 #: field:purchase.order.ask,service_id:0
-#: field:purchase.order.ask.verif.budget,service_id:0
 msgid "Service Demandeur"
 msgstr "Service Demandeur"
 

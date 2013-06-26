@@ -16,6 +16,16 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: openstc_achat_stock
+#: field:ir.attachment,create_date:0
+msgid "Date Created"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Engage"
+msgstr ""
+
+#. module: openstc_achat_stock
 #: view:purchase.order:0
 msgid "Validées"
 msgstr ""

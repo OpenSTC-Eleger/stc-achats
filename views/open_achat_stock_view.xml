@@ -174,8 +174,8 @@
 								<field name="create_date" />
 								<field name="action_date" />
 								<field name="state" />
-								<field name="engage_done" />
-								<field name="attach_made_done" />
+								<field name="engage_done" invisible="1"/>
+								<field name="attach_made_done" invisible="1"/>
 								<button name="send_invoice_to_pay" type="object" icon="gtk-go-forward"
 									help="Valide et Envoie la Facture au service compta pour paiement"
 									states="to_check,except_send_mail" />

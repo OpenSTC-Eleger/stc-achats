@@ -1049,7 +1049,7 @@ msgstr "Rapport des Coûts des Sites et Services"
 
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
-msgid "Budget To Check"
+msgid "Budget to Check"
 msgstr "Budget A vérfier"
 
 #. module: openstc_achat_stock

@@ -676,6 +676,7 @@ msgstr ""
 #: report:purchase.order.sumup:0
 msgid "Total :"
 msgstr ""
+
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,po_line_id:0
 msgid "Ligne Commande associée"

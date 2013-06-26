@@ -695,6 +695,7 @@ msgstr "Justification acheteur"
 #: report:purchase.order.sumup:0
 msgid "Total :"
 msgstr "Total :"
+
 #. module: openstc_achat_stock
 #: field:openstc.merge.line.ask,po_line_id:0
 msgid "Ligne Commande associée"

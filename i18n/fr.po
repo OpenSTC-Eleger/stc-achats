@@ -613,8 +613,8 @@ msgstr "Budget à vérifier"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases waiting for shipping - payment"
-msgstr "Commandes en attente de livraison - paiements"
+msgid "Purchases waiting for shipping"
+msgstr "Commandes en attente de livraison"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
@@ -624,8 +624,8 @@ msgstr "Commandes avec des articles en attente de livraison ou des factures en a
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases to be done"
-msgstr "Commandes à clôturer"
+msgid "Purchases waiting for payments"
+msgstr "Commandes en attente de paiements"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0

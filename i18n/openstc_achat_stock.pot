@@ -600,7 +600,7 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases waiting for shipping - payment"
+msgid "Purchases waiting for shipping"
 msgstr ""
 
 #. module: openstc_achat_stock
@@ -611,7 +611,7 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases to be done"
+msgid "Purchases waiting for payments"
 msgstr ""
 
 #. module: openstc_achat_stock

@@ -25,15 +25,15 @@
 			<field name="arch" type="xml">
 				<search>
 					<filter name="openstc_draft" string="Budget to check" domain="[('validation','=','budget_to_check')]"
-					    help="Purchases where budgets have to be checked" icon="terp-document-new"/>
-					<filter name="openstc_to_check_dst" string="Purchases to be signed by manager" domain="['&amp;',('validation','=','engagement_to_check'),('check_dst','=',False)]" icon="terp-project"
+					    help="Purchases where budgets have to be checked" icon="gtk-yes"/>
+					<filter name="openstc_to_check_dst" string="Purchases to be signed by manager" domain="['&amp;',('validation','=','engagement_to_check'),('check_dst','=',False)]" icon="gtk-yes"
 					    help="Purchases to be signed by manager because purchase amount is higher than user max amount."/>
-					<filter name="openstc_to_check_elu" string="Purchases to be signed by elu" domain="['&amp;','&amp;',('validation','=','engagement_to_check'),('check_elu','=',False),('check_dst','=',True)]" icon="terp-project"
+					<filter name="openstc_to_check_elu" string="Purchases to be signed by elu" domain="['&amp;','&amp;',('validation','=','engagement_to_check'),('check_elu','=',False),('check_dst','=',True)]" icon="gtk-yes"
 					    help="Purchases to be signed by elu before being validated"/>
 					<filter name="openstc_po_shipping" string="Purchases waiting for shipping - payment" domain="['&amp;',('validation','=','done'),('reception_ok','=',False)]"
-						help="Purchases with some products waiting for shipment or with some invoices to treat"/>
+						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="gtk-yes"/>
 					<filter name="openstc_po_shipping" string="Purchases to be done" domain="['&amp;',('validation','=','done'),('engage_to_treat','=',True)]"
-						help="Purchases paid ans shipped needing to be ended"/>
+						help="Purchases paid ans shipped needing to be ended" icon="gtk-yes"/>
 					
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>

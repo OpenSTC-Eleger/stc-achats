@@ -32,8 +32,8 @@
 					    help="Purchases to be signed by elu before being validated"/>
 					<filter name="openstc_po_shipping" string="Purchases waiting for shipping" domain="['&amp;',('validation','=','done'),('reception_ok','=',False)]"
 						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="gtk-yes"/>
-					<filter name="openstc_po_shipping" string="Purchases waiting for payments" domain="['&amp;',('validation','=','done'),('engage_to_treat','=',True)]"
-						help="Purchases paid ans shipped needing to be ended" icon="gtk-yes"/>
+					<filter name="openstc_po_pay_and_end" string="Purchases to be ended" domain="['&amp;',('validation','=','done'),'|',('engage_to_treat','=',True),('all_invoices_treated','=',True)]"
+						help="Purchases needing to be ended or paid" icon="gtk-yes"/>
 					
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>

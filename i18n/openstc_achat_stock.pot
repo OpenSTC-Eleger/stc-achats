@@ -611,12 +611,12 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases waiting for payments"
+msgid "Purchases to be ended"
 msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases paid ans shipped needing to be ended"
+msgid "Purchases needing to be ended or paid"
 msgstr ""
 
 

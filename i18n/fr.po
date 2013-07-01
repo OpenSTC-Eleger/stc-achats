@@ -624,13 +624,13 @@ msgstr "Commandes avec des articles en attente de livraison ou des factures en a
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases waiting for payments"
-msgstr "Commandes en attente de paiements"
+msgid "Purchases to be ended"
+msgstr "Commandes à clôturer"
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
-msgid "Purchases paid ans shipped needing to be ended"
-msgstr "Commandes entièrement soldées et livrées mais pas encore clôturées"
+msgid "Purchases needing to be ended or paid"
+msgstr "Commandes à clôturer ou avec des factures à traiter"
 
 
 #. module: openstc_achat_stock

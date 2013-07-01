@@ -101,7 +101,10 @@ class crossovered_budget_lines(osv.osv):
             else:
                 amount = line.practical_amount
             ret[line.id]['openstc_practical_amount'] = amount
-            ret[line.id]['openstc_erosion'] = amount * 100.0 / line.planned_amount
+            if line.planned_amount:
+                ret[line.id]['openstc_erosion'] = amount * 100.0 / line.planned_amount
+            else:
+                ret[line.id]['openstc_erosion'] = 0.0
             
         return ret
     
@@ -122,7 +125,9 @@ class crossovered_budget_lines(osv.osv):
             #we create an account.budget.post to respect base work of budget, even if we don't use it anymore
             account = self.pool.get("account.account").browse(cr, uid, openstc_general_account)
             post = self.pool.get("account.budget.post").search(cr, uid, [('account_ids','=',openstc_general_account)])
-            if not post:
+            if post:
+                post = post[0]
+            else:
                 post = self.pool.get("account.budget.post").create(cr, uid, {'code':account.code,
                                                                     'name':account.name,
                                                                     'account_ids':[(6,0,[account.id])]})

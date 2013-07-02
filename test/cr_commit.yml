@@ -1,5 +1,5 @@
 -
   i commit xml updates to conciliate module update and module test (i schunt base way to do)
 -
-  !python {model: open.engagement}: |
+  !python {model: purchase.order}: |
     cr.commit()

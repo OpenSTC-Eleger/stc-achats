@@ -595,7 +595,7 @@ class purchase_order(osv.osv):
                 #TODO: send mail to DST ?
             else:
                 engage_id = self.create_engage(cr, po.user_id.id, ids, context=context)
-                self.write(cr, uid, ids, {'validation':'done','engage_id':engage_id}, context=context)
+                self.write(cr, uid, ids, {'validation':'done'}, context=context)
                 self.validate_po_invoice(cr, uid, ids, context=context)
         else:
             msg_error = ""

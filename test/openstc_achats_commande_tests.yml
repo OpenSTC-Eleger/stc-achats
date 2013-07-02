@@ -136,17 +136,7 @@
 -
   !assert {model: ir.attachment, search: "[('res_id','=',ref('openstc_achats_tests_po2')),('res_model','=','purchase.order')]" , severity: error, string: "Report not created for this po, check _create_report_and_attach method", count: 1}
 -
-  and i check if open.engagement is created and has correct values
--
-  !assert {model: open.engagement, search: "[('purchase_order_id','=',ref('openstc_achats_tests_po2'))]", severity: error, string: "open.engagement is not created, check create_engage method", count: 1}
--
-  !assert {model: open.engagement, search: "[('purchase_order_id','=',ref('openstc_achats_tests_po2'))]", severity: error, string: "open.engagement is created but has not correct values", count: 1}:
-    - purchase_order_id != False
-    - purchase_order_id.id == ref('openstc_achats_tests_po2')
-    - user_id.id == purchase_order_id.user_id.id
-    - service_id.id == purchase_order_id.service_id.id
-    - description == purchase_order_id.description
-  
+ 
 -
   then, i create order_lines and associate them to 1st purchase order created before
 -

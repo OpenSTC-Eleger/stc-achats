@@ -167,8 +167,6 @@
 			<field name="view_mode">form</field>
 			<field name="target">new</field>
 		</record>
-
-		
 		
 		<record id="account.action_account_analytic_account_form" model="ir.actions.act_window">
 		    <field name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</field>

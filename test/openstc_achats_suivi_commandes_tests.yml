@@ -101,7 +101,7 @@
   and i check if ir_attachment state is to validated
 -
   !assert {model: ir.attachment, id: openstc_achats_tests_attach2, severity: error, string: "Attach is not correctly set to validated, check refuse_invoice_to_pay method"}:
-    - state in ('refused','except_send_mail')
+    - state in ('validated','except_send_mail')
 -
   now, i test ending of purchase
 -

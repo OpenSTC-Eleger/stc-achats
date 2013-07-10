@@ -34,10 +34,11 @@ class template_ciril_txt_file_engagement(object):
     
     def format_float(self, value):
         ret = ''
-        ret += str(int(value))
-        decimal = value - int(value)
-        if decimal:
-            ret += str(decimal)[2:]
+        temp_val = value * 100.0
+        ret += str(int(temp_val))
+#        decimal = temp_val - int(temp_val)
+#        if decimal:
+#            ret += str(decimal)[2:]
         return int(ret)
     
     def format_datas(self, datas):
@@ -57,6 +58,12 @@ class template_ciril_txt_file_engagement(object):
                     else:
                         ret += it['value'] + ''.join([' 'for i in range(missing)])
         return ret
+    
+    def format_code_nature(self, code):
+        res = re.search("[1-9][0-9]*[1-9]",code)
+        if res is not None:
+            return res.group(0)
+        return code
     
     def __init__(self, version='B'):
         self._version = version
@@ -167,7 +174,7 @@ class template_ciril_txt_file_engagement(object):
             now = datetime.now()
             budget_line = line.budget_line_id
             if budget_line.date_from <= str(now) and budget_line.date_to >= str(now):        
-                data['code_nature']['value'] = budget_line.openstc_general_account and budget_line.openstc_general_account.code or ''
+                data['code_nature']['value'] = budget_line.openstc_general_account and self.format_code_nature(budget_line.openstc_general_account.code) or ''
                 data['code_antenne']['value'] = budget_line.openstc_code_antenne or ''
                 data['code_budget']['value'] = budget_line.crossovered_budget_id.code_budget_ciril or ''
             #data['nomenclature']['value'] = record.purchase_order_id.partner_id.id

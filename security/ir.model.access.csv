@@ -104,9 +104,4 @@
 "access_openstc_service elu","openstc_service elu","openstc.model_openstc_service","openstc_achat_stock.openstc_elu","1","1","1","1"
 "access_openstc_service employee","openstc_service employee","openstc.model_openstc_service","openstc.openstc_employee","1","1","1","1"
 
-"acess_openstc_partner_activity_dst","openstc_partner_activity dst","model_openstc_partner_activity","openstc.openstc_dst","1","1","1","1"
-"acess_openstc_partner_activity_elu","openstc_partner_activity elu","model_openstc_partner_activity","openstc_elu","1","1","1","1"
-"acess_openstc_partner_activity_compta","openstc_partner_activity compta","model_openstc_partner_activity","account.group_account_user","1","1","1","1"
-"acess_openstc_partner_activity_manager","openstc_partner_activity manager","model_openstc_partner_activity","openstc.openstc_manager","1","1","1","1"
-"acess_openstc_partner_activity_employee","openstc_partner_activity employee","model_openstc_partner_activity","openstc.openstc_employee","1","1","1","1"
 

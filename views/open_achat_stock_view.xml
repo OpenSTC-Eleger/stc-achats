@@ -612,15 +612,6 @@
 			<field name="type">form</field>
 			<field name="inherit_id" ref="base.view_partner_form" />
 			<field name="arch" type="xml">
-				<page string="General" position="after">
-					<page string="Activities">
-						<field name="activity_ids" nolabel="1">
-							<tree string="Activities">
-								<field name="complete_name" />
-							</tree>
-						</field>
-					</page>
-				</page>
 				<field name="name" position="after">
 					<field name="code_tiers_ciril" invisible="1"/>
 				</field>
@@ -631,10 +622,9 @@
 		    <field name="name">res.partner.search.achats.inherit</field>
 		    <field name="model">res.partner</field>
 		    <field name="type">search</field>
-		    <field name="inherit_id" ref="openstc.view_openstc_partner_filter"/>
+		    <field name="inherit_id" ref="openbase.view_openbase_partner_filter"/>
 		    <field name="arch" type="xml">
-	            <field name="technical_site_id" position="after">
-	            	<newline/>
+	            <field name="type_id" position="after">
 	            	<field name="activity_ids" filter_domain="[('activity_ids','ilike',self)]"
 	            	    widget="selection"/>
 	            	<newline/>

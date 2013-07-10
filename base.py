@@ -60,50 +60,12 @@ class res_partner(osv.osv):
     _inherit = "res.partner"
     _name = "res.partner"
     _columns = {
-        'activity_ids':fields.many2many('openstc.partner.activity','openstc_partner_activity_rel','partner_id','activity_id', 'Supplier Activities'),
         'code_tiers_ciril':fields.char('Ciril Partner Code',size=8, help="this field refer to pkey from Ciril instance"),
         }
     
 res_partner()
 
-class openstc_partner_activity(osv.osv):
-    _name = "openstc.partner.activity"
-    
-    def _name_get_func(self, cr, uid, ids, name, args, context=None):
-        ret = {}
-        for item in self.name_get(cr, uid, ids, context=context):
-            ret[item[0]]=item[1]
-        return ret
-        
-    
-    _columns = {
-        'name':fields.char('Activity name',size=128, required=True),
-        'parent_activity_id':fields.many2one('openstc.partner.activity','Parent Activity'),
-        'complete_name':fields.function(_name_get_func, string='Activity name',type='char', method=True),
-        }
-    
-    def recursive_name_get(self, cr, uid, record, context=None):
-        name = record.name
-        if record.parent_activity_id:
-            name = self.recursive_name_get(cr, uid, record.parent_activity_id, context=context) + ' / ' + name
-            return name
-        return name
-    
-    def name_get(self, cr, uid, ids, context=None):
-        ret = []
-        for activity in self.browse(cr, uid, ids, context=None):
-            #get parent recursively
-            name = self.recursive_name_get(cr, uid, activity, context=context)
-            ret.append((activity.id,name))
-        return ret
-    
-    def name_search(self, cr, uid, name='', args=[], operator='ilike', context={}, limit=80):
-        if name:
-            args.extend([('name',operator,name)])
-        ids = self.search(cr, uid, args, limit=limit, context=context)
-        return self.name_get(cr, uid, ids, context=context)
-    
-openstc_partner_activity()
+
 
 class ir_attachment(osv.osv):
     _inherit = "ir.attachment"

@@ -74,7 +74,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('validation','=','engagement_to_check')]</field>
-            <field name="groups_id" eval="[(6,0,[ref('openstc.openstc_dst'),ref('openstc_achat_stock.openstc_elu')])]"/>
+            <field name="groups_id" eval="[(6,0,[ref('openbase.openstc_dst'),ref('openbase.openstc_elu')])]"/>
         </record>
 	    	    
 	    <record id="board_openstc_achat_form" model="ir.ui.view">

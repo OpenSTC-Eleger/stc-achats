@@ -19,7 +19,7 @@
     service_ids:
       - openstc_achats_tests_service1
     groups_id:
-      - openstc.openstc_manager
+      - openbase.openstc_manager
       - account.group_account_user
       - account.group_account_invoice
       - analytic.group_analytic_accounting
@@ -33,7 +33,7 @@
     service_ids:
       - openstc_achats_tests_service1
     groups_id:
-      - openstc.openstc_dst
+      - openbase.openstc_dst
       - account.group_account_user
       - account.group_account_invoice
       - analytic.group_analytic_accounting
@@ -46,7 +46,7 @@
     service_ids: 
       - openstc_achats_tests_service1
     groups_id:
-      - openstc_achat_stock.openstc_elu
+      - openbase.openstc_elu
       - account.group_account_user
       - account.group_account_invoice
       - analytic.group_analytic_accounting

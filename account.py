@@ -121,7 +121,7 @@ class account_account(osv.osv):
     #add analytic purchase journal to purchase journal (m20 field)
     def init_stc_achat_accounting(self, cr, uid, analytic_journal_id, context=None):
         if analytic_journal_id:
-            journal_id = self.pool.get("account.journal").search(cr, uid, [('code','=','EXJ')])
+            journal_id = self.pool.get("account.journal").search(cr, uid, [('type','=','purchase')])
             if journal_id:
                 self.pool.get("account.journal").write(cr, uid, journal_id, {'analytic_journal_id':analytic_journal_id})
                 return True

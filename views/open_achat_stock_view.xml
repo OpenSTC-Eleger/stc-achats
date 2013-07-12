@@ -124,23 +124,23 @@
 					<button name="write_ciril_engage" attrs="{'invisible':[('validation','&lt;&gt;','done')]}" icon="gtk-execute"
 						    string="Create Engage(s) export file" type="object"/>
 					
-					<group col="4" colspan="1" groups="openstc_achat_stock.openstc_elu,openstc.openstc_dst"
+					<group col="4" colspan="1" groups="openbase.openstc_elu,openbase.openstc_dst"
 						attrs="{'invisible':[('validation','&lt;&gt;','engagement_to_check')],'readonly':[('all_budget_dispo','=',False)]}">
 						<field name="check_dst" colspan="2" invisible="1" readonly="1"/>
-						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openstc.openstc_dst"
+						<button name="action_dst_check" type="object" string="Validate purchase by DST" groups="openbase.openstc_dst"
 						    icon="gtk-apply" attrs="{'invisible':[('check_dst','=',True)]}"/>
 						<field name="mail_sent" invisible="1"/>
-						<button name="action_dst_check" type="object" string="Send again mail to Elu" groups="openstc.openstc_dst"
+						<button name="action_dst_check" type="object" string="Send again mail to Elu" groups="openbase.openstc_dst"
 						    icon="gtk-execute" attrs="{'invisible':['|',('mail_sent','=',True),('check_dst','=',False)]}"/>
 						<button name="signal_except_check" string="Refuse purchase by DST"
 							icon="gtk-cancel" type="workflow"
-							groups="openstc.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
+							groups="openbase.openstc_dst" attrs="{'invisible':[('check_dst','=',True)]}" />
 						<button name="%(open_engage_check_elu_wizard)d" icon="gtk-apply"
 							string="Valider la commande par l'Elu" type="action"
-							groups="openstc_achat_stock.openstc_elu" />
+							groups="openbase.openstc_elu" />
 						<button name="signal_except_check" string="Refuser la commande par l'Elu"
 							icon="gtk-cancel" type="workflow"
-							groups="openstc_achat_stock.openstc_elu" />
+							groups="openbase.openstc_elu" />
 					</group>
 				</button>
 				<button name="%(purchase.report_purchase_order)d" position="after">
@@ -428,7 +428,7 @@
 						<button name="validate" string="Valider Pour Demande en Stock"
 							states="waiting_validation" />
 						<button name="in_except" string="Annuler Demande"
-							groups="openstc.openstc_manager,openstc.openstc_dst,openstc.openstc_elu"
+							groups="openbase.openstc_manager,openbase.openstc_dst,openbase.openstc_elu"
 							states='waiting_validation,in_progress' />
 					</group>
 				</form>
@@ -590,18 +590,13 @@
 			<field name="name">openstc.service.achats.inherit</field>
 			<field name="model">openstc.service</field>
 			<field name="type">form</field>
-			<field name="inherit_id" ref="openstc.view_openstc_service_form" />
+			<field name="inherit_id" ref="openbase.view_openstc_service_form" />
 			<field name="arch" type="xml">
-				<field name="technical" position="after">
-					<field name="accountant_service" />
-				</field>
-<!-- 				<field name="code" position="attributes"> -->
-<!-- 				    <attribute name="invisible">1</attribute> -->
-<!-- 				</field> -->
 				<field name="code" position="after">
 				    <field name="code_serv_ciril" required="1" on_change="onchange_code_serv_ciril(code_serv_ciril,code)"/>
 				    <field name="code_function_ciril" required="1"/>
 				    <field name="code_gest_ciril" required="1"/>
+					<field name="accountant_service" />
 				</field>
 			</field>
 		</record>

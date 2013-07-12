@@ -59,6 +59,13 @@ class purchase_order_ask(osv.osv):
             seq = seq.replace('xxx',self.remove_accents(service.name[:3]).upper())
         return seq
     
+    def _default_service_id(self, cr, uid, context={}):
+        services = self.pool.get("res.users").browse(cr, uid, uid, context).service_ids
+        ret = False
+        if len(services) > 0:
+            ret = services[0].id
+        return ret
+    
     _columns = {
         'order_lines':fields.one2many('purchase.order.ask.line','po_ask_id'),
         'name':fields.char('Objet de l\'achat',size=64),
@@ -75,7 +82,7 @@ class purchase_order_ask(osv.osv):
             'sequence': lambda self,cr,uid,ctx={}: self._custom_sequence(cr, uid, ctx),
             'date_order':lambda self, cr, uid, context: fields.date.context_today(self ,cr ,uid ,context),
             'user_id':lambda self, cr, uid, context: uid,
-            'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id,
+            'service_id': _default_service_id
     }
     
     

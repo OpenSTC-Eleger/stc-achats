@@ -124,7 +124,7 @@
 
   !record {model: purchase.order.ask, id: openstc_achats_tests_devis1}:
     name: Devis 1 test
-    service: ref('openstc_achats_tests_service1')
+    service_id: ref('openstc_achats_tests_service1')
 -
   and i check default value and sequence with service
 -

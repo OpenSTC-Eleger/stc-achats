@@ -42,13 +42,14 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context):
             #we compute only for draft purchases 
             if not line.order_id or line.order_id.state == 'draft':
-                line_id = self.pool.get("crossovered.budget.lines").search(cr, uid, [('analytic_account_id','=',line.account_analytic_id.id)])
+                #line_id = self.pool.get("crossovered.budget.lines").search(cr, uid, [('analytic_account_id','=',line.account_analytic_id.id)])
+                line_id = line.budget_line_id
                 if line_id:
                     #return {'warning':{'title':'Erreur','message':'Ce compte Analytique n appartient a aucune ligne budgetaire'}}
-                    if isinstance(line_id, list):
-                        line_id = line_id[0]
-                    budget_line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
-                    res = abs(budget_line.planned_amount) - abs(budget_line.openstc_practical_amount)
+                    #if isinstance(line_id, list):
+                        #line_id = line_id[0]
+                    #budget_line = self.pool.get("crossovered.budget.lines").browse(cr, uid, line_id)
+                    res = abs(line_id.planned_amount) - abs(line_id.openstc_practical_amount)
                     ret[line.id] = res
         return ret
     

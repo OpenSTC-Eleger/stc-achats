@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!--
+    OpenSTC Interventions - Openerp Module to manage Cityhall technical department
+    Copyright (C) 2013 Siclic www.siclic.fr
+
+    This file is part of OpenSTC Interventions.
+
+    OpenSTC Interventions is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    OpenSTC Interventions is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with OpenSTC Interventions.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<openerp>
+	<data>
+	    <record model="openstc.service" id="openstc_achats_tests_service1">
+	        <field name="name">Service 1 test</field>
+	        <field name="code">SERVICE 1 TEST</field>
+	    </record>
+	    
+		<record model="res.users" id="openstc_achats_tests_buyer">
+		    <field name="name">Buyer test</field>
+		    <field name="login">buyer</field>
+		    <field name="new_password">buyer</field>
+		    <field name="max_po_amount_no_market">150.0</field>
+		    <field name="user_email">bruno.plancher@siclic.fr</field>
+		    <field name="service_ids" eval="[(4,ref('openstc_achats_tests_service1'))]"/>
+		    <field name="groups_id" eval="[(4,ref('openbase.openstc_manager'))]"/>
+		</record>
+
+		
+		<record model="res.users" id="openstc_achats_tests_dst">
+		    <field name="name">DST test</field>
+		    <field name="login">dst</field>
+		    <field name="new_password">dst</field>
+		    <field name="user_email">bruno.plancher@gsiclic.fr</field>
+		    <field name="service_ids" eval="[(4,ref('openstc_achats_tests_service1'))]"/>
+		    <field name="groups_id" eval="[(4,ref('openbase.openstc_dst'))]"/>
+		</record>
+		
+		<record model="res.users" id="openstc_achats_tests_elu">
+		    <field name="name">Elu test</field>
+		    <field name="login">elu</field>
+		    <field name="new_password">elu</field>
+		    <field name="user_email">bruno.plancher@gsiclic.fr</field>
+		    <field name="service_ids" eval="[(4,ref('openstc_achats_tests_service1'))]"/>
+		    <field name="groups_id" eval="[(4,ref('openbase.openstc_elu'))]"/>
+		</record>
+
+		
+		<record model="account.account" id="openstc_achats_tests_expense_acc">
+		    <field name="name">Expense for tests</field>
+		    <field name="code">999999</field>
+		    <field name="user_type" ref="account.data_account_type_expense"/>
+		
+		
+		<record model="product.product" id="openstc_achats_tests_prod1">
+		    <field name="name">Consommable 1 test</field>
+		    <field name="property_account_expense" ref="openstc_achats_tests_expense_acc"/>
+		</record>
+		
+		<record model="product.product" id="openstc_achats_tests_prod2">
+		    <field name="name">Consommable 2 test</field>
+		    <field name="property_account_expense" ref="openstc_achats_tests_expense_acc"/>
+		</record>
+		
+		
+		<record model="openstc.partner.type" id="openstc_achats_tests_partner_type1">
+		    <field name="name">Supplier</field>
+		    <field name="code">SUPPLIER</field>
+		</record>
+		
+		<record model="res.partner" id="openstc_achats_tests_partner1">
+		    <field name="name">Supplier 1 test</field>
+		    <field name="supplier" eval="True"/>
+		    <field name="type_id" ref="openstc_achats_tests_partner_type1"/>
+		</record>
+		
+		<record model="res.partner.address" id="openstc_achats_tests_partner1_address1">
+		    <field name="name">Address 1 supplier 1</field>
+		    <field name="email">bruno.plancher@siclic.fr</field>
+		    <field name="partner_id" ref="openstc_achats_tests_partner1"/>
+		</record>
+
+		<record model="res.partner" id="openstc_achats_tests_partner2">
+		    <field name="name">Supplier 2 test</field>
+		    <field name="supplier" eval="True"/>
+		    <field name="type_id" ref="openstc_achats_tests_partner_type1"/>
+		    <field name="property_account_payable" ref="openstc_achats_tests_supplier_acc"/>
+		</record>
+		
+		<record model="res.partner.address" id="openstc_achats_tests_partner2_address1">
+		    <field name="name">Address 2 supplier 1</field>
+		    <field name="email">bruno.plancher@siclic.fr</field>
+		    <field name="partner_id" ref="openstc_achats_tests_partner2"/>
+		</record>
+		
+		
+				
+	</data>
+</openerp>

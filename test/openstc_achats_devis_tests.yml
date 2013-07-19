@@ -5,62 +5,62 @@
 -
   creation of users (buyer, dst, elu), their service and associate them to existing groups
 - 
-  !record {model: openstc.service, id: openstc_achats_tests_service1}:
-    name: Service 1 test
-    code: SERVICE 1 TEST
-
--
-  !record {model: res.users, id: openstc_achats_tests_buyer, view: false}:
-    name: Buyer test
-    login: buyer
-    new_password: buyer
-    max_po_amount_no_market: 150.0
-    user_email: bruno.plancher@siclic.fr
-    service_ids:
-      - openstc_achats_tests_service1
-    groups_id:
-      - openbase.openstc_manager
-      - account.group_account_user
-      - account.group_account_invoice
-      - analytic.group_analytic_accounting
-  
--  
-  !record {model: res.users, id: openstc_achats_tests_dst, view: false}:
-    name: DST test
-    login: dst
-    new_password: dst
-    user_email: bruno.plancher@siclic.fr
-    service_ids:
-      - openstc_achats_tests_service1
-    groups_id:
-      - openbase.openstc_dst
-      - account.group_account_user
-      - account.group_account_invoice
-      - analytic.group_analytic_accounting
--
-  !record {model: res.users, id: openstc_achats_tests_elu, view: false}:
-    name: Elu test
-    login: elu
-    new_password: elu
-    user_email: bruno.plancher@siclic.fr
-    service_ids: 
-      - openstc_achats_tests_service1
-    groups_id:
-      - openbase.openstc_elu
-      - account.group_account_user
-      - account.group_account_invoice
-      - analytic.group_analytic_accounting
-
--
-  creation of product test data
--
-
-  !record {model: product.product, id: openstc_achats_tests_prod1, view: false, context: {'default_purchase_ok':True}}:
-    name: Consommable 1 test
--
-
-  !record {model: product.product, id: openstc_achats_tests_prod2, view: false, context: {'default_purchase_ok':True}}:
-    name: Consommable 2 test
+#  !record {model: openstc.service, id: openstc_achats_tests_service1}:
+#    name: Service 1 test
+#    code: SERVICE 1 TEST
+#
+#-
+#  !record {model: res.users, id: openstc_achats_tests_buyer, view: false}:
+#    name: Buyer test
+#    login: buyer
+#    new_password: buyer
+#    max_po_amount_no_market: 150.0
+#    user_email: bruno.plancher@siclic.fr
+#    service_ids:
+#      - openstc_achats_tests_service1
+#    groups_id:
+#      - openbase.openstc_manager
+#      - account.group_account_user
+#      - account.group_account_invoice
+#      - analytic.group_analytic_accounting
+#  
+#-  
+#  !record {model: res.users, id: openstc_achats_tests_dst, view: false}:
+#    name: DST test
+#    login: dst
+#    new_password: dst
+#    user_email: bruno.plancher@siclic.fr
+#    service_ids:
+#      - openstc_achats_tests_service1
+#    groups_id:
+#      - openbase.openstc_dst
+#      - account.group_account_user
+#      - account.group_account_invoice
+#      - analytic.group_analytic_accounting
+#-
+#  !record {model: res.users, id: openstc_achats_tests_elu, view: false}:
+#    name: Elu test
+#    login: elu
+#    new_password: elu
+#    user_email: bruno.plancher@siclic.fr
+#    service_ids: 
+#      - openstc_achats_tests_service1
+#    groups_id:
+#      - openbase.openstc_elu
+#      - account.group_account_user
+#      - account.group_account_invoice
+#      - analytic.group_analytic_accounting
+#
+#-
+#  creation of product test data
+#-
+#
+#  !record {model: product.product, id: openstc_achats_tests_prod1, view: false, context: {'default_purchase_ok':True}}:
+#    name: Consommable 1 test
+#-
+#
+#  !record {model: product.product, id: openstc_achats_tests_prod2, view: false, context: {'default_purchase_ok':True}}:
+#    name: Consommable 2 test
 -
   i test if product has correct default_data
 -
@@ -78,34 +78,34 @@
     - categ_id.property_account_income_categ != False
     - categ_id.property_account_expense_categ != False
 
--
-  creation of supplier test data
--
-  creating Supplier 1 
--
-  !record {model: openstc.partner.type, id: openstc_achats_tests_partner_type1}:
-    name: Supplier
-    code: SUPPLIER
--
-  !record {model: res.partner, id: openstc_achats_tests_partner1, context: {'default_supplier':True}}:
-    name: Supplier 1 test
-    type_id: openstc_achats_tests_partner_type1
--
-  !record {model: res.partner.address, id: openstc_achats_tests_partner1_address1}:
-    name: Address 1 supplier 1
-    email: bruno.plancher@siclic.fr
-    partner_id: openstc_achats_tests_partner1
-    
--
-  creating Supplier 2 without email
--
-  !record {model: res.partner, id: openstc_achats_tests_partner2, context: {'default_supplier':True}}:
-    name: Supplier 2 test
-    type_id: openstc_achats_tests_partner_type1
--    
-  !record {model: res.partner.address, id: openstc_achats_tests_partner2_address1}:
-    name: Address 1 supplier 2
-    partner_id: openstc_achats_tests_partner1
+#-
+#  creation of supplier test data
+#-
+#  creating Supplier 1 
+#-
+#  !record {model: openstc.partner.type, id: openstc_achats_tests_partner_type1}:
+#    name: Supplier
+#    code: SUPPLIER
+#-
+#  !record {model: res.partner, id: openstc_achats_tests_partner1, context: {'default_supplier':True}}:
+#    name: Supplier 1 test
+#    type_id: openstc_achats_tests_partner_type1
+#-
+#  !record {model: res.partner.address, id: openstc_achats_tests_partner1_address1}:
+#    name: Address 1 supplier 1
+#    email: bruno.plancher@siclic.fr
+#    partner_id: openstc_achats_tests_partner1
+#    
+#-
+#  creating Supplier 2 without email
+#-
+#  !record {model: res.partner, id: openstc_achats_tests_partner2, context: {'default_supplier':True}}:
+#    name: Supplier 2 test
+#    type_id: openstc_achats_tests_partner_type1
+#-    
+#  !record {model: res.partner.address, id: openstc_achats_tests_partner2_address1}:
+#    name: Address 1 supplier 2
+#    partner_id: openstc_achats_tests_partner1
     
 -
   i test if suppliers have correct default data

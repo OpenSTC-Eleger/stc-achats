@@ -106,7 +106,6 @@ class template_ciril_txt_file_engagement(object):
 
     def init_main_vals(self):
         return {'code_tiers':{'length':10,'required':True,'value':'','pos':1},
-                    'code_ss_rub':{'length':7,'required':True,'value':'','pos':3},
                     'num_ope':{'length':10,'required':True,'value':'','pos':5},
                     'exercice':{'length':4,'required':True,'value':'','pos':10},
                     'date_engage':{'length':10,'required':True,'value':'','pos':11},
@@ -122,6 +121,7 @@ class template_ciril_txt_file_engagement(object):
     def init_line_vals(self):
         return {
                     'code_gest':{'length':10,'required':True,'value':'','pos':2},
+                    'code_ss_rub':{'length':7,'required':True,'value':'','pos':3},
                     'code_nature':{'length':10,'required':True,'value':'','pos':4},
                     'code_serv':{'length':4,'required':True,'value':'','pos':6},
                     'code_antenne':{'length':10,'required':True,'value':'','pos':7},
@@ -170,6 +170,7 @@ class template_ciril_txt_file_engagement(object):
         for line in record.engage_lines:
             data = self.init_line_vals()
             data['code_gest']['value'] = line.budget_line_id.crossovered_budget_id.service_id.code_gest_ciril
+            data['code_ss_rub']['value'] = line.budget_line_id.crossovered_budget_id.service_id.code_function_ciril
             data['num_engage_openstc']['value'] = line.name
             data['code_serv']['value'] = line.budget_line_id.crossovered_budget_id.service_id.code_serv_ciril
             now = datetime.now()

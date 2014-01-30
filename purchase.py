@@ -23,6 +23,7 @@
 #############################################################################
 
 from osv import osv, fields
+from tools import config
 from datetime import datetime
 import re
 import netsvc
@@ -31,6 +32,8 @@ import time
 import base64
 from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
+import urllib2
+import os
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -640,23 +643,6 @@ class purchase_order(osv.osv):
         return {
                 'type':'ir.actions.act_window.close',
         }
-
-    
-    def write_ciril_engage(self, cr, uid, ids, context=None):
-        ret = ''
-        template = template_ciril_txt_file_engagement()
-        
-        for po in self.browse(cr, uid, ids ,context=context):
-            ret += template.create_file(po.engage_id)
-            #write content in an ir.attachment
-            ret = base64.b64encode(ret)
-            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
-                                                            'datas_fname':'engages.txt',
-                                                            'datas':ret,
-                                                            'res_model':self._name,
-                                                            'res_id':po.id
-                                                            })
-        return {'type':'ir.actions.act_window_close'}
     
     def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
         ret = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)
@@ -689,14 +675,28 @@ class purchase_order(osv.osv):
         
         for po in self.browse(cr, uid, ids ,context=context):
             ret += template.create_file(po)
+            #ret = base64.b64encode(ret)
+            #@todo: write file on remote CIRIL server
+            ret_file = open('%s/repository/%s/%s.txt' %(os.getenv('HOME', '.'),cr.dbname,po.name.replace('/','_')), 'w')
+            ret_file.write(ret)
+            ret_file.close()
+            #perform push of the created file
+            #@todo: manage return code and msgerror to display user infos if an error occurred
+            ret = urllib2.urlopen('http://%s:%s/%s/%s' % (config.options.get('push_service_host','localhost'),
+                                                          config.options.get('push_service_port','44001'),
+                                                          config.options.get('push_service_base_url','push_service'),
+                                                          cr.dbname))
+            if ret.getcode() != 200:
+                raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % ret.read())
+                
             #write content in an ir.attachment
-            ret = base64.b64encode(ret)
-            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
-                                                            'datas_fname':'engages.txt',
-                                                            'datas':ret,
-                                                            'res_model':self._name,
-                                                            'res_id':po.id
-                                                            })
+#            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
+#                                                            'datas_fname':'engages.txt',
+#                                                            'datas':ret,
+#                                                            'res_model':self._name,
+#                                                            'res_id':po.id
+#                                                            })
+        
         return {'type':'ir.actions.act_window_close'}
     
     def all_reception_done(self, cr, uid, ids):

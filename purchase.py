@@ -34,6 +34,7 @@ from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
 import urllib2
 import os
+from urllib2 import URLError
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -682,10 +683,13 @@ class purchase_order(osv.osv):
             ret_file.close()
             #perform push of the created file
             #@todo: manage return code and msgerror to display user infos if an error occurred
-            ret = urllib2.urlopen('http://%s:%s/%s/%s' % (config.options.get('push_service_host','localhost'),
+            try:
+                ret = urllib2.urlopen('http://%s:%s/%s/%s' % (config.options.get('push_service_host','localhost'),
                                                           config.options.get('push_service_port','44001'),
                                                           config.options.get('push_service_base_url','push_service'),
                                                           cr.dbname))
+            except URLError as e:
+                raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % e.reason)
             if ret.getcode() != 200:
                 raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % ret.read())
                 

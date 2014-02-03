@@ -678,7 +678,7 @@ class purchase_order(osv.osv):
             ret += template.create_file(po)
             #ret = base64.b64encode(ret)
             #write file on remote CIRIL server
-            ret_file = open('%s/%s/%s/%s.txt' %(os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname,po.name.replace('/','_')), 'w')
+            ret_file = open('%s/%s/%s/todo/%s.txt' %(os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname,po.name.replace('/','_')), 'w')
             ret_file.write(ret)
             ret_file.close()
             #perform push of the created file

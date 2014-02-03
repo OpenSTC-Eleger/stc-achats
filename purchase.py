@@ -35,6 +35,7 @@ from ciril_template_files import template_ciril_txt_file_engagement
 import urllib2
 import os
 from urllib2 import URLError
+import shutil
 
 class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
@@ -678,11 +679,12 @@ class purchase_order(osv.osv):
             ret += template.create_file(po)
             #ret = base64.b64encode(ret)
             #write file on remote CIRIL server
-            ret_file = open('%s/%s/%s/todo/%s.txt' %(os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname,po.name.replace('/','_')), 'w')
+            base_path = '%s/%s/%s' % (os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname)
+            file_path = '%s/todo/%s.txt' % (base_path,po.name.replace('/','_'))
+            ret_file = open(file_path, 'w')
             ret_file.write(ret)
             ret_file.close()
             #perform push of the created file
-            #@todo: manage return code and msgerror to display user infos if an error occurred
             try:
                 ret = urllib2.urlopen('http://%s:%s/%s/%s' % (config.options.get('push_service_host','localhost'),
                                                           config.options.get('push_service_port','44001'),
@@ -692,7 +694,8 @@ class purchase_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % e.reason)
             if ret.getcode() != 200:
                 raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % ret.read())
-                
+            shutil.copy(file_path, base_path + '/archive')
+            os.remove(file_path)
             #write content in an ir.attachment
 #            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
 #                                                            'datas_fname':'engages.txt',

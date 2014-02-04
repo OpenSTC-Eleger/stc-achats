@@ -216,7 +216,7 @@
 						required="1" groups="analytic.group_analytic_accounting"
 						domain="[('type','&lt;&gt;','view'), ('company_id', '=', company_id), ('crossovered_budget_line','&lt;&gt;',False)]"
 						 invisible="1"/>
-					<field name="budget_line_id" groups="analytic.group_analytic_accounting" required="1" 
+					<field name="budget_line_id" domain="[('crossovered_budget_id.state','not in',('done','cancel'))]" groups="analytic.group_analytic_accounting" required="1" 
 					    colspan="4" on_change="onchange_budget_line_id(budget_line_id)"/>
 					<field name="budget_dispo_info" />
 					<field name="budget_dispo" invisible="1" />

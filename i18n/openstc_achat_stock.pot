@@ -546,6 +546,11 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: view:purchase.order:0
+msgid "Purchases closed"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
 msgid "Purchases to be signed by manager because purchase amount is higher than user max amount."
 msgstr ""
 
@@ -691,6 +696,16 @@ msgstr ""
 #. module: openstc_achat_stock
 #: field:purchase.order,date_engage_done:0
 msgid "Date de Cloture de la commande"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: field:purchase.order,date_order:0
+msgid "Order Date"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: field:purchase.order,date_engage_sent:0
+msgid "Date engagement commande"
 msgstr ""
 
 #. module: openstc_achat_stock
@@ -1039,6 +1054,11 @@ msgstr ""
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
 msgid "Budget To Check"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: selection:purchase.order,validation:0
+msgid "Purchase Paid"
 msgstr ""
 
 #. module: openstc_achat_stock
@@ -1547,6 +1567,11 @@ msgstr ""
 #. module: openstc_achat_stock
 #: selection:purchase.order,validation:0
 msgid "Purchase validated"
+msgstr ""
+
+#. module: openstc_achat_stock
+#: selection:purchase.order,validation:0
+msgid "Purchase engaged"
 msgstr ""
 
 #. module: openstc_achat_stock

@@ -25,15 +25,18 @@
 			<field name="arch" type="xml">
 				<search>
 					<filter name="openstc_draft" string="Budget to check" domain="[('validation','=','budget_to_check')]"
-					    help="Purchases where budgets have to be checked" icon="gtk-yes"/>
-					<filter name="openstc_to_check_dst" string="Purchases to be signed by manager" domain="['&amp;',('validation','=','engagement_to_check'),('check_dst','=',False)]" icon="gtk-yes"
+					    help="Purchases where budgets have to be checked" icon="terp-folder-blue"/>
+					<filter name="openstc_to_check_dst" string="Purchases to be signed by manager" domain="['&amp;',('validation','=','engagement_to_check'),('check_dst','=',False)]" icon="terp-folder-blue"
 					    help="Purchases to be signed by manager because purchase amount is higher than user max amount."/>
-					<filter name="openstc_to_check_elu" string="Purchases to be signed by elu" domain="['&amp;','&amp;',('validation','=','engagement_to_check'),('check_elu','=',False),('check_dst','=',True)]" icon="gtk-yes"
+					<filter name="openstc_to_check_elu" string="Purchases to be signed by elu" domain="['&amp;','&amp;',('validation','=','engagement_to_check'),('check_elu','=',False),('check_dst','=',True)]" icon="terp-folder-blue"
 					    help="Purchases to be signed by elu before being validated"/>
-					<filter name="openstc_po_shipping" string="Purchases waiting for shipping" domain="['&amp;',('validation','=','done'),('reception_ok','=',False)]"
-						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="gtk-yes"/>
-					<filter name="openstc_po_pay_and_end" string="Purchases to be ended" domain="['&amp;',('validation','=','done'),'|',('engage_to_treat','=',True),('all_invoices_treated','=',True)]"
-						help="Purchases needing to be ended or paid" icon="gtk-yes"/>
+					<newline/>
+					<filter name="openstc_po_shipping" string="Purchases waiting for shipping" domain="['&amp;',('validation','in',('done','purchase_engaged')),('reception_ok','=',False)]"
+						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="terp-folder-yellow"/>
+					<filter name="openstc_po_pay_and_end" string="Purchases to be ended" domain="['&amp;',('validation','in',('done','purchase_engaged')),'|',('engage_to_treat','=',True),('all_invoices_treated','=',True)]"
+						help="Purchases needing to be ended or paid" icon="terp-folder-yellow"/>
+					<separator orientation="vertical"/>
+					<filter name="openstc_po_done" string="Purchases closed" domain="[('state','=','done')]" icon="terp-folder-green"/>
 					
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>
@@ -76,18 +79,19 @@
 				<field name="invoiced" position="attributes">
 					<attribute name="invisible">1</attribute>
 				</field>
-				<field name="invoiced" position="after">
+				<field name="company_id" position="before">
 					<field name="user_id" readonly="1" />
 					<field name="service_id" context="{'only_my_services':'1'}"/>
+					<newline/>
 				</field>
 				<field name="origin" position="after">
 					<field name="account_analytic_id"
 						groups="base.group_extended" />
 				</field>
-				<field name="date_order" position="after">
-				    <field name="date_engage_validated"/>
-				    <field name="date_engage_done"/>
+				<field name="date_order" position="attributes">
+				    <attribute name="invisible">1</attribute>
 				</field>
+				    
 				<field name="order_line" position="attributes">
 				    <attribute name="context">{'default_company_id':company_id,'default_budget_line_id':account_analytic_id}</attribute>
 				    <attribute name="attrs">{'readonly':['|',('state','in',('approved','done')),('validation','!=','budget_to_check')]}</attribute>
@@ -107,6 +111,17 @@
 						
 					</tree>
 				</tree>
+				<field name="name" position="before">
+				    <field name="validation" widget="statusbar" colspan="4"/>
+				    <newline/>
+			    	<group colspan="2" col="8">
+					    <field name="date_order"/>
+					    <field name="date_engage_validated"/>
+					    <field name="date_engage_sent"/>
+					    <field name="date_engage_done"/>
+					</group>
+					<newline/>
+				</field>
 				<field name="name" position="after">
 					<field name="description" required="1" />
 					<newline />
@@ -121,7 +136,7 @@
 						type="object" icon="gtk-go-forward" attrs="{'invisible': ['|',('need_confirm','=',False),('validation','&lt;&gt;','budget_to_check')],'readonly':[('all_budget_dispo','=',False)]}" />
 					<button name="openstc_confirm" string="Validate and generate purchase order (pdf)" type="object" icon="gtk-go-forward" 
 						attrs="{'invisible': ['|',('need_confirm','=',True),('validation','&lt;&gt;','budget_to_check')]}" />
-					<button name="write_ciril_engage" attrs="{'invisible':[('validation','&lt;&gt;','done')]}" icon="gtk-execute"
+					<button name="write_ciril_engage" attrs="{'invisible':[('validation','not in',('done','purchase_engaged'))]}" icon="gtk-execute"
 						    string="Create Engage(s) export file" type="object"/>
 					
 					<group col="4" colspan="1" groups="openbase.openstc_elu,openbase.openstc_dst"
@@ -145,7 +160,6 @@
 				</button>
 				<button name="%(purchase.report_purchase_order)d" position="after">
 					<group colspan="3" col="6">
-						<field name="validation"/>
 						<field name="check_dst" readonly="1" attrs="{'invisible':[('state','&lt;&gt;','draft'),('need_confirm','=',False)]}"/>
 						<field name="check_elu" readonly="1" attrs="{'invisible':[('state','&lt;&gt;','draft'),('need_confirm','=',False)]}"/>     
 					</group>

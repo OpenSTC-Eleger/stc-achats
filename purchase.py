@@ -271,7 +271,7 @@ class purchase_order(osv.osv):
         return ret
     
     AVAILABLE_ETAPE_VALIDATION = [('budget_to_check','Budget to Check'),('engagement_to_check','Purchase to Check'),
-                                  ('done','Purchase validated')]
+                                  ('done','Purchase validated'),('purchase_engaged','Purchase engaged'), ('purchase_paid','Purchase Paid')]
     _inherit = 'purchase.order'
     _name = 'purchase.order'
     
@@ -376,6 +376,7 @@ class purchase_order(osv.osv):
             'mail_sent':fields.boolean('Mail sent ?', invisible=True),
             #fields moved from open.engagement
             'date_engage_validated':fields.date('Date Validation de la commande', readonly=True),
+            'date_engage_sent':fields.date('Date engagement commande', readonly=True),
             'date_engage_done':fields.datetime('Date de Cloture de la commande',readonly=True),
             'reception_ok':fields.boolean('Tous les Produits sont réceptionnés', readonly=True),
             'justificatif_refus':fields.text('Justification de votre Refus pour Paiement'),
@@ -387,6 +388,7 @@ class purchase_order(osv.osv):
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             }
     _defaults = {
+        'date_order': lambda *a: datetime.now().strftime('%Y-%m-%d'),
         'check_dst':lambda *a: False,
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
@@ -403,7 +405,7 @@ class purchase_order(osv.osv):
         else:
             default_search = []
             if 'service_id' in vals:
-                service = service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
+                service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
             else:
                 defaults = self.default_get(cr, uid, ['user_id','service_id'], context=context)
                 service = self.pool.get("openstc.service").browse(cr, uid, defaults['service_id'], context=context)
@@ -677,7 +679,6 @@ class purchase_order(osv.osv):
         
         for po in self.browse(cr, uid, ids ,context=context):
             ret += template.create_file(po)
-            #ret = base64.b64encode(ret)
             #write file on remote CIRIL server
             base_path = '%s/%s/%s' % (os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname)
             file_path = '%s/todo/%s.txt' % (base_path,po.name.replace('/','_'))
@@ -696,14 +697,10 @@ class purchase_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('Internal server error, please contact your supplier.\n Technical error : "%s"') % ret.read())
             shutil.copy(file_path, base_path + '/archive')
             os.remove(file_path)
-            #write content in an ir.attachment
-#            self.pool.get("ir.attachment").create(cr, uid, {'name':'engages.txt',
-#                                                            'datas_fname':'engages.txt',
-#                                                            'datas':ret,
-#                                                            'res_model':self._name,
-#                                                            'res_id':po.id
-#                                                            })
-        
+            #indicates that engage is sent by buyer (to the accounting department)
+            now = datetime.now().strftime('%Y-%m-%d')
+            po.write({'validation':'purchase_engaged','date_engage_sent':now})
+            #@todo: send mail to accounting department to notify that a new file can be imported to their 3rd part accounting software
         return {'type':'ir.actions.act_window_close'}
     
     def all_reception_done(self, cr, uid, ids):
@@ -721,7 +718,7 @@ class purchase_order(osv.osv):
     
     def engage_done(self, cr, uid, ids, context=None):
         po = self.browse(cr, uid, ids[0], context=context)
-        self.write(cr, uid, ids, {'state':'done','date_engage_done':datetime.now()})
+        self.write(cr, uid, ids, {'state':'done','date_engage_done':datetime.now(), 'validation': 'purchase_paid'})
         self.pool.get('ir.attachment').write(cr, uid, [x.id for x in po.attach_ids], {'engage_done':True}, context=context)
         return True
     

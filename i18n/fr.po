@@ -710,7 +710,17 @@ msgstr "Le DST doit signer en premier"
 #. module: openstc_achat_stock
 #: field:purchase.order,date_engage_done:0
 msgid "Date de Cloture de la commande"
-msgstr "Date de Cloture de la commande"
+msgstr "Clôturée le"
+
+#. module: openstc_achat_stock
+#: field:purchase.order,date_engage_sent:0
+msgid "Date engagement commande"
+msgstr "Engagée le"
+
+#. module: openstc_achat_stock
+#: field:purchase.order,date_order:0
+msgid "Order Date"
+msgstr "Créée le"
 
 #. module: openstc_achat_stock
 #: report:purchase.order.sumup:0
@@ -873,7 +883,7 @@ msgstr "Devis périmé"
 #. module: openstc_achat_stock
 #: field:purchase.order,date_engage_validated:0
 msgid "Date Validation de la commande"
-msgstr "Date Validation de la commande"
+msgstr "Validée le"
 
 #. module: openstc_achat_stock
 #: report:purchase.order.ask:0
@@ -1052,6 +1062,11 @@ msgstr "Rapport des Coûts des Sites et Services"
 #: selection:purchase.order,validation:0
 msgid "Budget to Check"
 msgstr "Budget A vérfier"
+
+#. module: openstc_achat_stock
+#: selection:purchase.order,validation:0
+msgid "Purchase Paid"
+msgstr "Commande clôturée"
 
 #. module: openstc_achat_stock
 #: field:purchase.order,user_id:0
@@ -1574,6 +1589,11 @@ msgid "Purchase validated"
 msgstr "Commande validée"
 
 #. module: openstc_achat_stock
+#: selection:purchase.order,validation:0
+msgid "Purchase engaged"
+msgstr "Commande engagée"
+
+#. module: openstc_achat_stock
 #: field:purchase.order.ask,date_order:0
 msgid "Date du Devis"
 msgstr "Date du Devis"
@@ -2021,6 +2041,11 @@ msgstr "Numéro Devis"
 #: view:board.board:0
 msgid "Purchases to Check"
 msgstr "Commandes en attente de validation"
+
+#. module: openstc_achat_stock
+#: view:purchase.order:0
+msgid "Purchases closed"
+msgstr "Commandes clôturées"
 
 #. module: openstc_achat_stock
 #: field:open.engagement,justificatif_refus:0

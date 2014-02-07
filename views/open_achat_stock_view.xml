@@ -32,11 +32,11 @@
 					    help="Purchases to be signed by elu before being validated"/>
 					<newline/>
 					<filter name="openstc_po_shipping" string="Purchases waiting for shipping" domain="['&amp;',('validation','in',('done','purchase_engaged')),('reception_ok','=',False)]"
-						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="terp-folder-yellow"/>
+						help="Purchases with some products waiting for shipment or with some invoices to treat" icon="terp-folder-green"/>
 					<filter name="openstc_po_pay_and_end" string="Purchases to be ended" domain="['&amp;',('validation','in',('done','purchase_engaged')),'|',('engage_to_treat','=',True),('all_invoices_treated','=',True)]"
-						help="Purchases needing to be ended or paid" icon="terp-folder-yellow"/>
+						help="Purchases needing to be ended or paid" icon="terp-folder-green"/>
 					<separator orientation="vertical"/>
-					<filter name="openstc_po_done" string="Purchases closed" domain="[('state','=','done')]" icon="terp-folder-green"/>
+					<filter name="openstc_po_done" string="Purchases closed" domain="[('state','=','done')]" icon="terp-folder-yellow"/>
 					
 					<newline/>
 					<field name="name" filter_domain="[('name','like',self)]"/>
@@ -52,13 +52,14 @@
 			<field name="type">tree</field>
 			<field name="priority">10</field>
 			<field name="arch" type="xml">
-				<tree>
+				<tree colors="blue:state == 'draft';green:state =='approved'">
 				    <field name="name"/>
 					<field name="description"/>
 					<field name="partner_id"/>
 					<field name="user_id"/>
 					<field name="amount_total"/>
 					<field name="validation"/>
+					<field name="state" invisible="1"/>
 				</tree>
 			</field>
 		</record>

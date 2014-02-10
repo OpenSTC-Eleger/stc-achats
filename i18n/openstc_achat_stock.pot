@@ -21,6 +21,11 @@ msgid "Date Created"
 msgstr ""
 
 #. module: openstc_achat_stock
+#: field:purchase.order,property_accountant_id:0
+msgid "Accountant"
+msgstr ""
+
+#. module: openstc_achat_stock
 #: view:purchase.order:0
 msgid "Engage"
 msgstr ""

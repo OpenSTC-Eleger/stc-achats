@@ -2,25 +2,48 @@
 <openerp>
 
 	<data>
+		
+	    
+   		<record id="openstc_email_template_purchase_engaged" model="email.template">
+			<field name="name">Engagement Généré</field>
+			<field name="model_id" ref="model_purchase_order" />
+			<field name="email_from">${object.user_id.user_email or	'bruno.plancher@siclic.fr'}</field>
+			<field name="email_to">${object.property_accountant_id and object.property_accountant_id.user_email or ''}</field>
+			<field name="subject">Un engagement est prêt à être importé: ${object.name or 'inconnu'}</field>
+			<field name="body_html"><![CDATA[
+		    <h2>Message Automatique</h2>
+		    
+		    <p>${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de valider la commande <b>${object.name or 'inconnu'}</b> pour être engagée.</p>
+					    
+		    <p>Vous pouvez récupérer cet engagement en utilisant <b>l'interface SICLIC</b> de votre logiciel de gestion des finances.</p>
+		    ]]></field>
+			<field name="body_text"><![CDATA[
+		    Message Automatique
+		    
+		    ${object.user_id.name or 'inconnu'} Vient de valider la commande ${object.name or 'inconnu'} pour être engagée.
+					    
+		    Vous pouvez récupérer cet engagement en utilisant l'interface SICLIC de votre logiciel de gestion des finances.
 
+		    ]]></field>
+		</record>
  
 		<record id="openstc_email_template_engage_inv_valid" model="email.template">
 			<field name="name">Facture Validée</field>
 			<field name="model_id" ref="model_purchase_order" />
 			<field name="email_from">${object.user_id.user_email or	'bruno.plancher@siclic.fr'}</field>
-			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="email_to">{object.property_accountant_id and object.property_accountant_id.user_email or ''}</field>
 			<field name="subject">Suivi commande ${object.name or 'inconnu'} : Une Facture est Validée pour paiement</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
-		    <p>${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée à la commande ${object.name or 'inconnu'}.</p>
+		    <p>${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée à la commande <b>${object.name or 'inconnu'}</b>.</p>
 		    
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
 			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
-		    ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}.
+		    ${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de Valider une facture pour paiement, associée à la commande <b>${object.name or 'inconnu'}</b>.
 		    Vous pouvez voir cette facture en piéce jointe A ce mail.
 		    ]]></field>
 		</record>
@@ -29,19 +52,19 @@
 			<field name="name">Facture Refusée</field>
 			<field name="model_id" ref="model_purchase_order" />
 			<field name="email_from">${object.user_id.user_email or 'bruno.plancher@siclic.fr'}</field>
-			<field name="email_to">bruno.plancher@siclic.fr</field>
+			<field name="email_to">{object.property_accountant_id and object.property_accountant_id.user_email or ''}</field>
 			<field name="subject">Suivi commande ${object.name or 'inconnu'} : Une Facture est refusée pour paiement</field>
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
-		    <p>${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour la raison suivante : </p>
+		    <p>${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée à la commande <b>${object.name or 'inconnu'}</b>, pour la raison suivante : </p>
 		    <p><i> ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}</i></p>
 		    <p>Vous pouvez voir cette facture en piéce jointe A ce mail.</p>
 		    ]]></field>
 			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
-		    ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée Au suivi commande ${object.name or 'inconnu'}, pour les raisons suivantes :
+		    ${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de Refuser une facture pour paiement, associée à la commande ${object.name or 'inconnu'}, pour les raisons suivantes :
 		    ${object.justificatif_refus or 'Erreur lors de la récupération du justificatif de Refus'}
 		    Vous pouvez voir cette facture en piéce jointe A ce mail.
 		    ]]></field>
@@ -56,7 +79,7 @@
 			<field name="body_html"><![CDATA[
 		    <h2>Message Automatique</h2>
 		    
-		    <p>${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.</p>
+		    <p>${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} A créé la commande <b>${object.name or 'inconnu'}</b> sur OpenERP.</p>
 		    
 		    <p>Celui-ci A besoin de votre signature pour pouvoir engager cette commande.</p>
 		    % if object.current_url:
@@ -72,7 +95,7 @@
 			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
-		    ${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.
+		    ${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} A créé la commande ${object.name or 'inconnu'} sur OpenERP.
 		    Celui-ci A besoin de votre signature pour pouvoir engager cette commande.
 		    
 			% if object.current_url:
@@ -119,6 +142,11 @@
 		    ${object.user_id.company_id.name}
 		    ]]></field>
 		</record>
-
+	 	<record id="property_purchase_openbase_account" model="ir.property">
+ 	    <field name="name">property_purchase_openbase_account</field>
+	    <field name="fields_id" search="[('model','=','purchase.order'),
+ 	      ('name','=','property_accountant_id')]"/>
+	    <field name="value" eval="'res.users,'+str(ref('openbase.openbase_accountant_user'))"/>
+ 	</record>
 	</data>
 </openerp>

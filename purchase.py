@@ -369,10 +369,10 @@ class purchase_order(osv.osv):
             'check_dst':fields.boolean('Signature DST'),
             'check_elu':fields.boolean('Signature Elu'),
             'current_url':fields.char('URL Courante',size=256),
-            'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
             'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
+            'property_accountant_id':fields.property('res.users', type="many2one", relation="res.users", view_load=True, string='Accountant', required=True),
             'mail_sent':fields.boolean('Mail sent ?', invisible=True),
             #fields moved from open.engagement
             'date_engage_validated':fields.date('Date Validation de la commande', readonly=True),
@@ -388,7 +388,6 @@ class purchase_order(osv.osv):
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             }
     _defaults = {
-        'date_order': lambda *a: datetime.now().strftime('%Y-%m-%d'),
         'check_dst':lambda *a: False,
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
@@ -676,7 +675,8 @@ class purchase_order(osv.osv):
     def write_ciril_engage(self, cr, uid, ids, context=None):
         ret = ''
         template = template_ciril_txt_file_engagement()
-        
+        mail_template_obj = self.pool.get('email.template')
+        mail_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openstc_achat_stock','openstc_email_template_purchase_engaged')[1]
         for po in self.browse(cr, uid, ids ,context=context):
             ret += template.create_file(po)
             #write file on remote CIRIL server
@@ -701,6 +701,7 @@ class purchase_order(osv.osv):
             now = datetime.now().strftime('%Y-%m-%d')
             po.write({'validation':'purchase_engaged','date_engage_sent':now})
             #@todo: send mail to accounting department to notify that a new file can be imported to their 3rd part accounting software
+            mail_template_obj.send_mail(cr, uid, mail_id, po.id, force_send=True, context=context)
         return {'type':'ir.actions.act_window_close'}
     
     def all_reception_done(self, cr, uid, ids):

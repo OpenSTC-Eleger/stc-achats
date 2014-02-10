@@ -21,6 +21,11 @@ msgid "Engage"
 msgstr "Gestion commande"
 
 #. module: openstc_achat_stock
+#: field:purchase.order,property_accountant_id:0
+msgid "Accountant"
+msgstr "Comptable concerné"
+
+#. module: openstc_achat_stock
 #: view:purchase.order:0
 msgid "Validées"
 msgstr "Validées"

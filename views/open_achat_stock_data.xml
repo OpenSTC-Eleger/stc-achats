@@ -20,7 +20,7 @@
 			<field name="body_text"><![CDATA[
 		    Message Automatique
 		    
-		    ${object.user_id.name or 'inconnu'} Vient de valider la commande ${object.name or 'inconnu'} pour être engagée.
+		    ${object.user_id.firstname or ''} ${object.user_id.name or 'inconnu'} Vient de valider la commande ${object.name or 'inconnu'} pour être engagée.
 					    
 		    Vous pouvez récupérer cet engagement en utilisant l'interface SICLIC de votre logiciel de gestion des finances.
 

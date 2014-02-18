@@ -678,12 +678,12 @@ class purchase_order(osv.osv):
         mail_template_obj = self.pool.get('email.template')
         mail_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openstc_achat_stock','openstc_email_template_purchase_engaged')[1]
         for po in self.browse(cr, uid, ids ,context=context):
-            ret += template.create_file(po)
+            ret = template.create_file(po)
             #write file on remote CIRIL server
             base_path = '%s/%s/%s' % (os.getenv('HOME', '.'),config.options.get('openerp_ciril_repository',''),cr.dbname)
             file_path = '%s/todo/%s.txt' % (base_path,po.name.replace('/','_'))
             ret_file = open(file_path, 'w')
-            ret_file.write(ret)
+            ret_file.write(ret.encode('utf-8'))
             ret_file.close()
             #perform push of the created file
             try:

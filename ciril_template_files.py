@@ -48,14 +48,14 @@ class template_ciril_txt_file_engagement(object):
             if len(ret) > 0:
                 ret += '\n'
             for (key, it) in data:
-                missing = it['length'] - len(str(it['value']))
+                missing = it['length'] - len(unicode(it['value']))
                 if missing <= 0:
                     #we just supply the string to the maximum length authorized for this field
-                    ret += str(it['value'])[:it['length']]
+                    ret += unicode(it['value'])[:it['length']]
                 else:
                     #otherwise, we complete non registered characters with default ones, spaces suffixing strings field and 0 prefixing numeric fields
                     if isinstance(it['value'], (int,long, float)):
-                        ret += ''.join(['0' for i in range(missing)]) + str(it['value'])
+                        ret += ''.join(['0' for i in range(missing)]) + unicode(it['value'])
                     else:
                         ret += it['value'] + ''.join([' 'for i in range(missing)])
         return ret

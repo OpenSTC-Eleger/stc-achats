@@ -21,8 +21,13 @@
 import logging
 import os
 import re
+import unicodedata
 from datetime import datetime
 _logger = logging.getLogger('openerp')
+
+"""@note: Remove all char that is an accent (category 'Mn' according to unicode RFC 5.2 used by python) """
+def to_upper_unaccent(str):
+    return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x) <> 'Mn').upper()
 
 class item_file(object):
     value = ''
@@ -87,40 +92,6 @@ class template_ciril_txt_file_engagement(object):
     def __init__(self, version='B'):
         self._version = version
         _logger.info('Initialized template file for engages at version %s' % self._version)
-#        lengths, mandatory and default values of each field 
-#        if version == 'B':
-#            self._vars = {'code_tiers':item_file(pos=1),
-#                    'code_gest':item_file(pos=2),
-#                    'code_ss_rub':item_file(length=7, pos=3),
-#                    'code_nature':item_file(pos=4),
-#                    'num_ope':item_file(pos=5),
-#                    'code_serv':item_file(pos=6,length=4),
-#                    'code_antenne':item_file(pos=7),
-#                    'depense_recette':item_file(pos=8,length=1),
-#                    'code_budget':item_file(pos=1),
-#                    'exercice':item_file(pos=10, length=4),
-#                    'date_engage':item_file(pos=11),
-#                    'code_user':item_file(pos=12, value='CIRIL'),
-#                    'code_tva':item_file(pos=13, value=0, length=2, mandatory=False),
-#                    'type_engage':item_file(pos=14, length=2),
-#                    'origin':item_file(pos=15, length=2, value='S'),
-#                    'amount_ht':item_file(pos=16, length=16, value=0),
-#                    'amount_tva':item_file(pos=17, length=16, value=0),
-#                    'string':item_file(pos=18, length=120),
-#                    'num_engage':item_file(pos=19, mandatory=False),
-#                    'num_market':item_file(pos=20, mandatory=False),
-#                    'num_lot':item_file(pos=21, length=10,mandatory=False),
-#                    'nomenclature':item_file(pos=22, mandatory=False),
-#                    'motif_rejet':item_file(pos=23, length=50, mandatory=False),
-#                    'type_depense':item_file(pos=24, length=2,mandatory=False),
-#                    'objectif':item_file(pos=25, length=11, mandatory=False),
-#                    'version':item_file(pos=26, length=1),
-#                    'num_engage_openstc':item_file(pos=27, length=64, mandatory=False),
-#                    'num_commande_openstc':item_file(pos=28, length=64, mandatory=False),
-#                    'code_origin_numerotation':item_file(pos=29, length=2, mandatory=False),}
-#            
-#
-#        }
 
     def init_main_vals(self):
         return {'code_tiers':{'length':10,'required':True,'value':'','pos':1},
@@ -211,7 +182,7 @@ class template_ciril_txt_file_engagement(object):
             data['code_tva']['value'] = line.order_line[0].taxes_id and line.order_line[0].taxes_id[0].code_tax_ciril or '' 
             data['depense_recette']['value'] = 'D'
             #TOREPLACE with real ids
-            data['string']['value'] = record.description
+            data['string']['value'] = to_upper_unaccent(record.description)
             #TODO: keep a trace of current code numerotation
             #num_engage and code_origin are exclusive each other
             #data['num_engage']['value'] = line.name

@@ -213,8 +213,13 @@ purchase_order_line()
 #Vérif validation achat par DST + Elu si > 300 euros (EDIT: voir modifs ALAMICHEL dans son mail)
 class purchase_order(osv.osv):
     
+    """ @note: Remove all char that is not a simple ascii letter"""
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
+    
+    """@note: Remove all char that is an accent (category 'Mn' according to unicode RFC 5.2 used by python) """
+    def to_upper_unaccent(self, str):
+        return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x) <> 'Mn').upper()
     
     def _custom_sequence(self, cr, uid, context):
         seq = self.pool.get("ir.sequence").next_by_code(cr, uid, 'openstc.purchase.order',context)

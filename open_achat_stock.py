@@ -706,7 +706,7 @@ product_product()
 
 
 #Override in order to switch to engage if the user clicked on "Voir Produits A Réceptionnés" of this engage
-class stock_partial_move(OpenbaseCore_memory):
+class stock_partial_move(osv.osv_memory):
     _inherit = "stock.partial.move"
     _name = "stock.partial.move"
     _columns = {

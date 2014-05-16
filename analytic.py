@@ -81,27 +81,23 @@ class crossovered_budget_lines(osv.osv):
     #custom field for public account : returns amount with taxes included
     def _openstc_pract(self, cr, uid, ids, name, args, context=None):
         #first, we get engage_lines that matches dates and current budget line analytic account
-        ret = {}
-        for line in self.browse(cr, uid, ids, context):
-            ret.setdefault(line.id,{})
-            engage_line_ids = self.pool.get("open.engagement.line").search(cr, uid, [('budget_line_id','=',line.id),
-                                                                                     ('engage_id.date_engage_validated','<=', line.date_to),
-                                                                                     ('engage_id.date_engage_validated','>=',line.date_from),
-                                                                                     ('engage_id.state','not in',('draft','to_validate','check_except'))])
-            amount = 0.0
-            #next, if we found engage_lines, we compute with them, 
-            #else, we use default openerp practical amount (for example to display sales amount which doesn't work with engages)
-            if engage_line_ids:
-                for engage_line in self.pool.get("open.engagement.line").browse(cr, uid, engage_line_ids, context):
-                    amount += engage_line.amount
-            else:
-                amount = line.practical_amount
-            ret[line.id]['openstc_practical_amount'] = amount
-            if line.planned_amount:
-                ret[line.id]['openstc_erosion'] = amount * 100.0 / line.planned_amount
-            else:
-                ret[line.id]['openstc_erosion'] = 0.0
-            
+        ret = {}.fromkeys(ids,{'openstc_practical_amount':0.0, 'openstc_erosion':0.0})
+        engage_obj = self.pool.get("open.engagement.line")
+        
+        cr.execute(''' select budget.id as id, budget.planned_amount, sum(line.amount) as amount
+        from open_engagement_line as line, crossovered_budget_lines as budget
+        where budget.id = line.budget_line_id
+        and line.budget_line_id in {budget_line_ids}
+        group by budget.planned_amount, budget.id'''.format(budget_line_ids=tuple(ids)))
+        amount = 0.0
+        data = cr.fetchall()
+        for d in data:
+            erosion = 0.0
+            if d[1]:
+                erosion = d[2] * 100.0 / d[1]
+            ret[d[0]] = {'openstc_practical_amount':d[2],
+                                 'openstc_erosion':erosion}
+        
         return ret
     
     _inherit = "crossovered.budget.lines"

@@ -23,8 +23,9 @@ import re
 from tools.translate import _
 from datetime import datetime
 import netsvc
+from openbase.openbase_core import OpenbaseCore
 
-class res_users(osv.osv):
+class res_users(OpenbaseCore):
     _inherit = "res.users"
     _name = "res.users"
     
@@ -40,7 +41,7 @@ class res_users(osv.osv):
     
 res_users()
 
-class res_company(osv.osv):
+class res_company(OpenbaseCore):
     _inherit = "res.company"
     _name = "res.company"
     _columns = {
@@ -52,7 +53,7 @@ class res_company(osv.osv):
 res_company()
 
 
-class res_partner(osv.osv):
+class res_partner(OpenbaseCore):
     _inherit = "res.partner"
     _name = "res.partner"
     _columns = {
@@ -63,7 +64,7 @@ res_partner()
 
 
 
-class ir_attachment(osv.osv):
+class ir_attachment(OpenbaseCore):
     _inherit = "ir.attachment"
     _name = "ir.attachment"
     _columns = {

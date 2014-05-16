@@ -20,8 +20,9 @@
 
 from osv import osv, fields
 from tools.translate import _
+from openbase.openbase_core import OpenbaseCore
 
-#class account_analytic_account(osv.osv):
+#class account_analytic_account(OpenbaseCore):
 #    _inherit = "account.analytic.account"
 #    _name = "account.analytic.account"
 #    
@@ -31,7 +32,7 @@ from tools.translate import _
 #    
 #account_analytic_account()
 
-class account_invoice_line(osv.osv):
+class account_invoice_line(OpenbaseCore):
     _inherit = "account.invoice.line"
     _name = "account.invoice.line"
     
@@ -59,7 +60,7 @@ class account_invoice_line(osv.osv):
 account_invoice_line()
  
 
-class account_invoice(osv.osv):
+class account_invoice(OpenbaseCore):
     _inherit = "account.invoice"
     _name = "account.invoice"
     _columns = {
@@ -86,7 +87,7 @@ class account_invoice(osv.osv):
 
 account_invoice()
 
-class account_move_line(osv.osv):
+class account_move_line(OpenbaseCore):
     _inherit = "account.move.line"
     _name = "account.move.line"
     _columns = {
@@ -105,7 +106,7 @@ class account_move_line(osv.osv):
     
 account_move_line()
     
-class account_tax(osv.osv):
+class account_tax(OpenbaseCore):
     _inherit = "account.tax"
     _name = "account.tax"
     _columns = {
@@ -114,7 +115,7 @@ class account_tax(osv.osv):
         
 account_tax()
 
-class account_account(osv.osv):
+class account_account(OpenbaseCore):
     _inherit = "account.account"
     
     #add analytic purchase journal to purchase journal (m20 field)

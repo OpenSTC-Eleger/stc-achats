@@ -32,8 +32,9 @@ import urllib2
 import os
 from urllib2 import URLError
 import shutil
+from openbase.openbase_core import OpenbaseCore
 
-class purchase_order_line(osv.osv):
+class purchase_order_line(OpenbaseCore):
     _inherit = "purchase.order.line"
     _name = "purchase.order.line"
 
@@ -211,7 +212,7 @@ purchase_order_line()
 #Surcharge de purchase.order pour ajouter les étapes de validation pour collectivités : 
 #Vérif dispo budget, sinon blocage
 #Vérif validation achat par DST + Elu si > 300 euros (EDIT: voir modifs ALAMICHEL dans son mail)
-class purchase_order(osv.osv):
+class purchase_order(OpenbaseCore):
     
     """ @note: Remove all char that is not a simple ascii letter"""
     def remove_accents(self, str):
@@ -357,8 +358,18 @@ class purchase_order(osv.osv):
                     raise osv.except_osv(_('Error'),_('There is missing budget attributions in order lines'))
         return {'type':'ir.actions.act_window.close'}
     
+    """ write the priority of the record according to its state and the values of 'order' list variable """
+    def _get_validation_order(self, cr, uid, ids, name, args, context=None):
+        order = ['budget_to_check','engagement_to_check','done','purchase_engaged','purchase_paid']
+        max_order = len(order)
+        ret = {}.fromkeys(ids, max_order)
+        for purchase in self.browse(cr, uid, ids, context=context):
+            ret[purchase.id] = order.index(purchase.validation) if purchase.validation in order else max_order
+        return ret
+    
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
+            'validation_order': fields.function(_get_validation_order, method=True, type='integer', string="Order", store=True),
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Objet de l\'achat',size=128),

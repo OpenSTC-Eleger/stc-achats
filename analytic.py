@@ -25,8 +25,9 @@ import unicodedata
 import netsvc
 import decimal_precision as dp
 from tools.translate import _
+from openbase.openbase_core import OpenbaseCore
 
-class crossovered_budget(osv.osv):
+class crossovered_budget(OpenbaseCore):
     _inherit = "crossovered.budget"
     _name = "crossovered.budget"
     
@@ -60,7 +61,7 @@ class crossovered_budget(osv.osv):
         }
 crossovered_budget()
 
-class crossovered_budget_lines(osv.osv):
+class crossovered_budget_lines(OpenbaseCore):
     _rec_name = "name"
     
     def name_get(self, cr, uid, ids, context=None):

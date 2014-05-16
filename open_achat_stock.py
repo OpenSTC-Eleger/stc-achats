@@ -29,9 +29,10 @@ import addons
 from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
 import logging
+from openbase.openbase_core import OpenbaseCore
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
-class purchase_order_ask(osv.osv):
+class purchase_order_ask(OpenbaseCore):
     AVAILABLE_ETAT_PO_ASK = [('draft','Brouillon'),('done','Devis Clos')]
     _name = "purchase.order.ask"
     
@@ -294,7 +295,7 @@ class purchase_order_ask(osv.osv):
 
 purchase_order_ask()
 
-class purchase_order_ask_line(osv.osv):
+class purchase_order_ask_line(OpenbaseCore):
     _name = "purchase.order.ask.line"
     _columns = {
         'po_ask_id': fields.many2one('purchase.order.ask','Demande associée'),
@@ -326,7 +327,7 @@ class purchase_order_ask_line(osv.osv):
 purchase_order_ask_line()
 
 
-class purchase_order_ask_partners(osv.osv):
+class purchase_order_ask_partners(OpenbaseCore):
     
     _AVAILABLE_NOTIF_STATES = [('nothing','Non notifié'),('error_mail','Non notifié(erreur envoi de mail)'),('mail','Mail Envoyé')]
     
@@ -347,7 +348,7 @@ class purchase_order_ask_partners(osv.osv):
 purchase_order_ask_partners()
 
 ##engage number model : YYYY-SER-xxx (YYYY: année, SER: service name on 3 characters, xxx: number increment )
-#class open_engagement(osv.osv):
+#class open_engagement(OpenbaseCore):
 #
 #    
 #    _AVAILABLE_STATE_ENGAGE = [('draft','Brouillon'),('to_validate','A Valider'),('waiting_invoice','Attente Facture Fournisseur')
@@ -366,7 +367,7 @@ purchase_order_ask_partners()
 #    
 #open_engagement()
     
-class open_engagement_line(osv.osv):
+class open_engagement_line(OpenbaseCore):
     
     def remove_accents(self, str):
         return ''.join(x for x in unicodedata.normalize('NFKD',str) if unicodedata.category(x)[0] == 'L')
@@ -426,7 +427,7 @@ class open_engagement_line(osv.osv):
     
 open_engagement_line()
     
-class openstc_ask_prod(osv.osv):
+class openstc_ask_prod(OpenbaseCore):
     _name = "openstc.ask.prod"
     
     _AVAILABLE_STATE_ASK = [('draft','Brouillon'),('confirmed','Confirmé par le Demandeur'),('waiting_validation','En Attente de Validation par les service concernés'),
@@ -480,7 +481,7 @@ class openstc_ask_prod(osv.osv):
     
 openstc_ask_prod()
     
-class openstc_merge_line_ask(osv.osv):
+class openstc_merge_line_ask(OpenbaseCore):
     _name = "openstc.merge.line.ask"
     
     def _get_merge_ids(self, cr, uid, ids, context=None):
@@ -642,7 +643,7 @@ class openstc_merge_line_ask(osv.osv):
 openstc_merge_line_ask()
 
 
-class stock_picking(osv.osv):
+class stock_picking(OpenbaseCore):
     _inherit = "stock.picking"
     _name = "stock.picking"
     
@@ -669,7 +670,7 @@ class stock_picking(osv.osv):
     
 stock_picking()
 
-class stock_move(osv.osv):
+class stock_move(OpenbaseCore):
     _inherit = "stock.move"
     _name = "stock.move"
     _columns = {
@@ -682,7 +683,7 @@ stock_move()
 
 
     
-class product_product(osv.osv):
+class product_product(OpenbaseCore):
     _inherit = "product.product"
     _name = "product.product"
     
@@ -705,7 +706,7 @@ product_product()
 
 
 #Override in order to switch to engage if the user clicked on "Voir Produits A Réceptionnés" of this engage
-class stock_partial_move(osv.osv_memory):
+class stock_partial_move(OpenbaseCore_memory):
     _inherit = "stock.partial.move"
     _name = "stock.partial.move"
     _columns = {
@@ -723,7 +724,7 @@ class stock_partial_move(osv.osv_memory):
 stock_partial_move()
 
 #Override of openstc.service to add services linked with purchases
-class openstc_service(osv.osv):
+class openstc_service(OpenbaseCore):
     _inherit = "openstc.service"
     _name = "openstc.service"
     

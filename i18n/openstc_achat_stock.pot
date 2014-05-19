@@ -259,7 +259,7 @@ msgstr ""
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock
-msgid "Achats-Stocks"
+msgid "OpenAchatsStocks"
 msgstr ""
 
 #. module: openstc_achat_stock

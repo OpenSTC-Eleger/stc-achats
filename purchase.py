@@ -408,6 +408,12 @@ class purchase_order(OpenbaseCore):
         'mail_sent' : lambda *a: False,
         }
 
+    _actions = {
+        'delete': lambda self,cr,uid,record,groups_code: record.validation in ('budget_to_check',),
+        'check_dst': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_dst and 'DIRE' in groups_code,
+        'check_elu': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_elu and 'ELU' in groups_code,
+        'cancel': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
+        }
     
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in vals and 'name' in vals:

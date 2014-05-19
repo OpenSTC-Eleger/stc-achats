@@ -221,7 +221,7 @@
 		    sequence="4" parent="menu_open_achat_stock_budgets"/>
 		
 		<menuitem id="menu_configuration_open_achat_stock" parent="openbase.menu_configuration"
-		    sequence="4" name="Achats-Stock"/>
+		    sequence="4" name="OpenAchatsStock"/>
 		
 		<menuitem id="menu_openstc_achat_stock_account_analytic_view" sequence="1" name="Analytic accounts"
 		     parent="menu_configuration_open_achat_stock" action="account.action_account_analytic_account_form" groups="analytic.group_analytic_accounting"/>

@@ -31,27 +31,39 @@ class crossovered_budget(OpenbaseCore):
     _inherit = "crossovered.budget"
     _name = "crossovered.budget"
     
+    """for performance purpose, filter fields to fetch from crossovered.budget.lines, 2 couples are available : 
+        - 'planned_amount' and 'openstc_practical_amount' (our use, fast to compute)
+        - 'pract_amount' and 'theo_amount' (openerp old use, very slow to compute)
+        @return: dict with {id: values} where values is a dict containing values of each 'field_name'"""
     def _calc_amounts(self, cr, uid, ids,  field_name, args, context=None):
-        res = {}
-        for budget in self.browse(cr, uid, ids, context):
+        res = {}       
+        map_line_fields = {'planned_amount':'planned_amount',
+                          'openstc_practical_amount': 'openstc_practical_amount',
+                          'pract_amount': 'practical_amount',
+                          'theo_amount': 'theoritical_amount'}
+        line_fields = [map_line_fields.get(x) for x in field_name if x in map_line_fields.keys()]
+
+        budget_line_obj = self.pool.get('crossovered.budget.lines')
+        for budget in self.read(cr, uid, ids, ['crossovered_budget_line'], context=context):
             pract = 0.0
             theo = 0.0
             planned = 0.0
             openstc_practical = 0.0
             #Pour chaque budget, on ajoute les montants de toutes leurs lignes budgétaires
-            for line in budget.crossovered_budget_line:
-                pract += line.practical_amount
-                theo += line.theoritical_amount
-                planned += line.planned_amount
-                openstc_practical += line.openstc_practical_amount
-            res.update({budget.id:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned, 'openstc_practical_amount':openstc_practical}})
+            for line in budget_line_obj.read(cr, uid, budget['crossovered_budget_line'], line_fields, context=context):
+                pract += line.get('practical_amount', 0.0)
+                theo += line.get('theoritical_amount', 0.0)
+                planned += line.get('planned_amount', 0.0)
+                openstc_practical += line.get('openstc_practical_amount', 0.0)
+            res.update({budget['id']:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned, 'openstc_practical_amount':openstc_practical}})
         return res
+
     
     _columns = {
-        'planned_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Plannifié", type='float'),
-        'pract_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Pratique", type='float'),
-        'theo_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Théorique", type='float'),
-        'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = True, string="Montant Consommé", type='float'),
+        'planned_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Plannifié", type='float'),
+        'pract_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Pratique", type='float'),
+        'theo_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Théorique", type='float'),
+        'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Consommé", type='float'),
         'code_budget_ciril':fields.char('CIRIL Budget Code', size=16),
         'service_id':fields.many2one('openstc.service','Service',required=True),
         }
@@ -88,8 +100,8 @@ class crossovered_budget_lines(OpenbaseCore):
         cr.execute(''' select budget.id as id, budget.planned_amount, sum(line.amount) as amount
         from open_engagement_line as line, crossovered_budget_lines as budget
         where budget.id = line.budget_line_id
-        and line.budget_line_id in {budget_line_ids}
-        group by budget.planned_amount, budget.id'''.format(budget_line_ids=tuple(ids)))
+        and line.budget_line_id in %s
+        group by budget.planned_amount, budget.id''', (tuple(ids),))
         amount = 0.0
         data = cr.fetchall()
         for d in data:

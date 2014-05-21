@@ -409,10 +409,12 @@ class purchase_order(OpenbaseCore):
         }
 
     _actions = {
-        'delete': lambda self,cr,uid,record,groups_code: record.validation in ('budget_to_check',),
+        'delete': lambda self,cr,uid,record,groups_code: record.state == 'cancel',
+        'cancel': lambda self,cr,uid,record,groups_code: record.validation in ('budget_to_check',),
         'check_dst': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_dst and 'DIRE' in groups_code,
         'check_elu': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_elu and 'ELU' in groups_code,
-        'cancel': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
+        'refuse': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
+        'done': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged') and record.all_invoices_treated
         }
     
     def create(self, cr, uid, vals, context=None):

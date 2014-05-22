@@ -148,5 +148,14 @@
  	      ('name','=','property_accountant_id')]"/>
 	    <field name="value" eval="'res.users,'+str(ref('openbase.openbase_accountant_user'))"/>
  	</record>
+ 	
+    <record id="filter_purchases_invoice_to_treat" model="ir.filters">
+	    <field name="name">Commandes avec des factures à traiter</field>
+	    <field name="description">Commandes avec des factures jointes à traiter par l'acheteur</field>
+	    <field name="model_id">purchase.order</field>
+	    <field name="pre_recorded" eval="True"/>
+	    <field name="domain">[{"field":"engage_to_treat","operator":"=","value":true}]</field>
+	</record>
+		
 	</data>
 </openerp>

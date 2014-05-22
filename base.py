@@ -74,10 +74,12 @@ class ir_attachment(OpenbaseCore):
          'engage_done':fields.boolean('Suivi commande Clos',readonly=True),
          'attach_made_done':fields.boolean('Cette Facture Clos cette commande', readonly=True),
          'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]}),
+         'is_invoice': fields.boolean('Is PDF invoice'),
         }
     
     _defaults = {
         'state':'not_invoice',
+        'is_invoice': lambda *a: False,
         }
     
     _order = "create_date"
@@ -86,11 +88,13 @@ class ir_attachment(OpenbaseCore):
     def create(self, cr, uid, vals, context=None):
         attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
         attach = self.browse(cr, uid, attach_id, context)
-        is_invoice = False
-        #invoice : F-yyyy-MM-dd-001
-        prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
-        #if attach.res_model == 'purchase.order':
-        is_invoice = prog.search(attach.datas_fname)
+        is_invoice = attach.is_invoice
+        if not is_invoice:
+            #invoice : F-yyyy-MM-dd-001
+            prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
+            #if attach.res_model == 'purchase.order':
+            is_invoice = prog.search(attach.datas_fname)
+            attach.write({'is_invoice':is_invoice})
         if is_invoice:
             self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture

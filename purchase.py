@@ -306,7 +306,7 @@ class purchase_order(OpenbaseCore):
     def _get_engage_attaches(self, cr, uid, ids, field_name, arg=None, context=None):
 
         po_ids = ids
-        cr.execute('''select a.id, a.res_id, a.state, a.engage_done
+        cr.execute('''select a.id, a.res_id, a.state, a.engage_done, a.datas_fname
                     from ir_attachment as a 
                     where a.res_id in %s and a.res_model = %s
                     group by a.res_id, a.id
@@ -315,18 +315,24 @@ class purchase_order(OpenbaseCore):
         search_ids = []
         search_ids.extend(ids)
         for id in ids:
-            ret.setdefault(id, {'attach_ids':[],'engage_to_treat':False,'all_invoices_treated':False})
+            ret.setdefault(id, {'attach_ids':[],'engage_to_treat':False,'all_invoices_treated':False, 
+                                'attach_not_invoices': [], 'attach_waiting_invoice_ids': [], 'attach_invoices': []})
         for r in cr.fetchall():
             if r[1] in ids:
-                #if attach is an invoice and if computation need to continue
-                if not ret[r[1]]['engage_to_treat'] and r[2] <> 'not_invoice':
+                attach_value = {'id': r[0], 'name': r[4]}
+                #if attach is an invoice
+                if r[2] <> 'not_invoice':
+                    ret[r[1]]['attach_invoices'].append(attach_value)
                     #if an invoice has to be check, purchase will appear in board
                     if r[2] in ('to_check','except_send_mail') and not r[3]:
                         ret[r[1]]['engage_to_treat'] = True
-                        ret[r[1]]['all_invoices_treated'] = False
-                    #as long as no invoices are found to be treated, we consider purchase to be endable
-                    elif not ret[r[1]]['all_invoices_treated']:
-                        ret[r[1]]['all_invoices_treated'] = True
+                        ret[r[1]]['attach_waiting_invoice_ids'].append(r[0])
+                        
+                    ret[r[1]]['all_invoices_treated'] = len(ret[r[1]]['attach_waiting_invoice_ids']) == 0
+                #else, if attach is not an invoice, add it to the not_invoice_ids
+                else:
+                    ret[r[1]]['attach_not_invoices'].append(attach_value)
+                #for backward_compatibility only
                 ret[r[1]]['attach_ids'].append(r[0])
             
                 
@@ -335,10 +341,12 @@ class purchase_order(OpenbaseCore):
     def _search_engage_to_treat(self, cr, uid, obj, name, args, context={}):
         if not args:
             return []
-        if ('engage_to_treat','=',True) in args:
-            cr.execute("select res_id from ir_attachment where state in ('to_check','except_send_mail') and res_model = %s and engage_done=False group by res_id;",(self._name,))
-            return [('id','in',[x for x in cr.fetchall()])]
-        return []
+        val = True
+        for arg in args:
+            if arg[1] == '=' and arg[2] is False:
+                val = False
+        cr.execute("select res_id from ir_attachment where state in ('to_check','except_send_mail') and res_model = %s and engage_done=False group by res_id;",(self._name,))
+        return [('id','in' if val else 'not in',[x for x in cr.fetchall()])]
     
     def search_all_invoices_treated(self, cr, uid, obj, name, args, context={}):
         if not args:
@@ -396,6 +404,10 @@ class purchase_order(OpenbaseCore):
             'attach_ids':fields.function(_get_engage_attaches, multi="attaches", type='one2many', relation='ir.attachment',string='Documents Joints'),
             'id':fields.integer('Id'),
             'current_url':fields.char('URL Courante',size=256),
+            
+            'attach_not_invoices': fields.function(_get_engage_attaches, multi="attaches", type="char", string="misc. attaches"),
+            'attach_invoices': fields.function(_get_engage_attaches, multi="attaches", type="char", string="PDF invoice attaches"),
+            'attach_waiting_invoice_ids': fields.function(_get_engage_attaches, multi="attaches", type="char", string="PDF invoice attaches to treat"),
             'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             }
@@ -414,7 +426,8 @@ class purchase_order(OpenbaseCore):
         'check_dst': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_dst and 'DIRE' in groups_code,
         'check_elu': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_elu and 'ELU' in groups_code,
         'refuse': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
-        'done': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged') and record.all_invoices_treated
+        'done': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged') and record.all_invoices_treated,
+        'invoice': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged')
         }
     
     def create(self, cr, uid, vals, context=None):

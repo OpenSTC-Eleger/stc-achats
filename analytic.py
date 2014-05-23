@@ -91,6 +91,12 @@ class crossovered_budget_lines(OpenbaseCore):
 #            ids = self.search(cr, uid, [('analytic_account_id.service_id.code',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, uid, ids, context=context)
     
+    def _get_complete_name(self, cr, uid, ids, name ,args, context=None):
+        ret = {}.fromkeys(ids, '')
+        for budget_line in self.browse(cr, uid, ids, context=context):
+            ret[budget_line.id] = budget_line.name_get()[0][1]
+        return ret
+    
     #custom field for public account : returns amount with taxes included
     def _openstc_pract(self, cr, uid, ids, name, args, context=None):
         #first, we get engage_lines that matches dates and current budget line analytic account
@@ -120,6 +126,7 @@ class crossovered_budget_lines(OpenbaseCore):
             'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
             'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
             'name':fields.related('analytic_account_id','complete_name',string='Budget name',type='char',store=True),
+            'complete_name': fields.function(_get_complete_name, method=True, string="Complete name", type='char', store=True),
         }
     
     

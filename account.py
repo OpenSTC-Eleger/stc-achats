@@ -115,8 +115,22 @@ class account_tax(OpenbaseCore):
         
 account_tax()
 
+class account_analytic_account(OpenbaseCore):
+    _inherit = "account.analytic.account"
+account_analytic_account()
+
 class account_account(OpenbaseCore):
     _inherit = "account.account"
+    
+    def _get_complete_name(self, cr, uid, ids, name, args, context=None):
+        ret = {}.fromkeys(ids, '')
+        for account in self.browse(cr, uid, ids, context=context):
+            ret[account.id] = account.name_get()[0][1] 
+        return ret
+    
+    _columns = {
+        'complete_name': fields.function(_get_complete_name, method=True, type='char', store=True)
+        }
     
     #add analytic purchase journal to purchase journal (m20 field)
     def init_stc_achat_accounting(self, cr, uid, analytic_journal_id, context=None):

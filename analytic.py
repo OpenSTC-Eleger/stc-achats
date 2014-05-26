@@ -58,6 +58,13 @@ class crossovered_budget(OpenbaseCore):
             res.update({budget['id']:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned, 'openstc_practical_amount':openstc_practical}})
         return res
 
+    _actions = {
+        'validate': lambda cr, uid, record, groups_code: record.state == 'confirm',
+        'confirm': lambda cr, uid, record, groups_code: record.state == 'draft',
+        'cancel': lambda cr, uid, record, groups_code: record.state in ('confirm','validate'),
+        'done': lambda cr, uid, record, groups_code: record.state == 'validate',
+        'delete': lambda cr, uid, record, groups_code: record.state == 'draft',
+        }
     
     _columns = {
         'planned_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Plannifié", type='float'),
@@ -67,6 +74,17 @@ class crossovered_budget(OpenbaseCore):
         'code_budget_ciril':fields.char('CIRIL Budget Code', size=16),
         'service_id':fields.many2one('openstc.service','Service',required=True),
         }
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        signal = False
+        if 'wkf_evolve' in vals:
+            signal = vals.pop('wkf_evolve')
+        ret = super(crossovered_budget, self).write(cr, uid, ids, vals, context=context)
+        if signal:
+            wkf_service = netsvc.LocalService('workflow')
+            for id in ids:
+                wkf_service.trg_validate(uid, self._name, id, signal, cr)
+        return ret
     
     _defaults = {
         'code_budget_ciril':lambda *a: '0',

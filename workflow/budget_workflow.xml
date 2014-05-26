@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+		<record id="act_renew" model="workflow.activity">
+			<field name="name">Renew</field>
+			<field name="wkf_id" ref="account_budget.wkf_crossovered_budget" />
+			<field name="kind">function</field>
+			<field name="action">budget_renew()</field>
+		</record>
+
+
+		<record id="wkf_openstc_trans_validate_renew" model="workflow.transition">
+			<field name="act_from" ref="account_budget.act_validate" />
+			<field name="act_to" ref="act_renew" />
+			<field name="signal">renew</field>
+		</record>
+		
+		<record id="wkf_openstc_trans_renew_done" model="workflow.transition">
+			<field name="act_from" ref="act_renew" />
+			<field name="act_to" ref="account_budget.act_done" />
+<!-- 			<field name="signal"></field> -->
+		</record>
+		
+	</data>
+</openerp>

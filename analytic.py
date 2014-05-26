@@ -63,6 +63,7 @@ class crossovered_budget(OpenbaseCore):
         'confirm': lambda cr, uid, record, groups_code: record.state == 'draft',
         'cancel': lambda cr, uid, record, groups_code: record.state in ('confirm','validate'),
         'done': lambda cr, uid, record, groups_code: record.state == 'validate',
+        'renew': lambda cr, uid, record, groups_code: record.state == 'validate',
         'delete': lambda cr, uid, record, groups_code: record.state == 'draft',
         }
     
@@ -73,7 +74,35 @@ class crossovered_budget(OpenbaseCore):
         'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Consommé", type='float'),
         'code_budget_ciril':fields.char('CIRIL Budget Code', size=16),
         'service_id':fields.many2one('openstc.service','Service',required=True),
+        
+        'validate_note': fields.text('Validate note'),
+        'done_note': fields.text('Validate note'),
+        'cancel_note': fields.text('Validate note'),
+        
+        'new_name': fields.char('New name', size=128),
+        'new_date_from': fields.date('New Date from'),
+        'new_date_to': fields.date('New Date to'),
+        'original_budget_id': fields.many2one('crossovered.budget', 'From budget'),
         }
+    
+    def prepare_default_values_renewed_contract(self, cr, uid, record, context=None):
+        return {
+            'original_budget_id': record.id,
+            'date_from': record.new_date_from or record.date_from,
+            'date_to': record.new_date_to or record.date_to,
+            'name': record.new_name or record.name
+            }
+    
+    def renew(self, cr, uid, ids, context=None):
+        ret = []
+        for budget in self.browse(cr, uid, ids):
+            val = self.prepare_default_values_renewed_contract(cr, uid, budget, context=context)
+            new_id = self.copy(cr, uid, budget.id, val, context=context)
+            ret.append(new_id)
+        return ret
+    
+    def budget_renew(self, cr, uid, ids):
+        self.renew(cr, uid, ids, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         signal = False

@@ -172,7 +172,7 @@
 		    <field name="domain">[('name','not like','Projects'),'|',('parent_id','=',False),('parent_id.name','not like','Projects')]</field>
 		</record>
 		
-		<menuitem id="menu_open_achat_stock" name="OpenAchatsStocks"
+		<menuitem id="menu_open_achat_stock" name="OpenstcAchatStock"
 			sequence="10" action="openstc_achat_stock_action_board_form"
 			groups="openbase.openstc_dst,openbase.openstc_elu,openbase.openstc_manager,account.group_account_user" />
 

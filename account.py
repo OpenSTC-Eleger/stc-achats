@@ -117,6 +117,11 @@ account_tax()
 
 class account_analytic_account(OpenbaseCore):
     _inherit = "account.analytic.account"
+    _actions = {
+        'delete': lambda self,cr,uid,record,groups_code: not record.crossovered_budget_line,
+        'update': lambda self,cr,uid,record,groups_code: True
+        
+        }
 account_analytic_account()
 
 class account_account(OpenbaseCore):

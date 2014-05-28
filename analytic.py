@@ -82,7 +82,7 @@ class crossovered_budget(OpenbaseCore):
         'new_name': fields.char('New name', size=128),
         'new_date_from': fields.date('New Date from'),
         'new_date_to': fields.date('New Date to'),
-        'original_budget_id': fields.many2one('crossovered.budget', 'From budget'),
+        'renewed_budget_id': fields.many2one('crossovered.budget', 'New budget created from renew'),
         }
     
     def prepare_default_values_renewed_contract(self, cr, uid, record, context=None):
@@ -192,7 +192,23 @@ class crossovered_budget_lines(OpenbaseCore):
                                                                     'account_ids':[(6,0,[account.id])]})
             
         return {'value':{'general_budget_id':post}}
-        
+    
+    def create(self, cr, uid, vals, context=None):
+        final_vals = {}
+        #create default budget.post account
+        account_id = vals.get('openstc_general_account',False)
+        if account_id and not 'general_budget_id' in vals:
+            values = self.onchange_openstc_general_account(cr, uid, False, openstc_general_account=account_id)
+            vals.update(values['value'])
+        #check if dates are in vals (else put default values)
+        if 'date_from' not in vals or 'date_to' not in vals:
+            budget = self.pool.get('crossovered.budget').read(cr, uid, vals.get('crossovered_budget_id'), ['date_from','date_to'], context=context)
+            final_vals.update({'date_from': budget.get('date_from'), 'date_to':budget.get('date_to')})
+        #finally, merge default values with input ones
+        final_vals.update(vals)
+        ret = super(crossovered_budget_lines, self).create(cr, uid, final_vals, context=context)
+        return ret
+    
 crossovered_budget_lines()
 
     

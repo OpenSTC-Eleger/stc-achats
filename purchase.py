@@ -375,6 +375,22 @@ class purchase_order(OpenbaseCore):
             ret[purchase.id] = order.index(purchase.validation) if purchase.validation in order else max_order
         return ret
     
+    def _get_reception_progress(self, cr, uid, ids, name, args, context=None):
+        ret = {}.fromkeys(ids, 0.0)
+        for purchase in self.browse(cr, uid, ids, context=context):
+            total_qties = 0.0
+            received_qties = 0.0
+            for picking in purchase.picking_ids:
+                for move in picking.move_lines:
+                    total_qties += move.product_qty
+                    if move.state in ('done','cancel'):
+                        received_qties += move.product_qty
+            val = 0
+            if total_qties > 0.0:
+                val = (received_qties / total_qties) * 100.0
+            ret[purchase.id] = val
+        return ret
+    
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
             'validation_order': fields.function(_get_validation_order, method=True, type='integer', string="Order", store=True),
@@ -394,6 +410,8 @@ class purchase_order(OpenbaseCore):
             'elu_id':fields.many2one('res.users','Elu Concerné', readonly=True),
             'property_accountant_id':fields.property('res.users', type="many2one", relation="res.users", view_load=True, string='Accountant', required=True),
             'mail_sent':fields.boolean('Mail sent ?', invisible=True),
+            'supplier_mail_sent':fields.boolean('Mail sent to supplier ?', invisible=True),
+            
             #fields moved from open.engagement
             'date_engage_validated':fields.date('Date Validation de la commande', readonly=True),
             'date_engage_sent':fields.date('Date engagement commande', readonly=True),
@@ -410,6 +428,8 @@ class purchase_order(OpenbaseCore):
             'attach_waiting_invoice_ids': fields.function(_get_engage_attaches, multi="attaches", type="char", string="PDF invoice attaches to treat"),
             'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
+            
+            'reception_progress': fields.function(_get_reception_progress, method=True, type='float', string='Reception progress (%)'),
             }
     _defaults = {
         'check_dst':lambda *a: False,
@@ -427,7 +447,8 @@ class purchase_order(OpenbaseCore):
         'check_elu': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_elu and 'ELU' in groups_code,
         'refuse': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
         'done': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged') and record.all_invoices_treated,
-        'invoice': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged')
+        'receive': lambda self,cr,uid,record,groups_code: record.validation in ('done','purchase_engaged') and not record.reception_ok,
+        'send_mail': lambda self,cr,uid,record,groups_code: record.validation in ('done','purchase_engaged')
         }
     
     def create(self, cr, uid, vals, context=None):

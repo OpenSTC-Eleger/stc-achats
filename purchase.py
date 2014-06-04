@@ -107,6 +107,7 @@ class purchase_order_line(OpenbaseCore):
     
     _defaults = {
         'dispo': False,
+        'date_planned': fields.date.context_today,
         }
     
     def _check_qte_merge_qte_po(self, cr, uid, ids, context=None):
@@ -438,6 +439,7 @@ class purchase_order(OpenbaseCore):
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
         'name': lambda self, cr, uid, context: self._custom_sequence(cr, uid, context),
         'mail_sent' : lambda *a: False,
+        'invoice_method': lambda *a: 'picking',
         }
 
     _actions = {
@@ -451,6 +453,20 @@ class purchase_order(OpenbaseCore):
         'send_mail': lambda self,cr,uid,record,groups_code: record.validation in ('done','purchase_engaged')
         }
     
+    ##@return: internally used to add default values not sent from the GUI to the create() method of OpenERP
+    def get_create_default_values(self, cr, uid, vals, context=None):
+        ret = vals.copy()
+        partner_id = vals.get('partner_id',False)
+        partner_obj = self.pool.get('res.partner')
+        if partner_id:
+            partner = partner_obj.browse(cr, uid, partner_id, context=context)
+            
+            ret.update({'partner_address_id':partner_obj.address_get(cr, uid, [partner_id], ['default'])['default'],
+                        'pricelist_id':partner.property_product_pricelist_purchase.id,
+                        'location_id':partner.property_stock_customer.id})
+        return ret
+    
+    ##@note: Override of create() method to add custom behavior : compute default value of 'name' using 'service_id' and compute value of 'current_url'
     def create(self, cr, uid, vals, context=None):
         if 'service_id' in vals and 'name' in vals:
            service = self.pool.get("openstc.service").browse(cr, uid, vals['service_id'], context=context)
@@ -468,6 +484,7 @@ class purchase_order(OpenbaseCore):
                 defaults = self.default_get(cr, uid, ['name'], context=context)
                 vals['name'] = defaults['name'].replace('xxx',self.remove_accents(service.name[:3]).upper())
             
+        vals = self.get_create_default_values(cr, uid, vals, context=context)
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
         self.write(cr, uid, [po_id],{'current_url':self.compute_current_url(cr, uid, po_id, context)}, context=context)
         return po_id

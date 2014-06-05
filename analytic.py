@@ -61,7 +61,7 @@ class crossovered_budget(OpenbaseCore):
     _actions = {
         'validate': lambda self, cr, uid, record, groups_code: record.state == 'confirm',
         'confirm': lambda self, cr, uid, record, groups_code: record.state == 'draft',
-        'cancel': lambda self, cr, uid, record, groups_code: record.state in ('confirm','validate'),
+        'cancel': lambda self, cr, uid, record, groups_code: record.state in ('confirm',),
         'done': lambda self, cr, uid, record, groups_code: record.state == 'validate',
         'renew': lambda self, cr, uid, record, groups_code: record.state == 'validate',
         'delete': lambda self, cr, uid, record, groups_code: record.state == 'confirm',

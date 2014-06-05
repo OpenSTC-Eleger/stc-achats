@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+		<record id="act_check_dst" model="workflow.activity">
+			<field name="name">Check DST</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_check_dst()</field>
+		</record>
+
+		<record id="act_check_elu" model="workflow.activity">
+			<field name="name">Check Elu</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_check_elu()</field>
+		</record>
+
+		<record id="purchase.trans_draft_confirmed" model="workflow.transition">
+		    <field name="condition">not need_confirm</field>
+		</record>
+		
+		<record id="trans_draft_check_dst" model="workflow.transition">
+	    	<field name="act_from" ref="purchase.act_draft"/>
+	    	<field name="act_to" ref="act_check_dst"/>
+	    	<field name="condition">need_dst</field>
+	    	<field name="signal">purchase_confirm</field>
+	    </record>
+	    
+		<record id="trans_draft_check_elu" model="workflow.transition">
+	    	<field name="act_from" ref="purchase.act_draft"/>
+	    	<field name="act_to" ref="act_check_elu"/>
+	    	<field name="condition">need_elu and not need_dst</field>
+	    	<field name="signal">purchase_confirm</field>
+	    </record>
+	    
+		<record id="trans_check_dst_confirmed" model="workflow.transition">
+	    	<field name="act_from" ref="act_check_dst"/>
+	    	<field name="act_to" ref="purchase.act_confirmed"/>
+	    	<field name="condition">not need_elu</field>
+	    	<field name="signal">check_dst</field>
+	    </record>
+	    
+		<record id="trans_check_dst_chec_elu" model="workflow.transition">
+	    	<field name="act_from" ref="act_check_dst"/>
+	    	<field name="act_to" ref="act_check_elu"/>
+	    	<field name="condition">need_elu</field>
+	    	<field name="signal">check_dst</field>
+	    </record>
+	    
+		<record id="trans_check_elu_confirmed" model="workflow.transition">
+	    	<field name="act_from" ref="act_check_elu"/>
+	    	<field name="act_to" ref="purchase.act_confirmed"/>
+	    	<field name="signal">check_elu</field>	    	
+	    </record>
+	    
+	    
+	</data>
+</openerp>

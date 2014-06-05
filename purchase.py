@@ -456,6 +456,7 @@ class purchase_order(OpenbaseCore):
         'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and ('DIRE' in groups_code or 'ELU' in groups_code),
         'done': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.all_invoices_treated,
         'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.reception_ok,
+        'manage_invoice': lambda self,cr,uid,record,groups_code: record.state in ('approved','done'),
         'send_mail': lambda self,cr,uid,record,groups_code: record.state in ('approved',)
         }
     

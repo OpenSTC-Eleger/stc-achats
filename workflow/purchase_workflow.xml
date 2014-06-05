@@ -50,9 +50,15 @@
 		<record id="trans_check_elu_confirmed" model="workflow.transition">
 	    	<field name="act_from" ref="act_check_elu"/>
 	    	<field name="act_to" ref="purchase.act_confirmed"/>
-	    	<field name="signal">check_elu</field>	    	
+	    	<field name="signal">check_elu</field>
 	    </record>
 	    
+		
+		
+		<record id="purchase.trans_invoice_end_done" model="workflow.transition">
+		    <field name="signal">done</field>
+		    <field name="condition">all_invoices_treated</field>
+		</record>
 	    
 	</data>
 </openerp>

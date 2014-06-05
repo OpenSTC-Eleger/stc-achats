@@ -279,12 +279,16 @@ class purchase_order(OpenbaseCore):
     _name = 'purchase.order'
     
     def _get_need_confirm(self, cr, uid, ids, name, args, context=None):
-        ret = {}
+        ret = {}.fromkeys(ids, {'need_confirm':False, 'need_dst':False, 'need_elu':False})
         for po in self.browse(cr, uid, ids, context=context):
-            if po.user_id and po.user_id.max_po_amount_no_market:
-                ret[po.id] = po.user_id.max_po_amount_no_market <= po.amount_total
-            else:
-                ret[po.id] = True
+            need = True
+            user = po.user_id
+            if user:
+                if user.max_po_amount_no_market:
+                    need = user.max_po_amount_no_market <= po.amount_total
+                if need:
+                    ret[po.id].update({'need_dst':user.need_dst, 'need_elu':user.need_elu})
+            ret[po.id].update({'need_confirm': need})
         return ret
     
     def _get_ids_from_users(self, cr, uid, ids, context=None):
@@ -368,12 +372,12 @@ class purchase_order(OpenbaseCore):
         return {'type':'ir.actions.act_window.close'}
     
     """ write the priority of the record according to its state and the values of 'order' list variable """
-    def _get_validation_order(self, cr, uid, ids, name, args, context=None):
-        order = ['budget_to_check','engagement_to_check','done','purchase_engaged','purchase_paid']
+    def _get_state_order(self, cr, uid, ids, name, args, context=None):
+        order = ['draft','wait','approved','done','cancel']
         max_order = len(order)
         ret = {}.fromkeys(ids, max_order)
         for purchase in self.browse(cr, uid, ids, context=context):
-            ret[purchase.id] = order.index(purchase.validation) if purchase.validation in order else max_order
+            ret[purchase.id] = order.index(purchase.state) if purchase.state in order else max_order
         return ret
     
     def _get_reception_progress(self, cr, uid, ids, name, args, context=None):
@@ -394,7 +398,7 @@ class purchase_order(OpenbaseCore):
     
     _columns = {
             'validation':fields.selection(AVAILABLE_ETAPE_VALIDATION, 'Etape Validation', readonly=True),
-            'validation_order': fields.function(_get_validation_order, method=True, type='integer', string="Order", store=True),
+            'state_order': fields.function(_get_state_order, method=True, type='integer', string="Order", store=True),
             'service_id':fields.many2one('openstc.service', 'Service Demandeur', required=True),
             'user_id':fields.many2one('res.users','Personnel Demandeur', required=True),
             'description':fields.char('Objet de l\'achat',size=128),
@@ -402,7 +406,9 @@ class purchase_order(OpenbaseCore):
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
             #'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
             'account_analytic_id':fields.many2one('crossovered.budget.lines', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
-            'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
+            'need_confirm':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need Validation ?'),
+            'need_dst':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need DST Validation ?'),
+            'need_elu':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need Elu Validation ?'),
             'check_dst':fields.boolean('Signature DST'),
             'check_elu':fields.boolean('Signature Elu'),
             'current_url':fields.char('URL Courante',size=256),
@@ -444,13 +450,14 @@ class purchase_order(OpenbaseCore):
 
     _actions = {
         'delete': lambda self,cr,uid,record,groups_code: record.state == 'cancel',
-        'cancel': lambda self,cr,uid,record,groups_code: record.validation in ('budget_to_check',),
-        'check_dst': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_dst and 'DIRE' in groups_code,
-        'check_elu': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and not record.check_elu and 'ELU' in groups_code,
-        'refuse': lambda self,cr,uid,record,groups_code: record.validation in ('engagement_to_check',) and ('DIRE' in groups_code or 'ELU' in groups_code),
-        'done': lambda self,cr,uid,record,groups_code: record.validation in ('done', 'purchase_engaged') and record.all_invoices_treated,
-        'receive': lambda self,cr,uid,record,groups_code: record.validation in ('done','purchase_engaged') and not record.reception_ok,
-        'send_mail': lambda self,cr,uid,record,groups_code: record.validation in ('done','purchase_engaged')
+        'cancel': lambda self,cr,uid,record,groups_code: record.state in ('draft',),
+        'check_dst': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and not record.check_dst and 'DIRE' in groups_code,
+        'check_elu': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and not record.check_elu and 'ELU' in groups_code,
+        'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and ('DIRE' in groups_code or 'ELU' in groups_code),
+        'done': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.all_invoices_treated,
+        'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.reception_ok,
+        'manage_invoice': lambda self,cr,uid,record,groups_code: record.state in ('approved','done'),
+        'send_mail': lambda self,cr,uid,record,groups_code: record.state in ('approved',)
         }
     
     ##@return: internally used to add default values not sent from the GUI to the create() method of OpenERP
@@ -488,11 +495,22 @@ class purchase_order(OpenbaseCore):
         po_id = super(purchase_order, self).create(cr, uid, vals, context)
         self.write(cr, uid, [po_id],{'current_url':self.compute_current_url(cr, uid, po_id, context)}, context=context)
         return po_id
-
+    
+    def perform_wkf_evolve(self, cr, uid, ids, wkf_evolve, context=None):
+        wkf_service = netsvc.LocalService('workflow')
+        for id in ids:
+            wkf_service.trg_validate(uid, 'purchase.order', id, wkf_evolve, cr)
+        return True
+    
     def write(self, cr, uid, ids, vals, context=None):
         if not isinstance(ids, list):
             ids = [ids]
+        wkf_evolve = False
+        if 'wkf_evolve' in vals:
+            wkf_evolve = vals.pop('wkf_evolve')
         super(purchase_order, self).write(cr, uid, ids, vals, context)
+        if wkf_evolve:
+            self.perform_wkf_evolve(cr, uid, ids, wkf_evolve, context=context)
         return True
     
     def search(self, cr, uid, args=[],offset=0,limit=None, order=None,context=None, count=False):
@@ -503,22 +521,29 @@ class purchase_order(OpenbaseCore):
         return super(purchase_order, self).search(cr, uid, args, offset=offset, limit=limit, order=order,context=context,count=count)
     
     
+#    def wkf_confirm_order(self, cr, uid, ids, context=None):
+#        ok = True
+#        res = False
+#        for po in self.browse(cr, uid, ids):
+#            #TOCHECK: no need budget and engage validation if purchase order amount equals zero ?
+#            if po.validation <> 'done' and po.amount_total > 0.0:
+#                ok = False
+#                if po.validation == 'budget_to_check':
+#                    raise osv.except_osv(_('Budget to check'),_('Budgets must be checked and available for this purchase'))
+#                elif po.validation == 'engagement_to_check':
+#                    raise osv.except_osv(_('Purchase to check'),_('Purchase must be check and validated for this purchase'))
+#            elif po.amount_total > 0.0:
+#                self._create_report_attach(cr, uid, po, context)
+#        if ok:
+#             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
+#        return False
+
     def wkf_confirm_order(self, cr, uid, ids, context=None):
-        ok = True
-        res = False
-        for po in self.browse(cr, uid, ids):
-            #TOCHECK: no need budget and engage validation if purchase order amount equals zero ?
-            if po.validation <> 'done' and po.amount_total > 0.0:
-                ok = False
-                if po.validation == 'budget_to_check':
-                    raise osv.except_osv(_('Budget to check'),_('Budgets must be checked and available for this purchase'))
-                elif po.validation == 'engagement_to_check':
-                    raise osv.except_osv(_('Purchase to check'),_('Purchase must be check and validated for this purchase'))
-            elif po.amount_total > 0.0:
-                self._create_report_attach(cr, uid, po, context)
-        if ok:
-             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
-        return False
+        self.write(cr, uid, ids, {'check_dst':True, 'check_elu':True})
+        for po in self.browse(cr, uid, ids, context=context):
+            self.create_engage(cr, po.user_id.id, po.id, context)
+            self._create_report_attach(cr, uid, po, context)
+        return super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
             
     def check_achat(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
@@ -559,32 +584,6 @@ class purchase_order(OpenbaseCore):
                     
         return ok and one_line
     
-    def verif_budget(self, cr, uid, ids, context=None):
-        line_ok = []
-        line_not_ok = []
-        
-        dict_line_account = {}
-        #On vérifie si on a un budget suffisant pour chaque ligne d'achat
-        #On gère aussi le cas de plusieurs lignes référants au même compte analytique
-        po = self.browse(cr, uid, ids)
-        for line in po.order_line:
-            #compute line amount with taxes
-            amount_line = line.amount_ttc
-            restant = -1
-            if not line.account_analytic_id.id in dict_line_account:
-                restant = line.budget_dispo - amount_line
-            else:
-                restant = dict_line_account[line.account_analytic_id.id] - amount_line
-            dict_line_account.update({line.account_analytic_id.id:restant})
-            if restant >= 0:
-                line_ok.append(line.id)
-            else:
-                line_not_ok.append(line.id)
-                #raise osv.except_osv('Erreur','Vous n\'avez pas le budget suffisant pour cet achat:' + line.name + ' x ' + str(line.product_qty) + '(' + str(line.price_subtotal) + ' euros)')
-        self.pool.get("purchase.order.line").write(cr, uid, line_ok, {'dispo':True})
-        self.pool.get("purchase.order.line").write(cr, uid, line_not_ok, {'dispo':False})
-        return line_not_ok
-    
     def get_elu_attached(self, cr, uid, id, context=None):
         service_id = self.browse(cr, uid, id, context).service_id.id
         groups_id = self.pool.get("res.groups").search(cr, uid, [('name','like','%Elu%')], context=context)
@@ -602,21 +601,21 @@ class purchase_order(OpenbaseCore):
         ret = "%s/web/webclient/home#id=%s&view_type=page&model=%s" % (web_root_url, id, model)
         return ret
     
-    def validate_po_invoice(self, cr, uid, ids,context=None):
-        wf_service = netsvc.LocalService('workflow')
-        if not isinstance(ids, list):
-            ids = [ids]
-        for po in self.browse(cr, uid, ids, context):
-            wf_service.trg_validate(po.user_id.id, 'purchase.order', po.id, 'purchase_confirm', cr)
-            wf_service.trg_write(po.user_id.id, 'purchase.order', po.id, cr)
-        #Il faut relire l'objet car une nouvelle donnée est apparue entre temps dans l'engagement, account_invoice_id
-        for po in self.browse(cr, uid, ids, context):
-            for inv in po.invoice_ids:
-                wf_service.trg_write(po.user_id.id, 'account.invoice', inv.id, cr)
-                wf_service.trg_validate(po.user_id.id, 'account.invoice', inv.id, 'invoice_open', cr)
-        if not po.invoice_ids:
-            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this purchase is needed, can not update budgets without'))
-        return True
+#    def validate_po_invoice(self, cr, uid, ids,context=None):
+#        wf_service = netsvc.LocalService('workflow')
+#        if not isinstance(ids, list):
+#            ids = [ids]
+#        for po in self.browse(cr, uid, ids, context):
+#            wf_service.trg_validate(po.user_id.id, 'purchase.order', po.id, 'purchase_confirm', cr)
+#            wf_service.trg_write(po.user_id.id, 'purchase.order', po.id, cr)
+#        #Il faut relire l'objet car une nouvelle donnée est apparue entre temps dans l'engagement, account_invoice_id
+#        for po in self.browse(cr, uid, ids, context):
+#            for inv in po.invoice_ids:
+#                wf_service.trg_write(po.user_id.id, 'account.invoice', inv.id, cr)
+#                wf_service.trg_validate(po.user_id.id, 'account.invoice', inv.id, 'invoice_open', cr)
+#        if not po.invoice_ids:
+#            raise osv.except_osv(_('Error'),_('An OpenERP Invoice associated to this purchase is needed, can not update budgets without'))
+#        return True
     
     def create_engage(self, cr, uid, id, context=None):
         po = self.browse(cr, uid, id, context=context)
@@ -657,66 +656,67 @@ class purchase_order(OpenbaseCore):
             #self.validate_po_invoice(cr, uid, ids, context)
         return True
     
-    def openstc_confirm(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        po = self.browse(cr, uid, ids, context)
-        #line_errors = self.verif_budget(cr, uid, ids, context)
-        line_errors = []
-        for line in po.order_line:
-            if not line.dispo:
-                line_errors.append(line.id)
-        if not line_errors:
-            #check if purchase need to be confirmed by DST and Elu
-            if po.need_confirm:
-                self.write(cr, uid, ids, {'validation':'engagement_to_check', 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)}, context=context)
-                #TODO: send mail to DST ?
-            else:
-                engage_id = self.create_engage(cr, po.user_id.id, ids, context=context)
-                self.write(cr, uid, ids, {'validation':'done'}, context=context)
-                self.validate_po_invoice(cr, uid, ids, context=context)
-        else:
-            msg_error = ""
-            cpt = 0
-            for error in self.pool.get("purchase.order.line").browse(cr, uid, line_errors):
-                cpt += 1
-                msg_error = "%s %s" %("," if cpt >1 else "", error.name)
-            raise osv.except_osv(_('Error'),_('Some purchase order lines does not match amount budget line available : %s') %(msg_error,))
-
-        return {'type':'ir.actions.act_window.close'}
+#    def openstc_confirm(self, cr, uid, ids, context=None):
+#        if isinstance(ids, list):
+#            ids = ids[0]
+#        po = self.browse(cr, uid, ids, context)
+#        line_errors = []
+#        for line in po.order_line:
+#            if not line.dispo:
+#                line_errors.append(line.id)
+#        if not line_errors:
+#            #check if purchase need to be confirmed by DST and Elu
+#            if po.need_confirm:
+#                self.write(cr, uid, ids, {'validation':'engagement_to_check'}, context=context)
+#                #TODO: send mail to DST ?
+#            else:
+#                engage_id = self.create_engage(cr, po.user_id.id, ids, context=context)
+#                self.write(cr, uid, ids, {'validation':'done'}, context=context)
+#                #self.validate_po_invoice(cr, uid, ids, context=context)
+#        else:
+#            msg_error = ""
+#            cpt = 0
+#            for error in self.pool.get("purchase.order.line").browse(cr, uid, line_errors):
+#                cpt += 1
+#                msg_error = "%s %s" %("," if cpt >1 else "", error.name)
+#            raise osv.except_osv(_('Error'),_('Some purchase order lines does not match amount budget line available : %s') %(msg_error,))
+#
+#        return {'type':'ir.actions.act_window.close'}
     
-    def action_dst_check(self, cr, uid, ids, context=None):
+    def wkf_check_dst(self, cr, uid, ids, context=None):
+        #@todo: send mail to dst ?
+        self.write(cr, uid, ids, {'state':'wait'},context=context)
+        return True
+    
+    def wkf_check_elu(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
             ids = ids[0]
+        self.write(cr, uid, ids, {'state':'wait'},context=context)
         #create sum'up report for elu
         po = self.browse(cr, uid, ids, context=context)
+        po.write({'check_dst':True, 'elu_id':self.get_elu_attached(cr, uid, po.id, context=context)},context=context)
         #self._create_report_sumup_attach(cr, uid, engage, context)
-        #Envoi du mail A l'élu pour lui demande sa signature Apres signature du DST
-        template_id = self.pool.get("email.template").search(cr, uid, [('model_id','=','purchase.order'),('name','like','%Elu%')], context=context)
-        if isinstance(template_id, list):
-            template_id = template_id[0]
+        #send mail to 'elu' to ask its check
+        template_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'openstc_achat_stock', 'openstc_email_template_engage_to_validate')[1]
         msg_id = self.pool.get("email.template").send_mail(cr, uid, template_id, ids, force_send=True, context=context)
         mail_sent = True
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
             mail_sent = False
-            #raise osv.except_osv(_('Error'),_('Error, fail to notify Elu by mail, your check is avoid for this time'))
-            #return False
-        po.write({'check_dst':True,'mail_sent':mail_sent})
-        #return True
-        return {'type':'ir.actions.act_window.close'}
+        po.write({'mail_sent':mail_sent})
+        return True
     
-    def check_elu(self, cr, uid, ids, context=None):
-        if isinstance(ids, list):
-            ids = ids[0]
-        po = self.browse(cr, uid, ids)
-        if not po.check_dst:
-            raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
-        engage_id = self.create_engage(cr, po.user_id.id, po.id, context)
-        po.write({'validation':'done','engage_id':engage_id,'check_elu':True})
-        self.validate_po_invoice(cr, uid, ids, context=context)
-        return {
-                'type':'ir.actions.act_window.close',
-        }
+#    def check_elu(self, cr, uid, ids, context=None):
+#        if isinstance(ids, list):
+#            ids = ids[0]
+#        po = self.browse(cr, uid, ids)
+#        if not po.check_dst:
+#            raise osv.except_osv(_('Error'),_('DST have to check purchase first'))
+#        
+#        po.write({'validation':'done','engage_id':engage_id,'check_elu':True})
+#        #self.validate_po_invoice(cr, uid, ids, context=context)
+#        return {
+#                'type':'ir.actions.act_window.close',
+#        }
     
     def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
         ret = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)

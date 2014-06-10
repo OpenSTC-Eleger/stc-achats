@@ -436,7 +436,7 @@ class purchase_order(OpenbaseCore):
             'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             
-            'reception_progress': fields.function(_get_reception_progress, method=True, type='float', string='Reception progress (%)'),
+            #'reception_progress': fields.function(_get_reception_progress, method=True, type='float', string='Reception progress (%)'),
             }
     _defaults = {
         'check_dst':lambda *a: False,
@@ -452,12 +452,13 @@ class purchase_order(OpenbaseCore):
         'delete': lambda self,cr,uid,record,groups_code: record.state == 'cancel',
         'cancel': lambda self,cr,uid,record,groups_code: record.state in ('draft',),
         'check_dst': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and not record.check_dst and 'DIRE' in groups_code,
-        'check_elu': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and not record.check_elu and 'ELU' in groups_code,
+        'check_elu': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.check_dst and 'ELU' in groups_code,
         'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and ('DIRE' in groups_code or 'ELU' in groups_code),
         'done': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.all_invoices_treated,
         'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.reception_ok,
         'manage_invoice': lambda self,cr,uid,record,groups_code: record.state in ('approved','done'),
-        'send_mail': lambda self,cr,uid,record,groups_code: record.state in ('approved',)
+        'send_mail': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.supplier_mail_sent,
+        'send_mail_again': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.supplier_mail_sent
         }
     
     ##@return: internally used to add default values not sent from the GUI to the create() method of OpenERP
@@ -537,13 +538,6 @@ class purchase_order(OpenbaseCore):
 #        if ok:
 #             return super(purchase_order,self).wkf_confirm_order(cr, uid, ids, context)
 #        return False
-
-    def wkf_confirm_order(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'check_dst':True, 'check_elu':True})
-        for po in self.browse(cr, uid, ids, context=context):
-            self.create_engage(cr, po.user_id.id, po.id, context)
-            self._create_report_attach(cr, uid, po, context)
-        return super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
             
     def check_achat(self, cr, uid, ids, context=None):
         if isinstance(ids, list):
@@ -703,6 +697,22 @@ class purchase_order(OpenbaseCore):
         if self.pool.get("mail.message").read(cr, uid, msg_id, ['state'], context)['state'] == 'exception':
             mail_sent = False
         po.write({'mail_sent':mail_sent})
+        return True
+    
+    def wkf_confirm_order(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'check_dst':True, 'check_elu':True})
+        for po in self.browse(cr, uid, ids, context=context):
+            self.create_engage(cr, po.user_id.id, po.id, context)
+            self._create_report_attach(cr, uid, po, context)
+        return super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)    
+    
+    def wkf_send_mail(self, cr, uid, ids, context=None):
+        #TODO: send mail to supplier using a custom mail template
+        self.write(cr, uid, ids, {'supplier_mail_sent':True}, context=context)
+        return True
+    
+    def wkf_wait_send_mail(self, cr, uid, ids, context=None):
+        
         return True
     
 #    def check_elu(self, cr, uid, ids, context=None):

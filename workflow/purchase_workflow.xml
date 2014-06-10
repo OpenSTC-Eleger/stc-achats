@@ -15,6 +15,27 @@
 			<field name="action">wkf_check_elu()</field>
 		</record>
 
+		<record id="act_wait_send_mail" model="workflow.activity">
+			<field name="name">Wait Send mail (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_wait_send_mail()</field>
+		</record>
+		
+		<record id="act_send_mail" model="workflow.activity">
+			<field name="name">Send mail (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_send_mail()</field>
+		</record>
+		
+		<record id="act_send_mail_again" model="workflow.activity">
+			<field name="name">Send mail Again (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_send_mail()</field>
+		</record>
+		
 		<record id="purchase.trans_draft_confirmed" model="workflow.transition">
 		    <field name="condition">not need_confirm</field>
 		</record>
@@ -60,5 +81,36 @@
 		    <field name="condition">all_invoices_treated</field>
 		</record>
 	    
+		
+		
+		<record id="trans_router_wait_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="purchase.act_router"/>
+		    <field name="act_to" ref="act_wait_send_mail"/>
+		</record>
+		
+		<record id="trans_wait_send_mail_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="act_wait_send_mail"/>
+		    <field name="act_to" ref="act_send_mail"/>
+		    <field name="signal">send_mail</field>
+		</record>
+		
+		<record id="trans_send_mail_done" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail"/>
+		    <field name="act_to" ref="purchase.act_done"/>
+		    <field name="signal">done</field>
+		</record>
+		
+		<record id="trans_send_mail_send_mail_again" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail"/>
+		    <field name="act_to" ref="act_send_mail_again"/>
+		    <field name="signal">send_mail_again</field>
+		</record>
+		
+		<record id="trans_send_mail_again_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail_again"/>
+		    <field name="act_to" ref="act_send_mail"/>
+		</record>
+		
+		
 	</data>
 </openerp>

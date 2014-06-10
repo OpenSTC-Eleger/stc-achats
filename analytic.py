@@ -20,6 +20,7 @@
 
 from osv import osv, fields
 from datetime import datetime
+from datetime import timedelta
 import re
 import unicodedata
 import netsvc
@@ -82,12 +83,13 @@ class crossovered_budget(OpenbaseCore):
         'new_name': fields.char('New name', size=128),
         'new_date_from': fields.date('New Date from'),
         'new_date_to': fields.date('New Date to'),
+        'new_service_id': fields.many2one('openstc.service', 'service for renewed budget'),
         'renewed_budget_id': fields.many2one('crossovered.budget', 'New budget created from renew'),
         }
     
     def prepare_default_values_renewed_contract(self, cr, uid, record, context=None):
         return {
-            'original_budget_id': record.id,
+            'service_id':record.new_service_id.id if record.new_service_id else record.service_id.id,
             'date_from': record.new_date_from or record.date_from,
             'date_to': record.new_date_to or record.date_to,
             'name': record.new_name or record.name
@@ -103,6 +105,20 @@ class crossovered_budget(OpenbaseCore):
     
     def budget_renew(self, cr, uid, ids):
         self.renew(cr, uid, ids, context=context)
+    
+    def budget_validate(self, cr, uid, ids):
+        for budget in self.browse(cr, uid, ids):
+            delta = timedelta(365)
+            date_start = datetime.strptime(budget.date_from, '%Y-%m-%d')
+            date_start = date_start + delta
+            date_end = datetime.strptime(budget.date_to, '%Y-%m-%d')
+            date_end = date_end + delta
+            budget.write({'new_service_id': budget.service_id.id,
+                          'new_date_from': date_start.strftime('%Y-%m-%d'),
+                          'new_date_to':date_end.strftime('%Y-%m-%d'),
+                          'new_name':budget.name})
+        super(crossovered_budget,self).budget_validate(cr, uid, ids)
+        return True
     
     def write(self, cr, uid, ids, vals, context=None):
         signal = False

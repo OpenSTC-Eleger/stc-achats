@@ -104,7 +104,7 @@ class crossovered_budget(OpenbaseCore):
         return ret
     
     def budget_renew(self, cr, uid, ids):
-        self.renew(cr, uid, ids, context=context)
+        self.renew(cr, uid, ids)
     
     def update_renew_budget_values(self, cr, uid, ids, context=None):
         for budget in self.browse(cr, uid, ids, context=context):

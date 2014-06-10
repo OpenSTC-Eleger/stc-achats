@@ -106,8 +106,8 @@ class crossovered_budget(OpenbaseCore):
     def budget_renew(self, cr, uid, ids):
         self.renew(cr, uid, ids, context=context)
     
-    def budget_validate(self, cr, uid, ids):
-        for budget in self.browse(cr, uid, ids):
+    def update_renew_budget_values(self, cr, uid, ids, context=None):
+        for budget in self.browse(cr, uid, ids, context=context):
             delta = timedelta(365)
             date_start = datetime.strptime(budget.date_from, '%Y-%m-%d')
             date_start = date_start + delta
@@ -116,7 +116,11 @@ class crossovered_budget(OpenbaseCore):
             budget.write({'new_service_id': budget.service_id.id,
                           'new_date_from': date_start.strftime('%Y-%m-%d'),
                           'new_date_to':date_end.strftime('%Y-%m-%d'),
-                          'new_name':budget.name})
+                          'new_name':budget.name}, context=context)
+        return True
+    
+    def budget_validate(self, cr, uid, ids):
+        self.update_renew_budget_values(cr, uid, ids)
         super(crossovered_budget,self).budget_validate(cr, uid, ids)
         return True
     

@@ -200,12 +200,6 @@ class purchase_order_line(OpenbaseCore):
             merge_action = []
             merge_action.extend([(1,merge_line.id,{'product_id':line.product_id.id})for merge_line in line.merge_line_ids if not merge_line.product_id])
             super(purchase_order_line, self).write(cr, uid, line.id, {'merge_line_ids':merge_action})
-            if not context:
-                context = {}
-            context.update({'no_ask_validation':'1'})
-            if budget_to_check:
-                self.pool.get("purchase.order").write(cr, uid, line.order_id.id, {'validation':'budget_to_check'},context)
-            #Récup du ou des Bons de Commandes associées aux lignes de Commandes (parametre ids)
         return True
     
 purchase_order_line()
@@ -279,16 +273,15 @@ class purchase_order(OpenbaseCore):
     _name = 'purchase.order'
     
     def _get_need_confirm(self, cr, uid, ids, name, args, context=None):
-        ret = {}.fromkeys(ids, {'need_confirm':False, 'need_dst':False, 'need_elu':False})
+        ret = {}.fromkeys(ids, True)
         for po in self.browse(cr, uid, ids, context=context):
-            need = True
-            user = po.user_id
-            if user:
-                if user.max_po_amount_no_market:
-                    need = user.max_po_amount_no_market <= po.amount_total
-                if need:
-                    ret[po.id].update({'need_dst':user.need_dst, 'need_elu':user.need_elu})
-            ret[po.id].update({'need_confirm': need})
+            service = po.user_id and po.user_id.service_id
+            if service:
+                if service.has_purchase_validation:
+                    ret[po.id] = service.purchase_max_amount_no_market <= po.amount_total
+                else:
+                    ret[po.id] = False
+                
         return ret
     
     def _get_ids_from_users(self, cr, uid, ids, context=None):
@@ -371,6 +364,32 @@ class purchase_order(OpenbaseCore):
                     raise osv.except_osv(_('Error'),_('There is missing budget attributions in order lines'))
         return {'type':'ir.actions.act_window.close'}
     
+    def _get_validation_order_items(self, cr, uid, ids, name, args, context=None):
+        ret = {}.fromkeys(ids, {})
+        for po in self.browse(cr, uid, ids, context=context):
+            vals = {'waiting':[], 'confirm':[], 'refuse':[]}
+            if po.validation_order_id:
+                vals.update({'waiting': [{'validator':item.user_id and item.user_id.name or '',
+                                'role': item.name} for item in po.validation_order_id.waiting_validation_item_ids]})
+                confirms = []
+                refuses = []
+                for log in po.validation_order_id.validation_log_ids:
+                    if log.state == 'confirm':
+                        confirms.append({'validator':log.user_id.name,
+                                        'role': log.validation_item_id.name,
+                                        'date': log.date,
+                                        'note': log.note})
+                    else:
+                        refuses.append({'validator':log.user_id.name,
+                                        'role': log.validation_item_id.name,
+                                        'date': log.date,
+                                        'note': log.note})
+                vals.update({'confirm': confirms})
+                vals.update({'refuse': refuses})
+                ret[po.id] = vals
+                
+        return ret
+    
     """ write the priority of the record according to its state and the values of 'order' list variable """
     def _get_state_order(self, cr, uid, ids, name, args, context=None):
         order = ['draft','wait','approved','done','cancel']
@@ -404,13 +423,10 @@ class purchase_order(OpenbaseCore):
             'description':fields.char('Objet de l\'achat',size=128),
             'po_ask_id':fields.many2one('purchase.order.ask', 'Demande de Devis Associée'),
             'po_ask_date':fields.related('po_ask_id','date_order', string='Date Demande Devis', type='date'),
-            #'account_analytic_id':fields.many2one('account.analytic.account', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
+
             'account_analytic_id':fields.many2one('crossovered.budget.lines', 'Ligne Budgétaire Par défaut', help="Ligne Budgétaire par défaut pour les lignes d'achat."),
-            'need_confirm':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need Validation ?'),
-            'need_dst':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need DST Validation ?'),
-            'need_elu':fields.function(_get_need_confirm, type='boolean', multi='purchase_stc_check', method=True, string='Need Elu Validation ?'),
-            'check_dst':fields.boolean('Signature DST'),
-            'check_elu':fields.boolean('Signature Elu'),
+            'need_confirm':fields.function(_get_need_confirm, type='boolean', method=True, string='Need Validation ?'),
+
             'current_url':fields.char('URL Courante',size=256),
             'justif_check':fields.text('Justification de la décision de l\'Elu'),
             'all_budget_dispo':fields.function(_get_all_budget_dispo, type='boolean',string='All Budget Dispo ?', method=True),
@@ -436,10 +452,13 @@ class purchase_order(OpenbaseCore):
             'engage_to_treat':fields.function(_get_engage_attaches, fnct_search=_search_engage_to_treat, multi="attaches", type='boolean', string='Engage to Treat', method=True),
             'all_invoices_treated':fields.function(_get_engage_attaches, fnct_search=search_all_invoices_treated, multi="attaches",type="boolean",string="All invoices treated", method=True),
             
+            'validation_order_id': fields.many2one('openbase.validation', 'Validation process'),
+            'validation_note': fields.text('Validation note'),
+            'validation_order_items': fields.function(_get_validation_order_items, method=True, type='char', string='Validation Items'),
             #'reception_progress': fields.function(_get_reception_progress, method=True, type='float', string='Reception progress (%)'),
             }
     _defaults = {
-        'check_dst':lambda *a: False,
+#        'check_dst':lambda *a: False,
         'validation':'budget_to_check',
         'user_id': lambda self, cr, uid, context: uid,
         'service_id': lambda self, cr, uid, context: self.pool.get("res.users").browse(cr, uid, uid, context).service_ids and self.pool.get("res.users").browse(cr, uid, uid, context).service_ids[0].id or False,
@@ -451,9 +470,8 @@ class purchase_order(OpenbaseCore):
     _actions = {
         'delete': lambda self,cr,uid,record,groups_code: record.state == 'cancel',
         'cancel': lambda self,cr,uid,record,groups_code: record.state in ('draft',),
-        'check_dst': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and not record.check_dst and 'DIRE' in groups_code,
-        'check_elu': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.check_dst and 'ELU' in groups_code,
-        'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and ('DIRE' in groups_code or 'ELU' in groups_code),
+        'confirm': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.validation_order_id and bool(record.validation_order_id.current_user_item_id),
+        'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.validation_order_id and bool(record.validation_order_id.current_user_item_id),
         'done': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.all_invoices_treated,
         'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.reception_ok,
         'manage_invoice': lambda self,cr,uid,record,groups_code: record.state in ('approved','done'),
@@ -503,15 +521,48 @@ class purchase_order(OpenbaseCore):
             wkf_service.trg_validate(uid, 'purchase.order', id, wkf_evolve, cr)
         return True
     
+    def perform_validation_wkf_evolve(self, cr, uid, ids, wkf_evolve, note='', context=None):
+        wkf_service = netsvc.LocalService('workflow')
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.validation_order_id:
+                if hasattr(po.validation_order_id, wkf_evolve + '_note'):
+                    po.validation_order_id.write({wkf_evolve + '_note': note})
+                wkf_service.trg_validate(uid, 'openbase.validation', po.validation_order_id.id, wkf_evolve, cr)
+        return True
+    
+    def create_stock_partial_picking(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        picking_obj = self.pool.get('stock.picking')
+        wizard_picking_obj = self.pool.get('stock.partial.picking')
+        ret_ids = []
+        for id in ids:
+            picking_ids = picking_obj.search(cr, uid, [('purchase_id.id','=',id),('state','not in', ['done','cancel'])])
+            if picking_ids:
+                context.update({'active_ids':[picking_ids[0]],'active_model':'stock.picking'})
+                vals = wizard_picking_obj.default_get(cr, uid, ['date','move_ids','picking_id'], context=context)
+                ret_ids.append(wizard_picking_obj.create(cr, uid, vals, context=context))
+        return ret_ids
+    
     def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
         if not isinstance(ids, list):
             ids = [ids]
         wkf_evolve = False
         if 'wkf_evolve' in vals:
             wkf_evolve = vals.pop('wkf_evolve')
+        note = vals.pop('validation_note') if 'validation_note' in vals else ''
+        
         super(purchase_order, self).write(cr, uid, ids, vals, context)
-        if wkf_evolve:
+        validation_wkf_evolve = ['confirm','refuse']
+        if wkf_evolve and wkf_evolve != 'receive' and wkf_evolve not in validation_wkf_evolve:
             self.perform_wkf_evolve(cr, uid, ids, wkf_evolve, context=context)
+        elif wkf_evolve == 'receive':
+            self.create_stock_partial_picking(cr, uid, ids, context=context)
+        elif wkf_evolve in validation_wkf_evolve:
+            self.perform_validation_wkf_evolve(cr, uid, ids, wkf_evolve, note=note, context=context)
+            
         return True
     
     def search(self, cr, uid, args=[],offset=0,limit=None, order=None,context=None, count=False):
@@ -677,10 +728,30 @@ class purchase_order(OpenbaseCore):
 #
 #        return {'type':'ir.actions.act_window.close'}
     
-    def wkf_check_dst(self, cr, uid, ids, context=None):
+    def prepare_validation_order(self, cr, uid, purchase, context=None):
+        service = purchase.user_id and purchase.user_id.service_id or False
+        vals = {}
+        if service:
+            vals.update({
+                'validation_type': service.purchase_validation_type,
+                'validation_item_ids':[(4,x.id) for x in service.purchase_validation_item_ids],
+                'name': u'%s - %s' % (purchase.name or u'', purchase.description or u'')
+            })
+            
+        return vals
+    
+    def create_validation_order(self, cr, uid, ids, context=None):
         #@todo: send mail to dst ?
+        validation_obj = self.pool.get('openbase.validation')
+        ret = False
+        for purchase in self.browse(cr, uid, ids, context=context):
+            vals = self.prepare_validation_order(cr, uid, purchase, context=context)
+            if vals:
+                validation_id = validation_obj.create(cr, uid, vals, context=context)
+                purchase.write({'validation_order_id': validation_id})
+                ret = validation_id if not ret else ret # get only the first one created, because wkf must be called with ids of length 1, and must return the subflow id to link with
         self.write(cr, uid, ids, {'state':'wait'},context=context)
-        return True
+        return ret
     
     def wkf_check_elu(self, cr, uid, ids, context=None):
         if isinstance(ids, list):

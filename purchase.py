@@ -530,20 +530,6 @@ class purchase_order(OpenbaseCore):
                 wkf_service.trg_validate(uid, 'openbase.validation', po.validation_order_id.id, wkf_evolve, cr)
         return True
     
-    def create_stock_partial_picking(self, cr, uid, ids, context=None):
-        if not context:
-            context = {}
-        picking_obj = self.pool.get('stock.picking')
-        wizard_picking_obj = self.pool.get('stock.partial.picking')
-        ret_ids = []
-        for id in ids:
-            picking_ids = picking_obj.search(cr, uid, [('purchase_id.id','=',id),('state','not in', ['done','cancel'])])
-            if picking_ids:
-                context.update({'active_ids':[picking_ids[0]],'active_model':'stock.picking'})
-                vals = wizard_picking_obj.default_get(cr, uid, ['date','move_ids','picking_id'], context=context)
-                ret_ids.append(wizard_picking_obj.create(cr, uid, vals, context=context))
-        return ret_ids
-    
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
             context = {}
@@ -823,6 +809,24 @@ class purchase_order(OpenbaseCore):
             'view_mode':'form',
             'target':'new',
             }
+    
+    ## retrieve the main picking related to the purchase (the one with state <> 'done') and use it to create a partial.stock.picking
+    ## @return: id the created stock.partial.picking
+    def create_partial_picking(self, cr, uid, id, context=None):
+        context = context or {}
+        ret = False
+        wizard_obj = self.pool.get('stock.partial.picking')
+        picking_obj = self.pool.get('stock.picking')
+        
+        #retrieve working picking(s) (must be only one)
+        picking_ids = picking_obj.search(cr, uid, [('purchase_id.id', '=',id), ('state','not in',('done', 'cancel'))], context=context) 
+        #if 1 or more pickings are found, we create a partial_picking converting the context to be properly used by the openerp wizard
+        if picking_ids:
+            context.update({'active_ids':picking_ids, 'active_model': 'stock.picking'})
+            vals = wizard_obj.default_get(cr, uid, ['picking_id', 'move_ids', 'date'], context=context)
+            vals.update({'move_ids': [(0,0,x) for x in vals['move_ids']]})
+            ret = wizard_obj.create(cr, uid, vals, context=context)
+        return ret
     
     def write_ciril_engage(self, cr, uid, ids, context=None):
         ret = ''

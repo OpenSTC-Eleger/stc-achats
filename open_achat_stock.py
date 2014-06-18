@@ -29,7 +29,7 @@ import addons
 from tools.translate import _
 from ciril_template_files import template_ciril_txt_file_engagement
 import logging
-from openbase.openbase_core import OpenbaseCore
+from openbase.openbase_core import OpenbaseCore, OpenbaseCoreWizard
 
 #Objet gérant une demande de prix selon les normes pour les collectivités (ex: demander à 3 fournisseurs différents mini)
 class purchase_order_ask(OpenbaseCore):
@@ -722,6 +722,11 @@ class stock_partial_move(osv.osv_memory):
         return res
     
 stock_partial_move()
+
+class stock_partial_picking(OpenbaseCoreWizard):
+    _inherit = 'stock.partial.picking'
+    
+stock_partial_picking()
 
 #Override of openstc.service to add services linked with purchases
 class openstc_service(OpenbaseCore):

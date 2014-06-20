@@ -726,16 +726,6 @@ class openstc_service(OpenbaseCore):
         'code_gest_ciril':fields.char('Ciril Gestionnaire Code',size=8, help="this field refer to gestionnaire pkey from Ciril instance"),
         #'purchase_order_ids':fields.one2many('purchase.order','service_id','Purchases made by this service'),
         #'purchase_order_ask_ids':fields.one2many('purchase.order.ask','service_id','Purchase Asks made by this service'),
-        'purchase_validation_type': fields.selection([('and', 'ET'), ('or', 'OU'), ('next', 'Ensuite')], 'Validation type'),
-        'purchase_validation_item_ids':fields.many2many('openbase.validation.item', 'purchase_validation_validation_item_rel', 'validation_id', 'item_id', 'Validations'),
-        'has_purchase_validation': fields.boolean('Purchase Validation ?'),
-        'purchase_max_amount_no_market': fields.float('out market Purchases max amount'),
-    }
-    
-    _defaults = {
-        'purchase_validation_type': lambda *a: 'next',
-        'has_purchase_validation': lambda *a: False,
-        'purchase_max_amount_no_market': lambda *a: 0.0,
     }
     
 openstc_service()

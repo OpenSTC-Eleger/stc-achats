@@ -642,34 +642,6 @@ class openstc_merge_line_ask(OpenbaseCore):
     
 openstc_merge_line_ask()
 
-
-class stock_picking(OpenbaseCore):
-    _inherit = "stock.picking"
-    _name = "stock.picking"
-    
-    _columns = {
-        }
-    
-    #TOCHECK: Vérifier si nécessiter de vérifier les stock.move, puisqu'apparemment action_done n'est appelée uniquement
-    #lorsque tous les stock.move sont faits (Etat Done seulement, ou aussi en exception ?)
-    def action_done(self, cr, uid, ids, context=None):
-        po_ids = []
-        if not isinstance(ids, list):
-            ids = [ids]
-        for picking in self.browse(cr ,uid, ids, context):
-            for move_id in picking.move_lines:
-                engage_id = move_id.purchase_line_id and move_id.purchase_line_id.order_id and move_id.purchase_line_id.order_id.id or False
-                if engage_id and not (engage_id in po_ids):
-                    po_ids.append(engage_id)
-#        wf_service = netsvc.LocalService('workflow')
-#        #On vérifie que toutes les réceptions de produits sont faites
-#        #for engage_id in engage_ids:
-#            #wf_service.trg_validate(uid, 'open.engagement', engage_id, 'signal_received', cr)
-        self.pool.get("purchase.order").write(cr, uid, po_ids, {'reception_ok':True}, context=context)    
-        return super(stock_picking, self).action_done(cr, uid, ids, context)
-    
-stock_picking()
-
 class stock_move(OpenbaseCore):
     _inherit = "stock.move"
     _name = "stock.move"
@@ -679,10 +651,6 @@ class stock_move(OpenbaseCore):
     
 stock_move()
 
-
-
-
-    
 class product_product(OpenbaseCore):
     _inherit = "product.product"
     _name = "product.product"
@@ -727,6 +695,11 @@ class stock_partial_picking(OpenbaseCoreWizard):
     _inherit = 'stock.partial.picking'
     
 stock_partial_picking()
+
+class stock_partial_picking_line(OpenbaseCoreWizard):
+    _inherit = 'stock.partial.picking.line'
+
+stock_partial_picking_line()
 
 #Override of openstc.service to add services linked with purchases
 class openstc_service(OpenbaseCore):

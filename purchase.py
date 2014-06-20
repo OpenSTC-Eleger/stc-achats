@@ -473,7 +473,7 @@ class purchase_order(OpenbaseCore):
         'confirm': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.validation_order_id and bool(record.validation_order_id.current_user_item_id),
         'refuse': lambda self,cr,uid,record,groups_code: record.state in ('wait',) and record.validation_order_id and bool(record.validation_order_id.current_user_item_id),
         'done': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.all_invoices_treated,
-        'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.reception_ok,
+        'receive': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.shipped,
         'manage_invoice': lambda self,cr,uid,record,groups_code: record.state in ('approved','done'),
         'send_mail': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and not record.supplier_mail_sent,
         'send_mail_again': lambda self,cr,uid,record,groups_code: record.state in ('approved',) and record.supplier_mail_sent

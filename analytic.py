@@ -58,7 +58,11 @@ class crossovered_budget(OpenbaseCore):
                 openstc_practical += line.get('openstc_practical_amount', 0.0)
             res.update({budget['id']:{'pract_amount':pract, 'theo_amount':theo, 'planned_amount':planned, 'openstc_practical_amount':openstc_practical}})
         return res
-
+    
+    def _search_openstc_practical_amount(self, cr, uid, obj, name, args):
+        
+        return
+    
     _actions = {
         'validate': lambda self, cr, uid, record, groups_code: record.state == 'confirm',
         'confirm': lambda self, cr, uid, record, groups_code: record.state == 'draft',
@@ -68,11 +72,17 @@ class crossovered_budget(OpenbaseCore):
         'delete': lambda self, cr, uid, record, groups_code: record.state == 'confirm',
         }
     
+    def _get_budget_by_line_ids(self, cr, uid, ids, context=None):
+        return self.search(cr, uid, [('crossovered_budget_line.id', 'in', ids)], context=context)
+    
+    store_values = {'crossovered.budget': [lambda self,cr,uid,ids,ctx={}:ids, [], 11],
+                'crossovered.budget.lines':[_get_budget_by_line_ids, [], 10]}
+    
     _columns = {
-        'planned_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Plannifié", type='float'),
-        'pract_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Pratique", type='float'),
-        'theo_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Théorique", type='float'),
-        'openstc_practical_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Consommé", type='float'),
+        'planned_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Plannifié", type='float', store=store_values),
+        'pract_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Pratique", type='float', store=store_values),
+        'theo_amount':fields.function(_calc_amounts, method=True, multi = 'old_budget_amount', string="Montant Théorique", type='float', store=store_values),
+        'openstc_practical_amount':fields.function(_calc_amounts, fnct_search=_search_openstc_practical_amount, method=True, multi = 'openstc_budget_amount', string="Montant Consommé", type='float', store=store_values),
         'code_budget_ciril':fields.char('CIRIL Budget Code', size=16),
         'service_id':fields.many2one('openstc.service','Service',required=True),
         
@@ -186,10 +196,20 @@ class crossovered_budget_lines(OpenbaseCore):
         
         return ret
     
+    def _get_budget_by_line_ids(self, cr, uid, ids, context=None):
+        cr.execute('''select id 
+        from crossovered_budget_lines as budget, open_engagement_line as engage 
+        where budget.id = engage.budget_line_id 
+        and engage.id in %s''', (tuple(ids),))
+        return [x[0] for x in cr.fetchall()]
+    
+    store_values = {'crossovered.budget.lines': [lambda self,cr,uid,ids,ctx={}:ids, [], 11],
+                    'open.engagement.line':[_get_budget_by_line_ids, [], 10]}
+    
     _inherit = "crossovered.budget.lines"
     _columns = {
-            'openstc_practical_amount':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account')),
-            'openstc_erosion':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Taux d'érosion (%)", type="float", digits_compute=dp.get_precision('Account')),
+            'openstc_practical_amount':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Montant Consommé", type="float", digits_compute=dp.get_precision('Account'), store=store_values),
+            'openstc_erosion':fields.function(_openstc_pract, multi="openstc_pract_amount", method=True, string="Taux d'érosion (%)", type="float", digits_compute=dp.get_precision('Account'), store=store_values),
             'openstc_general_account':fields.many2one('account.account', 'M14 account', help="M14 account corresponding to this budget line"),
             'openstc_code_antenne':fields.char('Antenne Code', size=16, help='Antenne code from CIRIL instance'),
             'name':fields.related('analytic_account_id','complete_name',string='Budget name',type='char',store=True),

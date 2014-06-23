@@ -46,6 +46,8 @@
         "views/openstc_achat_stock_report.xml",
         
         "workflow/openstc_achat_stock_workflow.xml",
+        "workflow/budget_workflow.xml",
+        "workflow/purchase_workflow.xml",
         
         "security/openstc_achat_stock_security.xml",
         "security/ir.model.access.csv",

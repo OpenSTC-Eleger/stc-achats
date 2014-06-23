@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+<!-- 		<record id="act_check_dst" model="workflow.activity"> -->
+<!-- 			<field name="name">Check DST</field> -->
+<!-- 			<field name="wkf_id" ref="purchase.purchase_order" /> -->
+<!-- 			<field name="kind">function</field> -->
+<!-- 			<field name="action">wkf_check_dst()</field> -->
+<!-- 		</record> -->
+
+<!-- 		<record id="act_check_elu" model="workflow.activity"> -->
+<!-- 			<field name="name">Check Elu</field> -->
+<!-- 			<field name="wkf_id" ref="purchase.purchase_order" /> -->
+<!-- 			<field name="kind">function</field> -->
+<!-- 			<field name="action">wkf_check_elu()</field> -->
+<!-- 		</record> -->
+
+		<record id="act_validation" model="workflow.activity">
+			<field name="name">Validation</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">subflow</field>
+			<field name="subflow_id" search="[('osv','=','openbase.validation')]" type="int"/>
+			<field name="action">create_validation_order()</field>
+		</record>
+
+		<record id="act_wait_send_mail" model="workflow.activity">
+			<field name="name">Wait Send mail (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_wait_send_mail()</field>
+		</record>
+		
+		<record id="act_send_mail" model="workflow.activity">
+			<field name="name">Send mail (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_send_mail()</field>
+		</record>
+		
+		<record id="act_send_mail_again" model="workflow.activity">
+			<field name="name">Send mail Again (supplier)</field>
+			<field name="wkf_id" ref="purchase.purchase_order" />
+			<field name="kind">function</field>
+			<field name="action">wkf_send_mail()</field>
+		</record>
+		
+		<record id="purchase.trans_draft_confirmed" model="workflow.transition">
+		    <field name="condition">not need_confirm</field>
+		</record>
+		
+		<record id="trans_draft_validation" model="workflow.transition">
+		    <field name="act_from" ref="purchase.act_draft"/>
+		    <field name="act_to" ref="act_validation"/>
+		    <field name="condition">need_confirm</field>
+		    <field name="signal">purchase_confirm</field>
+		</record>
+		
+		<record id="trans_validation_confirm" model="workflow.transition">
+		    <field name="act_from" ref="act_validation"/>
+		    <field name="act_to" ref="purchase.act_confirmed"/>
+		    <field name="signal">subflow.check_done</field>
+		</record>
+
+		<record id="trans_validation_cancel" model="workflow.transition">
+		    <field name="act_from" ref="act_validation"/>
+		    <field name="act_to" ref="purchase.act_cancel"/>
+		    <field name="signal">subflow.check_refused</field>
+		</record>
+				
+<!-- 		<record id="trans_draft_check_dst" model="workflow.transition"> -->
+<!-- 	    	<field name="act_from" ref="purchase.act_draft"/> -->
+<!-- 	    	<field name="act_to" ref="act_check_dst"/> -->
+<!-- 	    	<field name="condition">need_dst</field> -->
+<!-- 	    	<field name="signal">purchase_confirm</field> -->
+<!-- 	    </record> -->
+	    
+<!-- 		<record id="trans_draft_check_elu" model="workflow.transition"> -->
+<!-- 	    	<field name="act_from" ref="purchase.act_draft"/> -->
+<!-- 	    	<field name="act_to" ref="act_check_elu"/> -->
+<!-- 	    	<field name="condition">need_elu and not need_dst</field> -->
+<!-- 	    	<field name="signal">purchase_confirm</field> -->
+<!-- 	    </record> -->
+	    
+<!-- 		<record id="trans_check_dst_confirmed" model="workflow.transition"> -->
+<!-- 	    	<field name="act_from" ref="act_check_dst"/> -->
+<!-- 	    	<field name="act_to" ref="purchase.act_confirmed"/> -->
+<!-- 	    	<field name="condition">not need_elu</field> -->
+<!-- 	    	<field name="signal">check_dst</field> -->
+<!-- 	    </record> -->
+	    
+<!-- 		<record id="trans_check_dst_chec_elu" model="workflow.transition"> -->
+<!-- 	    	<field name="act_from" ref="act_check_dst"/> -->
+<!-- 	    	<field name="act_to" ref="act_check_elu"/> -->
+<!-- 	    	<field name="condition">need_elu</field> -->
+<!-- 	    	<field name="signal">check_dst</field> -->
+<!-- 	    </record> -->
+	    
+<!-- 		<record id="trans_check_elu_confirmed" model="workflow.transition"> -->
+<!-- 	    	<field name="act_from" ref="act_check_elu"/> -->
+<!-- 	    	<field name="act_to" ref="purchase.act_confirmed"/> -->
+<!-- 	    	<field name="signal">check_elu</field> -->
+<!-- 	    </record> -->
+   		
+		<record id="purchase.trans_invoice_end_done" model="workflow.transition">
+		    <field name="signal">done</field>
+		    <field name="condition">all_invoices_treated</field>
+		</record>
+	    
+		<record id="trans_router_wait_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="purchase.act_router"/>
+		    <field name="act_to" ref="act_wait_send_mail"/>
+		</record>
+		
+		<record id="trans_wait_send_mail_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="act_wait_send_mail"/>
+		    <field name="act_to" ref="act_send_mail"/>
+		    <field name="signal">send_mail</field>
+		</record>
+		
+		<record id="trans_send_mail_done" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail"/>
+		    <field name="act_to" ref="purchase.act_done"/>
+		    <field name="signal">done</field>
+		</record>
+		
+		<record id="trans_send_mail_send_mail_again" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail"/>
+		    <field name="act_to" ref="act_send_mail_again"/>
+		    <field name="signal">send_mail_again</field>
+		</record>
+		
+		<record id="trans_send_mail_again_send_mail" model="workflow.transition">
+		    <field name="act_from" ref="act_send_mail_again"/>
+		    <field name="act_to" ref="act_send_mail"/>
+		</record>
+		
+		
+	</data>
+</openerp>

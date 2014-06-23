@@ -259,8 +259,8 @@ msgstr "Montant Max autorisé par commande hors marché"
 
 #. module: openstc_achat_stock
 #: model:ir.ui.menu,name:openstc_achat_stock.menu_open_achat_stock
-msgid "Achats-Stocks"
-msgstr "Achats-Stocks"
+msgid "OpenstcAchatStock"
+msgstr "OpenstcAchatStock"
 
 #. module: openstc_achat_stock
 #: view:purchase.order.ask:0

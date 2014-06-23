@@ -23,8 +23,9 @@ import re
 from tools.translate import _
 from datetime import datetime
 import netsvc
+from openbase.openbase_core import OpenbaseCore
 
-class res_users(osv.osv):
+class res_users(OpenbaseCore):
     _inherit = "res.users"
     _name = "res.users"
     
@@ -32,15 +33,19 @@ class res_users(osv.osv):
         'max_po_amount':fields.float('Montant par Bon de Commande', digit=(4,2), help="Montant Max autorisé par Bon de Commande"),
         'max_total_amount':fields.float('Montant Annuel max', digit=(5,2)),
         'max_po_amount_no_market':fields.float('Seuil max par commande hors marché', digit=(4,2), help="Montant Max autorisé par commande hors marché"),
+        'need_dst':fields.boolean('Need dst check ?', help='Need dst check if purchase is too expensive ?'),
+        'need_elu':fields.boolean('Need elu check ?', help='Need elu check if purchase is too expensive ?'),        
         'code_user_ciril':fields.char('Ciril user code', size=8, help="this field refer to user code from Ciril instance"),
         }
     _defaults = {
         'max_po_amount_no_market':lambda *a: 0.0, 
+        'need_dst': lambda *a: True,
+        'need_elu': lambda *a: True,
         }
     
 res_users()
 
-class res_company(osv.osv):
+class res_company(OpenbaseCore):
     _inherit = "res.company"
     _name = "res.company"
     _columns = {
@@ -52,7 +57,7 @@ class res_company(osv.osv):
 res_company()
 
 
-class res_partner(osv.osv):
+class res_partner(OpenbaseCore):
     _inherit = "res.partner"
     _name = "res.partner"
     _columns = {
@@ -63,7 +68,7 @@ res_partner()
 
 
 
-class ir_attachment(osv.osv):
+class ir_attachment(OpenbaseCore):
     _inherit = "ir.attachment"
     _name = "ir.attachment"
     _columns = {
@@ -73,10 +78,12 @@ class ir_attachment(osv.osv):
          'engage_done':fields.boolean('Suivi commande Clos',readonly=True),
          'attach_made_done':fields.boolean('Cette Facture Clos cette commande', readonly=True),
          'justif_refuse':fields.text('Justificatif Refus', state={'required':[('state','=','refused')], 'invisible':[('state','!=','refused')]}),
+         'is_invoice': fields.boolean('Is PDF invoice'),
         }
     
     _defaults = {
         'state':'not_invoice',
+        'is_invoice': lambda *a: False,
         }
     
     _order = "create_date"
@@ -85,11 +92,13 @@ class ir_attachment(osv.osv):
     def create(self, cr, uid, vals, context=None):
         attach_id = super(ir_attachment, self).create(cr, uid, vals, context=context)
         attach = self.browse(cr, uid, attach_id, context)
-        is_invoice = False
-        #invoice : F-yyyy-MM-dd-001
-        prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
-        #if attach.res_model == 'purchase.order':
-        is_invoice = prog.search(attach.datas_fname)
+        is_invoice = attach.is_invoice
+        if not is_invoice:
+            #invoice : F-yyyy-MM-dd-001
+            prog = re.compile('F-[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]-[0-9]{3}')
+            #if attach.res_model == 'purchase.order':
+            is_invoice = prog.search(attach.datas_fname)
+            attach.write({'is_invoice':is_invoice})
         if is_invoice:
             self.write(cr, uid, [attach_id], {'state':'to_check'}, context=context)
             #Envoye une notification A l'Acheteur pour lui signifier qu'il doit vérifier une facture

@@ -73,10 +73,16 @@ class crossovered_budget(OpenbaseCore):
         }
     
     def _get_budget_by_line_ids(self, cr, uid, ids, context=None):
-        return self.search(cr, uid, [('crossovered_budget_line.id', 'in', ids)], context=context)
+        return self.pool.get('crossovered.budget').search(cr, uid, [('crossovered_budget_line.id', 'in', ids)], context=context)
+    
+    def _get_budget_by_engage_ids(self, cr, uid, ids, context=None):
+        line_ids = self.pool.get('crossovered.budget.lines').get_budget_by_line_ids(cr, uid, ids, context=context)
+        ret = self.pool.get('crossovered.budget')._get_budget_by_line_ids(cr, uid, line_ids, context=None)
+        return ret
     
     store_values = {'crossovered.budget': [lambda self,cr,uid,ids,ctx={}:ids, [], 11],
-                'crossovered.budget.lines':[_get_budget_by_line_ids, [], 10]}
+                'crossovered.budget.lines':[_get_budget_by_line_ids, [], 10],
+                'open.engagement.line':[_get_budget_by_engage_ids, [], 12]}
     
     _columns = {
         'planned_amount':fields.function(_calc_amounts, method=True, multi = 'openstc_budget_amount', string="Montant Plannifié", type='float', store=store_values),
@@ -196,15 +202,15 @@ class crossovered_budget_lines(OpenbaseCore):
         
         return ret
     
-    def _get_budget_by_line_ids(self, cr, uid, ids, context=None):
-        cr.execute('''select id 
+    def get_budget_by_line_ids(self, cr, uid, ids, context=None):
+        cr.execute('''select budget.id
         from crossovered_budget_lines as budget, open_engagement_line as engage 
         where budget.id = engage.budget_line_id 
         and engage.id in %s''', (tuple(ids),))
         return [x[0] for x in cr.fetchall()]
     
     store_values = {'crossovered.budget.lines': [lambda self,cr,uid,ids,ctx={}:ids, [], 11],
-                    'open.engagement.line':[_get_budget_by_line_ids, [], 10]}
+                    'open.engagement.line':[get_budget_by_line_ids, [], 10]}
     
     _inherit = "crossovered.budget.lines"
     _columns = {
